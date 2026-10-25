@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>将棋推し活アプリ</title>
+    <meta name="description" content="棋士・女流棋士（連盟・LPSA・無所属）を応援するAndroid推し活アプリ。対局予定カレンダー登録、プッシュ通知、勝敗速報、棋譜リンク、通算成績・過去対戦履歴の統計グラフ、公式サイトスクレイピング連携を完備。" />
+    <meta property="og:title" content="将棋推し活アプリ" />
+    <meta property="og:description" content="棋士・女流棋士（連盟・LPSA・無所属）を応援するAndroid推し活アプリ。対局予定カレンダー登録、プッシュ通知、勝敗速報、棋譜リンク、通算成績・過去対戦履歴の統計グラフ、公式サイトスクレイピング連携を完備。" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#1a1816" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="将棋推し活アプリ" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@600;800&display=swap" rel="stylesheet">
+    <script>
+      // In AI Studio Cloud Run / iframe preview, HMR is disabled and Vite dev client
+      // WebSocket disconnections are expected and benign (as specified in runtime constraints: "HMR: Disabled. Ignore WebSocket errors.")
+      (function () {
+        function isViteWsMessage(arg) {
+          if (!arg) return false;
+          const str = typeof arg === 'string' ? arg : (arg && (arg.message || arg.stack || ''));
+          const text = String(str);
+          return text.includes('WebSocket') || text.includes('[vite]') || text.includes('closed without opened') || text.includes('server connection lost');
+        }
+
+        const origConsoleError = console.error;
+        console.error = function (...args) {
+          if (args.some(isViteWsMessage)) {
+            return;
+          }
+          origConsoleError.apply(console, args);
+        };
+
+        const origConsoleWarn = console.warn;
+        console.warn = function (...args) {
+          if (args.some(isViteWsMessage)) {
+            return;
+          }
+          origConsoleWarn.apply(console, args);
+        };
+
+        window.addEventListener('error', function (e) {
+          const msg = e && (e.message || (e.error && (e.error.message || e.error.stack)) || '');
+          if (isViteWsMessage(msg)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (e) {
+          const reason = e && (e.reason ? (e.reason.message || e.reason.stack || e.reason) : '');
+          if (isViteWsMessage(reason)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

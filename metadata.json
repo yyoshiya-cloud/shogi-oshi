@@ -1,0 +1,6 @@
+{
+  "name": "将棋推し活アプリ",
+  "description": "日本将棋連盟・LPSA・無所属の棋士・女流棋士を応援するAndroid専用推し活アプリ。対局予定カレンダー、プッシュ通知速報、棋譜リンク、通算成績・過去対戦履歴の統計グラフ、連盟公式サイトスクレイピング同期を完備。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
