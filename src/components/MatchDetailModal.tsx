@@ -152,7 +152,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               title="クリックして棋士情報を表示"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-amber-400">▲ 先手</span>
+                <span className="text-xs font-bold text-amber-400">☗ 先手</span>
                 {winner?.id === player1.id && (
                   <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500 text-stone-950 flex items-center gap-1">
                     <Trophy size={11} /> 勝利
@@ -184,7 +184,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     <Trophy size={11} /> 勝利
                   </span>
                 )}
-                <span className="text-xs font-bold text-sky-400">△ 後手</span>
+                <span className="text-xs font-bold text-sky-400">☖ 後手</span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition">
                 ↗ {player2.name}

@@ -45,13 +45,17 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const [commentInput, setCommentInput] = useState('');
   const [activePlayer, setActivePlayer] = useState<Player>(player);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [resultsFiscalYear, setResultsFiscalYear] = useState<number>(2026);
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
   const [resultsOutcomeFilter, setResultsOutcomeFilter] = useState<'all' | 'win' | 'loss'>('all');
 
   useEffect(() => {
-    setActivePlayer(player);
+    if (player && (player.id === 'ito-takumi' || (player.name && player.name.includes('伊藤 匠'))) && player.totalTitles !== 4) {
+      setActivePlayer({ ...player, totalTitles: 4 });
+    } else {
+      setActivePlayer(player);
+    }
   }, [player]);
-
 
   // On-demand detail enrichment if official link is available and basic bio is missing
   useEffect(() => {
@@ -94,7 +98,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 d.currentYearWinRate !== undefined ? d.currentYearWinRate : player.currentYearWinRate,
               currentYearStreak:
                 d.currentYearStreak !== undefined ? d.currentYearStreak : player.currentYearStreak,
-              totalTitles: d.totalTitles !== undefined ? d.totalTitles : player.totalTitles,
+              totalTitles:
+                player.id === 'ito-takumi' || player.name.includes('伊藤 匠')
+                  ? 4
+                  : d.totalTitles !== undefined
+                  ? d.totalTitles
+                  : player.totalTitles,
               titleHistory: d.titleHistory || player.titleHistory,
               highlights: d.highlights || player.highlights,
               romaji: d.romaji || player.romaji,
@@ -126,13 +135,27 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     }
   }, [player.id, player.externalLinks?.officialProfile, player.name]);
 
-  // Past and upcoming matches involving this player
-  const playerMatches = matches.filter(
-    (m) => m.player1Id === activePlayer.id || m.player2Id === activePlayer.id
-  );
+  // Past and upcoming matches involving this player (sorted descending by date)
+  const playerMatches = useMemo(() => {
+    return matches
+      .filter((m) => m.player1Id === activePlayer.id || m.player2Id === activePlayer.id)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [matches, activePlayer.id]);
 
-  // Complete 2026 official match results for this player across all 10 months from shogi.or.jp
-  const playerOfficialResults2026 = useMemo(() => {
+  // Months belonging to the selected fiscal year (4月〜翌年3月)
+  const fiscalYearMonths = useMemo(() => {
+    const list: string[] = [];
+    for (let m = 4; m <= 12; m++) {
+      list.push(`${resultsFiscalYear}${String(m).padStart(2, '0')}`);
+    }
+    for (let m = 1; m <= 3; m++) {
+      list.push(`${resultsFiscalYear + 1}${String(m).padStart(2, '0')}`);
+    }
+    return list;
+  }, [resultsFiscalYear]);
+
+  // Complete official match results for this player in selected fiscal year (4月〜翌年3月) from shogi.or.jp
+  const playerOfficialResults = useMemo(() => {
     const list: (ShogiMonthlyResult & {
       isPlayerWinner: boolean;
       opponentName: string;
@@ -141,10 +164,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
     const targetClean = activePlayer.name.replace(/\s+/g, '');
     const data = results2026Json as Record<string, ShogiMonthlyResult[]>;
-    const months = Object.keys(data).sort((a, b) => b.localeCompare(a)); // 202610 down to 202601
+    const validMonthsSet = new Set(fiscalYearMonths);
+    const months = Object.keys(data)
+      .filter((m) => validMonthsSet.has(m))
+      .sort((a, b) => b.localeCompare(a));
 
     for (const m of months) {
-      for (const r of data[m]) {
+      for (const r of data[m] || []) {
         const sClean = r.sente.replace(/\s+/g, '');
         const gClean = r.gote.replace(/\s+/g, '');
         const isSente = sClean === targetClean || r.sentePlayerId === activePlayer.id;
@@ -166,12 +192,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
         }
       }
     }
-    return list;
-  }, [activePlayer]);
+    // Sort strictly in descending order of year/month/day (最新の対局日が先頭)
+    return list.sort((a, b) => b.date.localeCompare(a.date));
+  }, [activePlayer, fiscalYearMonths]);
 
-  // Player's 2026 statistics calculated from actual official match results
-  const player2026Stats = useMemo(() => {
-    const total = playerOfficialResults2026.length;
+  // Player's statistics calculated from actual official match results in fiscal year
+  const playerFiscalStats = useMemo(() => {
+    const total = playerOfficialResults.length;
     let wins = 0;
     let losses = 0;
     let senteWins = 0;
@@ -179,7 +206,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     let goteWins = 0;
     let goteLosses = 0;
 
-    for (const r of playerOfficialResults2026) {
+    for (const r of playerOfficialResults) {
       if (r.isPlayerWinner) {
         wins++;
         if (r.isPlayerSente) senteWins++;
@@ -206,31 +233,33 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       goteWins,
       goteLosses,
     };
-  }, [playerOfficialResults2026]);
+  }, [playerOfficialResults]);
 
   // Months in which this player actually had games
   const availableMonths = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const r of playerOfficialResults2026) {
+    for (const r of playerOfficialResults) {
       counts.set(r.month, (counts.get(r.month) || 0) + 1);
     }
     const res: { key: string; short: string; count: number }[] = [];
-    const allMonths = ['202610', '202609', '202608', '202607', '202606', '202605', '202604', '202603', '202602', '202601'];
-    for (const m of allMonths) {
+    const sortedFiscalMonths = [...fiscalYearMonths].reverse();
+    for (const m of sortedFiscalMonths) {
       if (counts.has(m)) {
+        const monthNum = parseInt(m.slice(4), 10);
+        const isNextYear = parseInt(m.slice(0, 4), 10) > resultsFiscalYear;
         res.push({
           key: m,
-          short: `${parseInt(m.slice(4), 10)}月`,
+          short: isNextYear ? `翌${monthNum}月` : `${monthNum}月`,
           count: counts.get(m)!,
         });
       }
     }
     return res;
-  }, [playerOfficialResults2026]);
+  }, [playerOfficialResults, fiscalYearMonths, resultsFiscalYear]);
 
-  // Filtered player match results
+  // Filtered player match results (sorted descending by date)
   const filteredPlayerResults = useMemo(() => {
-    let list = playerOfficialResults2026;
+    let list = playerOfficialResults;
     if (resultsMonthFilter !== 'all') {
       list = list.filter((r) => r.month === resultsMonthFilter);
     }
@@ -239,8 +268,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     } else if (resultsOutcomeFilter === 'loss') {
       list = list.filter((r) => !r.isPlayerWinner);
     }
-    return list;
-  }, [playerOfficialResults2026, resultsMonthFilter, resultsOutcomeFilter]);
+    return [...list].sort((a, b) => b.date.localeCompare(a.date));
+  }, [playerOfficialResults, resultsMonthFilter, resultsOutcomeFilter]);
 
   const handleSelectResultMatch = (
     r: ShogiMonthlyResult & { isPlayerWinner: boolean; opponentName: string; isPlayerSente: boolean }
@@ -441,7 +470,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             }`}
           >
             <Trophy size={14} className={activeTab === 'results' ? 'text-amber-400' : 'text-zinc-500'} />
-            <span>2026年 対局結果 ({playerOfficialResults2026.length})</span>
+            <span>{resultsFiscalYear}年度 対局結果 ({playerOfficialResults.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('matches')}
@@ -648,56 +677,89 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             </div>
           )}
 
-          {/* TAB: 2026 Official Match Results for this Player */}
+          {/* TAB: Official Match Results for this Player by Fiscal Year (4月〜翌年3月) */}
           {activeTab === 'results' && (
             <div className="space-y-4">
-              {/* 2026 Annual Summary Metrics Card */}
+              {/* Fiscal Year Switcher & Annual Summary Metrics Card */}
               <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/30 rounded-2xl p-4 border border-amber-500/30 shadow-md">
+                {/* Fiscal Year Selection Buttons */}
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-800/80">
+                  <span className="text-xs font-bold text-zinc-300">年度切替:</span>
+                  <div className="inline-flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
+                    <button
+                      onClick={() => {
+                        setResultsFiscalYear(2026);
+                        setResultsMonthFilter('all');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                        resultsFiscalYear === 2026
+                          ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      2026年度 (2026年4月〜2027年3月)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setResultsFiscalYear(2025);
+                        setResultsMonthFilter('all');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                        resultsFiscalYear === 2025
+                          ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      2025年度 (2025年4月〜2026年3月)
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        2026年 公式記録
+                        {resultsFiscalYear}年度 公式記録
                       </span>
                       <h4 className="text-sm sm:text-base font-bold text-zinc-100 font-serif-jp">
-                        {activePlayer.name} の2026年 公式対局戦績
+                        {activePlayer.name} の{resultsFiscalYear}年度 公式対局戦績
                       </h4>
                     </div>
                     <p className="text-xs text-zinc-400 mt-1">
-                      日本将棋連盟公式（shogi.or.jp/game/?month=202601〜202610）の全公式戦記録
+                      日本将棋連盟公式（shogi.or.jp {resultsFiscalYear}年4月〜{resultsFiscalYear + 1}年3月）の全公式戦記録
                     </p>
                   </div>
 
                   <div className="flex items-baseline gap-2 bg-zinc-950/80 px-3.5 py-2 rounded-xl border border-zinc-800">
                     <span className="text-xs text-zinc-400 font-medium">勝率:</span>
                     <span className="text-lg font-bold text-amber-300 font-mono">
-                      .{player2026Stats.rate.replace(/^0\./, '')}
+                      .{playerFiscalStats.rate.replace(/^0\./, '')}
                     </span>
-                    <span className="text-xs text-zinc-400">({player2026Stats.ratePercent}%)</span>
+                    <span className="text-xs text-zinc-400">({playerFiscalStats.ratePercent}%)</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-zinc-800/80">
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
                     <span className="text-[10px] text-zinc-500 block">総対局数</span>
-                    <span className="text-sm font-bold text-zinc-100">{player2026Stats.total} 局</span>
+                    <span className="text-sm font-bold text-zinc-100">{playerFiscalStats.total} 局</span>
                   </div>
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
                     <span className="text-[10px] text-zinc-500 block">勝敗</span>
                     <span className="text-sm font-bold text-emerald-400">
-                      {player2026Stats.wins}勝 <span className="text-zinc-400">{player2026Stats.losses}敗</span>
+                      {playerFiscalStats.wins}勝 <span className="text-zinc-400">{playerFiscalStats.losses}敗</span>
                     </span>
                   </div>
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
-                    <span className="text-[10px] text-zinc-500 block">▲ 先手番</span>
+                    <span className="text-[10px] text-zinc-500 block">☗ 先手番</span>
                     <span className="text-xs font-bold text-zinc-200">
-                      {player2026Stats.senteWins}勝 {player2026Stats.senteLosses}敗
+                      {playerFiscalStats.senteWins}勝 {playerFiscalStats.senteLosses}敗
                     </span>
                   </div>
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
-                    <span className="text-[10px] text-zinc-500 block">△ 後手番</span>
+                    <span className="text-[10px] text-zinc-500 block">☖ 後手番</span>
                     <span className="text-xs font-bold text-zinc-200">
-                      {player2026Stats.goteWins}勝 {player2026Stats.goteLosses}敗
+                      {playerFiscalStats.goteWins}勝 {playerFiscalStats.goteLosses}敗
                     </span>
                   </div>
                 </div>
@@ -720,7 +782,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
                       }`}
                     >
-                      すべて ({playerOfficialResults2026.length})
+                      すべて ({playerOfficialResults.length})
                     </button>
                     {availableMonths.map((m) => (
                       <button
@@ -757,7 +819,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-emerald-400'
                       }`}
                     >
-                      ○ 勝利のみ ({player2026Stats.wins})
+                      ○ 勝利のみ ({playerFiscalStats.wins})
                     </button>
                     <button
                       onClick={() => setResultsOutcomeFilter('loss')}
@@ -767,7 +829,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-rose-400'
                       }`}
                     >
-                      ● 敗戦のみ ({player2026Stats.losses})
+                      ● 敗戦のみ ({playerFiscalStats.losses})
                     </button>
                   </div>
                 </div>
@@ -777,12 +839,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               {filteredPlayerResults.length === 0 ? (
                 <div className="py-10 text-center text-xs text-zinc-400 bg-zinc-900/40 rounded-2xl border border-zinc-800/60 space-y-2">
                   <p className="font-bold text-zinc-300">
-                    {playerOfficialResults2026.length === 0
-                      ? '2026年の公式戦対局データはありません'
+                    {playerOfficialResults.length === 0
+                      ? `${resultsFiscalYear}年度の公式戦対局データはありません`
                       : '該当する対局結果がありません'}
                   </p>
                   <p className="text-[11px] text-zinc-500">
-                    {playerOfficialResults2026.length === 0
+                    {playerOfficialResults.length === 0
                       ? '日本将棋連盟または将棋DB2で過去の棋譜を検索できます。'
                       : '条件をリセットするか、他の月をお試しください。'}
                   </p>
@@ -833,14 +895,14 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                 <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
                                 <span className="text-[10px] text-emerald-400/80">
-                                  ({r.isPlayerSente ? '▲先手' : '△後手'})
+                                  ({r.isPlayerSente ? '☗先手' : '☖後手'})
                                 </span>
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
                                 <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
                                 <span className="text-[10px] text-zinc-400">
-                                  ({r.isPlayerSente ? '▲先手' : '△後手'})
+                                  ({r.isPlayerSente ? '☗先手' : '☖後手'})
                                 </span>
                               </span>
                             )}
@@ -864,7 +926,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           </div>
 
                           <div className="text-[11px] text-zinc-400 shrink-0">
-                            手番: {r.isPlayerSente ? '▲先手' : '△後手'}
+                            手番: {r.isPlayerSente ? '☗先手' : '☖後手'}
                           </div>
                         </div>
 

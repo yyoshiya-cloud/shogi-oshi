@@ -151,8 +151,8 @@ export const PLAYERS_DATA: Player[] = [
     ryuoClass: '1組',
     junisenClass: 'B級1組',
     heldTitles: ['叡王'],
-    totalTitles: 1,
-    titleHistory: '第9期叡王戦にて藤井聡太叡王を破り初タイトル叡王奪取。同世代の最大のライバル。',
+    totalTitles: 4,
+    titleHistory: '通算タイトル獲得4期。第9期叡王戦にて藤井聡太叡王を破り初タイトル叡王奪取。同世代の最大のライバル。',
     careerWins: 182,
     careerLosses: 52,
     careerWinRate: 0.7778,
@@ -458,7 +458,7 @@ export const PLAYERS_DATA: Player[] = [
     romaji: 'Fukuma Kana',
     type: 'women',
     affiliation: '日本将棋連盟',
-    rank: '女流五冠',
+    rank: '女流四冠',
     danRank: '女流六段',
     playerNumber: 33, // 女流棋士番号
     birthDate: '1992-03-02',
@@ -467,7 +467,7 @@ export const PLAYERS_DATA: Player[] = [
     style: '振り飛車',
     ryuoClass: '女流最高峰',
     junisenClass: '白玲戦A級',
-    heldTitles: ['清麗', '女流王座', '女流名人', '女流王位', '倉敷藤花'],
+    heldTitles: ['女王', '女流王座', '女流王位', '倉敷藤花'],
     totalTitles: 58,
     titleHistory: '「出雲のイナズマ」。女流タイトル獲得通算58期（史上最多記録独走中）。クイーン四冠保持。',
     careerWins: 418,
@@ -506,7 +506,7 @@ export const PLAYERS_DATA: Player[] = [
       { name: '四間飛車', winRate: 0.770, count: 50 },
     ],
     headToHead: [
-      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流二冠', wins: 42, losses: 38 },
+      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流四冠', wins: 42, losses: 38 },
       { opponentId: 'kato-momoko', opponentName: '加藤 桃子', opponentRank: '女流四段', wins: 36, losses: 15 },
       { opponentId: 'ito-sae', opponentName: '伊藤 沙恵', opponentRank: '女流四段', wins: 30, losses: 11 },
     ],
@@ -523,7 +523,7 @@ export const PLAYERS_DATA: Player[] = [
     romaji: 'Nishiyama Tomoka',
     type: 'women',
     affiliation: '日本将棋連盟',
-    rank: '白玲・女流二冠',
+    rank: '白玲・女流四冠',
     danRank: '女流五段',
     playerNumber: 73,
     birthDate: '1995-06-27',
@@ -532,7 +532,7 @@ export const PLAYERS_DATA: Player[] = [
     style: '振り飛車',
     ryuoClass: '女流最高峰',
     junisenClass: '白玲 (防衛期中)',
-    heldTitles: ['白玲', '女王', '女流王将'],
+    heldTitles: ['白玲', '清麗', '女流名人', '女流王将'],
     totalTitles: 18,
     titleHistory: '奨励会三段リーグで次点を獲得、女流転向後も白玲・女王などタイトル多数。棋士編入試験で話題沸騰。',
     careerWins: 278,
@@ -571,7 +571,7 @@ export const PLAYERS_DATA: Player[] = [
       { name: '四間飛車', winRate: 0.740, count: 40 },
     ],
     headToHead: [
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 38, losses: 42 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 38, losses: 42 },
       { opponentId: 'kato-momoko', opponentName: '加藤 桃子', opponentRank: '女流四段', wins: 28, losses: 18 },
       { opponentId: 'ito-sae', opponentName: '伊藤 沙恵', opponentRank: '女流四段', wins: 22, losses: 10 },
     ],
@@ -636,8 +636,8 @@ export const PLAYERS_DATA: Player[] = [
       { name: '相掛かり', winRate: 0.650, count: 50 },
     ],
     headToHead: [
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 20, losses: 35 },
-      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流二冠', wins: 10, losses: 18 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 20, losses: 35 },
+      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流四冠', wins: 10, losses: 18 },
     ],
     externalLinks: {
       officialProfile: 'https://www.shogi.or.jp/player/ichiyo_shimizu',
@@ -697,8 +697,8 @@ export const PLAYERS_DATA: Player[] = [
       { name: '矢倉', winRate: 0.690, count: 45 },
     ],
     headToHead: [
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 15, losses: 36 },
-      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流二冠', wins: 18, losses: 28 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 15, losses: 36 },
+      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流四冠', wins: 18, losses: 28 },
       { opponentId: 'ito-sae', opponentName: '伊藤 沙恵', opponentRank: '女流四段', wins: 19, losses: 16 },
     ],
     externalLinks: {
@@ -760,7 +760,7 @@ export const PLAYERS_DATA: Player[] = [
     ],
     headToHead: [
       { opponentId: 'kato-momoko', opponentName: '加藤 桃子', opponentRank: '女流四段', wins: 5, losses: 12 },
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 3, losses: 18 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 3, losses: 18 },
     ],
     externalLinks: {
       officialProfile: 'https://www.shogi.or.jp/player/kanna_suzuki',
@@ -821,7 +821,7 @@ export const PLAYERS_DATA: Player[] = [
     ],
     headToHead: [
       { opponentId: 'kato-momoko', opponentName: '加藤 桃子', opponentRank: '女流四段', wins: 3, losses: 5 },
-      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流二冠', wins: 2, losses: 6 },
+      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流四冠', wins: 2, losses: 6 },
     ],
     externalLinks: {
       officialProfile: 'https://www.shogi.or.jp/player/miran_nohara',
@@ -885,7 +885,7 @@ export const PLAYERS_DATA: Player[] = [
       { name: '相掛かり', winRate: 0.640, count: 75 },
     ],
     headToHead: [
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 14, losses: 26 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 14, losses: 26 },
       { opponentId: 'kato-momoko', opponentName: '加藤 桃子', opponentRank: '女流四段', wins: 8, losses: 12 },
       { opponentId: 'watanabe-mana', opponentName: '渡部 愛', opponentRank: '女流三段 (LPSA)', wins: 9, losses: 6 },
     ],
@@ -951,8 +951,8 @@ export const PLAYERS_DATA: Player[] = [
       { name: '角換わり', winRate: 0.680, count: 35 },
     ],
     headToHead: [
-      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流五冠', wins: 6, losses: 18 },
-      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流二冠', wins: 5, losses: 12 },
+      { opponentId: 'fukuma-kana', opponentName: '福間 香奈', opponentRank: '女流四冠', wins: 6, losses: 18 },
+      { opponentId: 'nishiyama-tomoka', opponentName: '西山 朋佳', opponentRank: '白玲・女流四冠', wins: 5, losses: 12 },
       { opponentId: 'nakai-hiroe', opponentName: '中井 広恵', opponentRank: '女流六段 (無所属)', wins: 6, losses: 9 },
     ],
     externalLinks: {

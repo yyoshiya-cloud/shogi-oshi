@@ -68,9 +68,9 @@ export default function App() {
             (p.rank && p.rank.length > 25) ||
             (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
             (p.heldTitles && p.heldTitles.some((t) => t.includes('段') || t.includes('級'))) ||
-            (!p.danRank && (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'nishiyama-tomoka' || p.id === 'fukuma-kana' || p.id === 'shimizu-ichiyo'))
+            (!p.danRank && (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'nishiyama-tomoka' || p.id === 'fukuma-kana' || p.id === 'shimizu-ichiyo')) ||
+            ((p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) && p.totalTitles !== 4)
         );
-
       if (needsCleanup) {
         const cleaned = [...stored, ...missingStatic].map((p) => {
           let name = p.name ? p.name.replace(/[※＊\*\s]/g, ' ').replace(/\s+/g, ' ').trim() : p.name;
@@ -91,6 +91,10 @@ export default function App() {
             else if (p.id === 'fukuma-kana' || p.name.includes('福間 香奈')) danRank = '女流六段';
             else if (p.id === 'shimizu-ichiyo' || p.name.includes('清水 市代')) danRank = '女流七段';
           }
+          let totalTitles = p.totalTitles;
+          if (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) {
+            totalTitles = 4;
+          }
           const staticP = staticMap.get(p.id);
           let careerWins = p.careerWins;
           let careerLosses = p.careerLosses;
@@ -98,7 +102,6 @@ export default function App() {
           let currentYearWins = p.currentYearWins;
           let currentYearLosses = p.currentYearLosses;
           let currentYearWinRate = p.currentYearWinRate;
-
           if (staticP && (p.id === 'nakai-hiroe' || p.affiliation === 'LPSA')) {
             if (p.id === 'nakai-hiroe' && (careerWins < 780 || currentYearWins !== 9)) {
               careerWins = staticP.careerWins;
@@ -116,13 +119,13 @@ export default function App() {
               currentYearWinRate = staticP.currentYearWinRate;
             }
           }
-
           return {
             ...p,
             name,
             rank,
             danRank,
             heldTitles: validHeldTitles,
+            totalTitles,
             careerWins,
             careerLosses,
             careerWinRate,
@@ -288,7 +291,12 @@ export default function App() {
         setPlayersList((prev) => {
           // Keep custom added players
           const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
-          const merged = [...data.players, ...customPlayers];
+          const merged = [...data.players, ...customPlayers].map((p) => {
+            if (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) {
+              return { ...p, totalTitles: 4 };
+            }
+            return p;
+          });
           saveStoredPlayers(merged);
           return merged;
         });

@@ -30,18 +30,34 @@ interface MonthlyResultsViewProps {
   onSelectMatch?: (match: Match) => void;
 }
 
-const MONTH_OPTIONS = [
-  { key: '202610', label: '2026年 10月', short: '10月' },
-  { key: '202609', label: '2026年 9月', short: '9月' },
-  { key: '202608', label: '2026年 8月', short: '8月' },
-  { key: '202607', label: '2026年 7月', short: '7月' },
-  { key: '202606', label: '2026年 6月', short: '6月' },
-  { key: '202605', label: '2026年 5月', short: '5月' },
-  { key: '202604', label: '2026年 4月', short: '4月' },
-  { key: '202603', label: '2026年 3月', short: '3月' },
-  { key: '202602', label: '2026年 2月', short: '2月' },
-  { key: '202601', label: '2026年 1月', short: '1月' },
+export const FISCAL_YEARS = [
+  { year: 2026, label: '2026年度 (2026年4月〜2027年3月)', short: '2026年度' },
+  { year: 2025, label: '2025年度 (2025年4月〜2026年3月)', short: '2025年度' },
 ];
+
+export function getFiscalYearMonths(year: number) {
+  const months: { key: string; label: string; short: string; isNextYear?: boolean }[] = [];
+  // 4月 to 12月
+  for (let m = 4; m <= 12; m++) {
+    const key = `${year}${String(m).padStart(2, '0')}`;
+    months.push({
+      key,
+      label: `${year}年 ${m}月`,
+      short: `${m}月`,
+    });
+  }
+  // 翌年 1月 to 3月
+  for (let m = 1; m <= 3; m++) {
+    const key = `${year + 1}${String(m).padStart(2, '0')}`;
+    months.push({
+      key,
+      label: `${year + 1}年 ${m}月 (翌年)`,
+      short: `翌${m}月`,
+      isNextYear: true,
+    });
+  }
+  return months;
+}
 
 export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   players,
@@ -49,6 +65,8 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   onSelectPlayer,
   onSelectMatch,
 }) => {
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number>(2026);
+  const activeFiscalYearMonths = useMemo(() => getFiscalYearMonths(selectedFiscalYear), [selectedFiscalYear]);
   const [selectedMonth, setSelectedMonth] = useState<string>('202610');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -66,15 +84,15 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     setSelectedDate(null);
   };
 
-  const currentMonthIndex = MONTH_OPTIONS.findIndex((m) => m.key === selectedMonth);
+  const currentMonthIndex = activeFiscalYearMonths.findIndex((m) => m.key === selectedMonth);
   const handlePrevMonth = () => {
-    if (currentMonthIndex < MONTH_OPTIONS.length - 1) {
-      handleSelectMonth(MONTH_OPTIONS[currentMonthIndex + 1].key);
+    if (currentMonthIndex > 0) {
+      handleSelectMonth(activeFiscalYearMonths[currentMonthIndex - 1].key);
     }
   };
   const handleNextMonth = () => {
-    if (currentMonthIndex > 0) {
-      handleSelectMonth(MONTH_OPTIONS[currentMonthIndex - 1].key);
+    if (currentMonthIndex < activeFiscalYearMonths.length - 1) {
+      handleSelectMonth(activeFiscalYearMonths[currentMonthIndex + 1].key);
     }
   };
 
@@ -102,14 +120,36 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     return map;
   }, [players]);
 
+  const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
+  const displayFiscalYearMonths = useMemo(() => {
+    return monthSortDir === 'desc' ? [...activeFiscalYearMonths].reverse() : activeFiscalYearMonths;
+  }, [activeFiscalYearMonths, monthSortDir]);
+
+  const totalFiscalYearMatches = useMemo(() => {
+    return activeFiscalYearMonths.reduce((sum, m) => sum + (monthlyData[m.key]?.length || 0), 0);
+  }, [activeFiscalYearMonths, monthlyData]);
+
   const currentMonthResults = useMemo(() => {
-    return monthlyData[selectedMonth] || [];
-  }, [monthlyData, selectedMonth]);
+    if (selectedMonth === 'all') {
+      const all: ShogiMonthlyResult[] = [];
+      for (const m of activeFiscalYearMonths) {
+        if (monthlyData[m.key]) {
+          all.push(...monthlyData[m.key]);
+        }
+      }
+      return all.sort((a, b) => b.date.localeCompare(a.date));
+    }
+    const list = monthlyData[selectedMonth] || [];
+    return [...list].sort((a, b) => b.date.localeCompare(a.date));
+  }, [monthlyData, selectedMonth, activeFiscalYearMonths]);
 
   // Calendar matrix and dates for selectedMonth
   const calendarData = useMemo(() => {
-    const year = parseInt(selectedMonth.slice(0, 4), 10);
-    const month = parseInt(selectedMonth.slice(4, 6), 10) - 1; // 0-indexed month
+    const calMonth = selectedMonth === 'all'
+      ? (activeFiscalYearMonths.find((m) => (monthlyData[m.key]?.length || 0) > 0)?.key || '202610')
+      : selectedMonth;
+    const year = parseInt(calMonth.slice(0, 4), 10);
+    const month = parseInt(calMonth.slice(4, 6), 10) - 1; // 0-indexed month
 
     const firstDay = new Date(year, month, 1).getDay(); // 0 = Sun
     const totalDays = new Date(year, month + 1, 0).getDate();
@@ -445,11 +485,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               </span>
               <h2 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-1.5">
                 <Trophy size={20} className="text-amber-400" />
-                2026年 対局結果一覧
+                公式対局結果一覧（年度別: 4月〜翌年3月）
               </h2>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              日本将棋連盟公式（shogi.or.jp）2026年1月〜10月の全対局結果（棋士・女流棋士 2,900局超）
+              日本将棋連盟公式（shogi.or.jp）公式戦対局結果（年度制: 4月〜翌年3月）。棋士・女流棋士の勝敗・中継リンクを網羅。
             </p>
           </div>
 
@@ -483,17 +523,70 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           </div>
         )}
 
-        {/* Month Selector Carousel */}
-        <div className="mt-4 pt-3 border-t border-zinc-800/80">
-          <div className="text-[11px] font-medium text-zinc-400 mb-1.5 flex items-center justify-between">
-            <span>対象月を選択（2026年）:</span>
-            <span className="text-zinc-400 text-[10px]">
-              選択中: {selectedMonth.slice(0, 4)}年{parseInt(selectedMonth.slice(4), 10)}月 (
+        {/* Fiscal Year Selector & Month Carousel */}
+        <div className="mt-4 pt-3 border-t border-zinc-800/80 space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-zinc-300">年度切替:</span>
+              <div className="inline-flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
+                {FISCAL_YEARS.map((fy) => (
+                  <button
+                    key={fy.year}
+                    onClick={() => {
+                      setSelectedFiscalYear(fy.year);
+                      const defaultM = fy.year === 2026 ? '202610' : '202603';
+                      setSelectedMonth(defaultM);
+                      setSelectedDate(null);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      selectedFiscalYear === fy.year
+                        ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {fy.short}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className="text-zinc-400 text-[11px]">
+              選択中: {selectedMonth === 'all' ? `${selectedFiscalYear}年度 全月一括` : `${selectedMonth.slice(0, 4)}年${parseInt(selectedMonth.slice(4), 10)}月`} (
               {currentMonthResults.length}局)
             </span>
           </div>
+
+          <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-zinc-400">
+            <span>対象月を選択（{selectedFiscalYear}年度: 4月〜翌年3月）:</span>
+            <button
+              onClick={() => setMonthSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
+              className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-amber-300 hover:text-amber-200 border border-zinc-700 transition"
+              title="月の並び順を切り替え"
+            >
+              <span>月順: {monthSortDir === 'desc' ? '新しい月順 (翌3月→4月) ▼' : '年度順 (4月→翌3月) ▲'}</span>
+            </button>
+          </div>
+
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-700">
-            {MONTH_OPTIONS.map((m) => {
+            <button
+              onClick={() => handleSelectMonth('all')}
+              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex flex-col items-center min-w-[70px] ${
+                selectedMonth === 'all'
+                  ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
+                  : 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700/80 hover:text-white border border-zinc-700/60'
+              }`}
+              title="この年度の全対局結果をまとめて年月日で降順表示"
+            >
+              <span>全月一括</span>
+              <span
+                className={`text-[10px] font-normal ${
+                  selectedMonth === 'all' ? 'text-zinc-900 font-bold' : 'text-zinc-400'
+                }`}
+              >
+                全{totalFiscalYearMatches}局
+              </span>
+            </button>
+
+            {displayFiscalYearMonths.map((m) => {
               const isSelected = selectedMonth === m.key;
               const count = monthlyData[m.key]?.length || 0;
               return (
@@ -600,9 +693,9 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrevMonth}
-                disabled={currentMonthIndex >= MONTH_OPTIONS.length - 1}
+                disabled={currentMonthIndex <= 0}
                 className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-30 transition"
-                title="前の月へ（2026年）"
+                title="前の月へ"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -611,9 +704,9 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               </h3>
               <button
                 onClick={handleNextMonth}
-                disabled={currentMonthIndex <= 0}
+                disabled={currentMonthIndex >= activeFiscalYearMonths.length - 1 || currentMonthIndex === -1}
                 className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-30 transition"
-                title="次の月へ（2026年）"
+                title="次の月へ"
               >
                 <ChevronRight size={16} />
               </button>
@@ -776,10 +869,12 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           <button
             onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
             className="flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs border border-zinc-700/80 transition flex-shrink-0"
-            title="日付順を変更"
+            title="対局結果の日付並び順を変更"
           >
             <ArrowUpDown size={13} className="text-amber-400" />
-            <span>{sortOrder === 'desc' ? '日付が新しい順' : '日付が古い順'}</span>
+            <span className="font-semibold text-amber-300">
+              {sortOrder === 'desc' ? '年月日で降順（新しい順 ▼）' : '年月日で昇順（古い順 ▲）'}
+            </span>
           </button>
         </div>
 
@@ -865,8 +960,13 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="text-xs text-zinc-400 px-1 flex items-center justify-between">
-            <span>表示中: {filteredResults.length} 局</span>
+          <div className="text-xs text-zinc-400 px-1 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span>表示中: <strong className="text-zinc-200">{filteredResults.length}</strong> 局</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                {sortOrder === 'desc' ? '年月日で降順（最新対局順）' : '年月日で昇順'}
+              </span>
+            </div>
             {searchQuery && (
               <span className="text-amber-400 truncate max-w-[200px]">
                 「{searchQuery}」の検索結果

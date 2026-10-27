@@ -132,10 +132,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
               </div>
               <div>
                 <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  4. 2026年 公式対局結果一覧（1月〜10月 2,900局超）
+                  4. 公式対局結果一覧（年度別 4月〜翌年3月 全網羅）
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  日本将棋連盟公式（shogi.or.jp/game/?month=YYYYMM）の2026年月別対局結果を全網羅。棋士・女流棋士の勝敗、先手後手、携帯中継・棋譜リンク、推し棋士絞り込みに対応。
+                  日本将棋連盟公式（shogi.or.jp/game/?month=YYYYMM）の年度別（4月〜翌年3月）対局結果を全網羅。棋士・女流棋士の勝敗、先手後手、携帯中継・棋譜リンク、推し棋士絞り込みに対応。
                 </p>
               </div>
             </div>

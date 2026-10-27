@@ -132,8 +132,8 @@ export const ShogiBoardViewer: React.FC<ShogiBoardViewerProps> = ({
       const move = moves[i];
       if (!move) continue;
 
-      const owner = move.startsWith('▲') ? 'sente' : move.startsWith('△') ? 'gote' : (i % 2 === 0 ? 'sente' : 'gote');
-      const clean = move.replace(/^[▲△]/, '');
+      const owner = move.startsWith('☗') || move.startsWith('▲') ? 'sente' : move.startsWith('☖') || move.startsWith('△') ? 'gote' : (i % 2 === 0 ? 'sente' : 'gote');
+      const clean = move.replace(/^[☗☖▲△]/, '');
 
       // Ignore endgame declarations or special conditions
       if (clean.includes('投了') || clean.includes('反則') || clean.includes('千日手') || clean.includes('持将棋') || clean.includes('中断')) {
@@ -254,11 +254,11 @@ export const ShogiBoardViewer: React.FC<ShogiBoardViewerProps> = ({
       <div className="w-full flex items-center justify-between pb-3 border-b border-amber-900/30 text-xs sm:text-sm">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-zinc-400">△ 後手:</span>
+          <span className="text-zinc-400">☖ 後手:</span>
           <span className="font-bold text-zinc-100">{goteName}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-zinc-400">▲ 先手:</span>
+          <span className="text-zinc-400">☗ 先手:</span>
           <span className="font-bold text-amber-300">{senteName}</span>
         </div>
       </div>

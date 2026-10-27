@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Match, Player, FollowedPlayerConfig } from '../types/shogi';
 import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
 import { getTodayDateString, getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
@@ -122,27 +122,32 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
     };
   };
 
-  // Filter matches
-  const filteredMatches = matches.filter((m) => {
-    // Oshi filter
-    if (filterOnlyOshi) {
-      const isOshi = followedPlayerIds.has(m.player1Id) || followedPlayerIds.has(m.player2Id);
-      if (!isOshi) return false;
-    }
-    // Status filter
-    if (statusFilter === 'upcoming' && m.status === 'finished') return false;
-    if (statusFilter === 'finished' && m.status !== 'finished') return false;
+  // Filter matches (対局結果・対局一覧は年月日で降順に整列)
+  const filteredMatches = useMemo(() => {
+    const list = matches.filter((m) => {
+      // Oshi filter
+      if (filterOnlyOshi) {
+        const isOshi = followedPlayerIds.has(m.player1Id) || followedPlayerIds.has(m.player2Id);
+        if (!isOshi) return false;
+      }
+      // Status filter
+      if (statusFilter === 'upcoming' && m.status === 'finished') return false;
+      if (statusFilter === 'finished' && m.status !== 'finished') return false;
 
-    // Search query filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const p1 = getPlayer(m.player1Id);
-      const p2 = getPlayer(m.player2Id);
-      const str = `${m.tournament} ${m.round || ''} ${p1.name} ${p2.name} ${m.date} ${m.venue} ${m.highlights || ''}`.toLowerCase();
-      if (!str.includes(q)) return false;
-    }
-    return true;
-  });
+      // Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const p1 = getPlayer(m.player1Id);
+        const p2 = getPlayer(m.player2Id);
+        const str = `${m.tournament} ${m.round || ''} ${p1.name} ${p2.name} ${m.date} ${m.venue} ${m.highlights || ''}`.toLowerCase();
+        if (!str.includes(q)) return false;
+      }
+      return true;
+    });
+
+    // 年月日で降順 (最新の日程・終局結果が先頭)
+    return list.sort((a, b) => b.date.localeCompare(a.date));
+  }, [matches, filterOnlyOshi, followedPlayerIds, statusFilter, searchQuery, players]);
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -237,7 +242,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
           }`}
         >
           <Trophy size={14} />
-          <span>対局結果（2026年 1〜10月一覧）</span>
+          <span>対局結果（年度別 4月〜翌年3月）</span>
         </button>
       </div>
 
@@ -739,7 +744,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center py-2">
                   <div className="flex items-center justify-between bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60">
                     <div>
-                      <span className="text-xs text-amber-400 font-bold mr-1">▲ 先手</span>
+                      <span className="text-xs text-amber-400 font-bold mr-1">☗ 先手</span>
                       <span className="font-bold text-sm text-zinc-100 font-serif-jp">
                         {p1.name}
                       </span>
@@ -754,7 +759,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
 
                   <div className="flex items-center justify-between bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60">
                     <div>
-                      <span className="text-xs text-sky-400 font-bold mr-1">△ 後手</span>
+                      <span className="text-xs text-sky-400 font-bold mr-1">☖ 後手</span>
                       <span className="font-bold text-sm text-zinc-100 font-serif-jp">
                         {p2.name}
                       </span>

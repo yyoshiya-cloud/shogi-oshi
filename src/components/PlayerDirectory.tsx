@@ -87,13 +87,26 @@ export function matchesRankFilter(playerOrRank: Player | string, filter: string)
   const normFilter = normalizeRankForFilter(filter);
 
   // Pro Ranks (四段〜九段) should only match pro players (excluding 女流X段)
-  if (['四段', '五段', '六段', '七段', '八段', '九段'].includes(filter)) {
+  if (PRO_RANKS.includes(filter)) {
     return normRank.includes(normFilter) && !isWomen;
   }
 
   // Women Ranks (女流2級, 女流1級, 女流初段, 女流二段...)
   return normRank.includes(normFilter);
 }
+
+export const PRO_RANKS = ['四段', '五段', '六段', '七段', '八段', '九段'];
+export const WOMEN_RANKS = [
+  '女流2級',
+  '女流1級',
+  '女流初段',
+  '女流二段',
+  '女流三段',
+  '女流四段',
+  '女流五段',
+  '女流六段',
+  '女流七段',
+];
 
 export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   players,
@@ -111,6 +124,25 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [affiliationFilter, setAffiliationFilter] = useState<'all' | PlayerAffiliation>('all');
   const [styleFilter, setStyleFilter] = useState<'all' | '居飛車' | '振り飛車'>('all');
+
+  const handleSelectFilterType = (newType: 'all' | PlayerType) => {
+    setFilterType(newType);
+    if (newType === 'pro') {
+      // 棋士選択時: LPSAと無所属は不活性。選択されていたら全所属にリセット
+      if (affiliationFilter === 'LPSA' || affiliationFilter === '無所属') {
+        setAffiliationFilter('all');
+      }
+      // 女流2級から女流七段は不活性。選択されていたら全段位にリセット
+      if (WOMEN_RANKS.includes(rankFilter)) {
+        setRankFilter('all');
+      }
+    } else if (newType === 'women') {
+      // 女流棋士選択時: 棋士の四段から九段は不活性。選択されていたら全段位にリセット
+      if (PRO_RANKS.includes(rankFilter)) {
+        setRankFilter('all');
+      }
+    }
+  };
 
   // Follow Registration Modal State
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -317,7 +349,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex bg-zinc-950 p-0.5 rounded-xl border border-zinc-800">
             <button
-              onClick={() => setFilterType('all')}
+              onClick={() => handleSelectFilterType('all')}
               className={`px-3 py-1 rounded-lg transition ${
                 filterType === 'all'
                   ? 'bg-zinc-800 text-white font-bold'
@@ -327,7 +359,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               全員 ({players.length})
             </button>
             <button
-              onClick={() => setFilterType('pro')}
+              onClick={() => handleSelectFilterType('pro')}
               className={`px-3 py-1 rounded-lg transition ${
                 filterType === 'pro'
                   ? 'bg-amber-500/20 text-amber-300 font-bold'
@@ -337,7 +369,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               棋士 ({players.filter((p) => p.type === 'pro').length})
             </button>
             <button
-              onClick={() => setFilterType('women')}
+              onClick={() => handleSelectFilterType('women')}
               className={`px-3 py-1 rounded-lg transition ${
                 filterType === 'women'
                   ? 'bg-rose-500/20 text-rose-300 font-bold'
@@ -374,23 +406,31 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               </button>
               <button
                 onClick={() => setAffiliationFilter('LPSA')}
+                disabled={filterType === 'pro'}
+                title={filterType === 'pro' ? '棋士選択時は不活性' : undefined}
                 className={`px-2 py-0.5 rounded text-[11px] transition ${
-                  affiliationFilter === 'LPSA'
+                  filterType === 'pro'
+                    ? 'opacity-25 cursor-not-allowed text-zinc-600 pointer-events-none'
+                    : affiliationFilter === 'LPSA'
                     ? 'bg-cyan-500/20 text-cyan-300 font-bold'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                LPSA ({players.filter((p) => p.affiliation === 'LPSA').length})
+                LPSA ({filterType === 'pro' ? 0 : players.filter((p) => p.affiliation === 'LPSA').length})
               </button>
               <button
                 onClick={() => setAffiliationFilter('無所属')}
+                disabled={filterType === 'pro'}
+                title={filterType === 'pro' ? '棋士選択時は不活性' : undefined}
                 className={`px-2 py-0.5 rounded text-[11px] transition ${
-                  affiliationFilter === '無所属'
+                  filterType === 'pro'
+                    ? 'opacity-25 cursor-not-allowed text-zinc-600 pointer-events-none'
+                    : affiliationFilter === '無所属'
                     ? 'bg-amber-500/20 text-amber-300 font-bold'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                無所属 ({players.filter((p) => p.affiliation === '無所属').length})
+                無所属 ({filterType === 'pro' ? 0 : players.filter((p) => p.affiliation === '無所属').length})
               </button>
             </div>
           </div>
@@ -452,37 +492,47 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             </button>
 
             {/* Pro Ranks */}
-            {['四段', '五段', '六段', '七段', '八段', '九段'].map((rank) => {
-              const count = players.filter((p) => matchesRankFilter(p, rank)).length;
+            {PRO_RANKS.map((rank) => {
+              const isProDisabled = filterType === 'women';
+              const count = players.filter((p) => (filterType === 'women' ? false : matchesRankFilter(p, rank))).length;
               return (
                 <button
                   key={rank}
+                  disabled={isProDisabled}
                   onClick={() => setRankFilter(rank)}
+                  title={isProDisabled ? '女流棋士選択時は不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
-                    rankFilter === rank
+                    isProDisabled
+                      ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                      : rankFilter === rank
                       ? 'bg-amber-500 text-stone-950 font-bold shadow-sm'
                       : 'bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
-                  {rank} <span className="text-[9px] opacity-70">({count})</span>
+                  {rank} <span className="text-[9px] opacity-70">({isProDisabled ? 0 : count})</span>
                 </button>
               );
             })}
 
             {/* Women Ranks */}
-            {['女流2級', '女流1級', '女流初段', '女流二段', '女流三段', '女流四段', '女流五段', '女流六段', '女流七段'].map((rank) => {
-              const count = players.filter((p) => matchesRankFilter(p, rank)).length;
+            {WOMEN_RANKS.map((rank) => {
+              const isWomenDisabled = filterType === 'pro';
+              const count = players.filter((p) => (filterType === 'pro' ? false : matchesRankFilter(p, rank))).length;
               return (
                 <button
                   key={rank}
+                  disabled={isWomenDisabled}
                   onClick={() => setRankFilter(rank)}
+                  title={isWomenDisabled ? '棋士選択時は不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
-                    rankFilter === rank
+                    isWomenDisabled
+                      ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                      : rankFilter === rank
                       ? 'bg-rose-500 text-white font-bold shadow-sm'
                       : 'bg-zinc-950 text-rose-300 hover:bg-zinc-800 border border-zinc-800/80'
                   }`}
                 >
-                  {rank} <span className="text-[9px] opacity-70">({count})</span>
+                  {rank} <span className="text-[9px] opacity-70">({isWomenDisabled ? 0 : count})</span>
                 </button>
               );
             })}

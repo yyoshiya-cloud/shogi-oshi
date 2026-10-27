@@ -173,7 +173,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     });
     await triggerPushNotification(
       '【勝敗速報】西山 朋佳 白玲が防衛達成！',
-      '第4期 白玲戦 七番勝負 第6局にて、西山白玲が福間女流五冠に127手で勝利しタイトル防衛！',
+      '第4期 白玲戦 七番勝負 第6局にて、西山白玲が福間女流四冠に127手で勝利しタイトル防衛！',
       'match_result',
       'match-fin-02',
       'nishiyama-tomoka'

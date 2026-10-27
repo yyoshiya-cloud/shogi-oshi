@@ -107,7 +107,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-amber-300 font-semibold mt-1">
-                    ▲ {p1.name} ({p1.rank}) vs △ {p2.name} ({p2.rank})
+                    ☗ {p1.name} ({p1.rank}) vs ☖ {p2.name} ({p2.rank})
                   </p>
                   <p className="text-[11px] text-zinc-400 mt-0.5">
                     会場: {m.venue} / 持ち時間: {m.timeControl}
@@ -176,11 +176,11 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                 日本将棋連盟公式
               </span>
               <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-amber-300 transition">
-                2026年 対局結果一覧（1月〜10月）
+                公式対局結果一覧（年度別: 4月〜翌年3月）
               </h4>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
-              棋士・女流棋士の全公式戦 2,900局超の勝敗・中継リンクを月別に閲覧
+              日本将棋連盟公式の全公式戦（棋士・女流棋士）の勝敗・中継リンクを月別に閲覧
             </p>
           </div>
         </div>

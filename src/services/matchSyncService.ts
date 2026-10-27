@@ -448,6 +448,7 @@ export async function scrapeMonthlyResults(
 
   // If live scraping yielded results, update cache
   if (results.length > 0) {
+    results.sort((a, b) => b.date.localeCompare(a.date));
     monthlyCache.set(normalizedMonth, { timestamp: now, data: results });
     return {
       success: true,
@@ -461,17 +462,19 @@ export async function scrapeMonthlyResults(
   // Fallback to bundled JSON data if upstream is unreachable or empty
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>)[normalizedMonth];
   if (bundled && bundled.length > 0) {
-    const enriched = bundled.map((b) => {
-      const p1Obj = playerMap.get(b.sente.replace(/\s+/g, '')) || playerMap.get(b.sente);
-      const p2Obj = playerMap.get(b.gote.replace(/\s+/g, '')) || playerMap.get(b.gote);
-      return {
-        ...b,
-        sentePlayerId: p1Obj?.id,
-        gotePlayerId: p2Obj?.id,
-        winnerId: b.winner === b.sente ? p1Obj?.id : p2Obj?.id,
-        loserId: b.loser === b.sente ? p1Obj?.id : p2Obj?.id,
-      };
-    });
+    const enriched = bundled
+      .map((b) => {
+        const p1Obj = playerMap.get(b.sente.replace(/\s+/g, '')) || playerMap.get(b.sente);
+        const p2Obj = playerMap.get(b.gote.replace(/\s+/g, '')) || playerMap.get(b.gote);
+        return {
+          ...b,
+          sentePlayerId: p1Obj?.id,
+          gotePlayerId: p2Obj?.id,
+          winnerId: b.winner === b.sente ? p1Obj?.id : p2Obj?.id,
+          loserId: b.loser === b.sente ? p1Obj?.id : p2Obj?.id,
+        };
+      })
+      .sort((a, b) => b.date.localeCompare(a.date));
     monthlyCache.set(normalizedMonth, { timestamp: now, data: enriched });
     return {
       success: true,
@@ -492,10 +495,22 @@ export async function scrapeMonthlyResults(
 }
 
 /**
- * Get results for all supported 2026 months (202601 to 202610)
+ * Get results for all months in a given fiscal year (年度: 4月から翌年3月まで)
+ * e.g. 2026年度: 202604 .. 202612, 202701 .. 202703
  */
-export async function getAll2026Results(): Promise<Record<string, ShogiMonthlyResult[]>> {
-  const months = ['202601', '202602', '202603', '202604', '202605', '202606', '202607', '202608', '202609', '202610'];
+export function getFiscalYearMonths(fiscalYear = 2026): string[] {
+  const months: string[] = [];
+  for (let m = 4; m <= 12; m++) {
+    months.push(`${fiscalYear}${String(m).padStart(2, '0')}`);
+  }
+  for (let m = 1; m <= 3; m++) {
+    months.push(`${fiscalYear + 1}${String(m).padStart(2, '0')}`);
+  }
+  return months;
+}
+
+export async function getAllFiscalYearResults(fiscalYear = 2026): Promise<Record<string, ShogiMonthlyResult[]>> {
+  const months = getFiscalYearMonths(fiscalYear);
   const res: Record<string, ShogiMonthlyResult[]> = {};
   for (const m of months) {
     const data = await scrapeMonthlyResults(m, false);
@@ -503,4 +518,12 @@ export async function getAll2026Results(): Promise<Record<string, ShogiMonthlyRe
   }
   return res;
 }
+
+/**
+ * Get results for current 2026 fiscal year (2026年度: 2026年4月〜2027年3月)
+ */
+export async function getAll2026Results(): Promise<Record<string, ShogiMonthlyResult[]>> {
+  return getAllFiscalYearResults(2026);
+}
+
 

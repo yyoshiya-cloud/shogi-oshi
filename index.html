@@ -20,9 +20,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@600;700;900&family=Shippori+Mincho:wght@600;800&display=swap" rel="stylesheet">
     <script>
-      // In AI Studio Cloud Run / iframe preview, HMR is disabled and Vite dev client
-      // WebSocket disconnections are expected and benign (as specified in runtime constraints: "HMR: Disabled. Ignore WebSocket errors.")
+      // In AI Studio Cloud Run / iframe preview, HMR is disabled ("HMR: Disabled. Ignore WebSocket errors.")
       (function () {
+        class MockWebSocket extends EventTarget {
+          constructor(url, protocols) {
+            super();
+            this.url = url || '';
+            this.protocol = Array.isArray(protocols) ? (protocols[0] || '') : (protocols || '');
+            this.readyState = 1; // WebSocket.OPEN
+            this.bufferedAmount = 0;
+            this.extensions = '';
+            this.binaryType = 'blob';
+            this.onopen = null;
+            this.onclose = null;
+            this.onerror = null;
+            this.onmessage = null;
+
+            setTimeout(() => {
+              if (this.readyState === 1) {
+                const ev = new Event('open');
+                if (typeof this.onopen === 'function') {
+                  try { this.onopen(ev); } catch (e) {}
+                }
+                this.dispatchEvent(ev);
+              }
+            }, 0);
+          }
+
+          send() {}
+
+          close(code, reason) {
+            this.readyState = 3; // CLOSED
+            const ev = new CloseEvent('close', { wasClean: true, code: code || 1000, reason: reason || '' });
+            if (typeof this.onclose === 'function') {
+              try { this.onclose(ev); } catch (e) {}
+            }
+            this.dispatchEvent(ev);
+          }
+        }
+
+        MockWebSocket.CONNECTING = 0;
+        MockWebSocket.OPEN = 1;
+        MockWebSocket.CLOSING = 2;
+        MockWebSocket.CLOSED = 3;
+
+        window.WebSocket = MockWebSocket;
+
         function isViteWsMessage(arg) {
           if (!arg) return false;
           const str = typeof arg === 'string' ? arg : (arg && (arg.message || arg.stack || ''));
@@ -32,18 +75,20 @@
 
         const origConsoleError = console.error;
         console.error = function (...args) {
-          if (args.some(isViteWsMessage)) {
-            return;
-          }
+          if (args.some(isViteWsMessage)) return;
           origConsoleError.apply(console, args);
         };
 
         const origConsoleWarn = console.warn;
         console.warn = function (...args) {
-          if (args.some(isViteWsMessage)) {
-            return;
-          }
+          if (args.some(isViteWsMessage)) return;
           origConsoleWarn.apply(console, args);
+        };
+
+        const origConsoleLog = console.log;
+        console.log = function (...args) {
+          if (args.some(isViteWsMessage)) return;
+          origConsoleLog.apply(console, args);
         };
 
         window.addEventListener('error', function (e) {

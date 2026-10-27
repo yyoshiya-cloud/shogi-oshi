@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
-import { Player } from '../types/shogi';
-import { Trophy, TrendingUp, ShieldCheck, Swords, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Player, YearRecord, ShogiMonthlyResult } from '../types/shogi';
+import results2026Json from '../data/results2026.json';
+import {
+  Trophy,
+  TrendingUp,
+  ShieldCheck,
+  Swords,
+  ExternalLink,
+  Award,
+  Sparkles,
+  BarChart2,
+  Calendar,
+} from 'lucide-react';
 
 interface PlayerStatsChartsProps {
   player: Player;
@@ -8,9 +19,99 @@ interface PlayerStatsChartsProps {
 
 export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player }) => {
   const [activeTab, setActiveTab] = useState<'yearly' | 'opening' | 'rivals'>('yearly');
+  const [selectedYearIndex, setSelectedYearIndex] = useState<number | null>(null);
 
   const hasCareerStats = player.careerWins > 0 || player.careerLosses > 0;
   const hasYearStats = player.currentYearWins > 0 || player.currentYearLosses > 0;
+
+  // Derive comprehensive year records (including 2025 and 2026 from official data)
+  const effectiveYearRecords = useMemo<YearRecord[]>(() => {
+    if (player.yearRecords && player.yearRecords.length > 1) {
+      return player.yearRecords;
+    }
+
+    const targetClean = player.name.replace(/\s+/g, '');
+    const data = results2026Json as Record<string, ShogiMonthlyResult[]>;
+
+    // 2025年度: 202504〜202603
+    let y2025Wins = 0;
+    let y2025Losses = 0;
+    const m2025 = [
+      '202504', '202505', '202506', '202507', '202508', '202509',
+      '202510', '202511', '202512', '202601', '202602', '202603'
+    ];
+    for (const m of m2025) {
+      for (const r of data[m] || []) {
+        const sClean = r.sente.replace(/\s+/g, '');
+        const gClean = r.gote.replace(/\s+/g, '');
+        if (
+          sClean === targetClean ||
+          gClean === targetClean ||
+          r.sentePlayerId === player.id ||
+          r.gotePlayerId === player.id
+        ) {
+          const isWinner =
+            r.winner.replace(/\s+/g, '') === targetClean ||
+            (sClean === targetClean && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
+            (gClean === targetClean && (r.goteMark.includes('○') || r.goteMark.includes('□')));
+          if (isWinner) y2025Wins++;
+          else y2025Losses++;
+        }
+      }
+    }
+
+    // 2026年度: 202604〜202703
+    let y2026Wins = player.currentYearWins || 0;
+    let y2026Losses = player.currentYearLosses || 0;
+    if (y2026Wins === 0 && y2026Losses === 0) {
+      const m2026 = ['202604', '202605', '202606', '202607', '202608', '202609', '202610'];
+      for (const m of m2026) {
+        for (const r of data[m] || []) {
+          const sClean = r.sente.replace(/\s+/g, '');
+          const gClean = r.gote.replace(/\s+/g, '');
+          if (
+            sClean === targetClean ||
+            gClean === targetClean ||
+            r.sentePlayerId === player.id ||
+            r.gotePlayerId === player.id
+          ) {
+            const isWinner =
+              r.winner.replace(/\s+/g, '') === targetClean ||
+              (sClean === targetClean && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
+              (gClean === targetClean && (r.goteMark.includes('○') || r.goteMark.includes('□')));
+            if (isWinner) y2026Wins++;
+            else y2026Losses++;
+          }
+        }
+      }
+    }
+
+    const records: YearRecord[] = [];
+    if (y2025Wins + y2025Losses > 0) {
+      records.push({
+        year: 2025,
+        wins: y2025Wins,
+        losses: y2025Losses,
+        rate: Math.round((y2025Wins / (y2025Wins + y2025Losses)) * 1000) / 1000,
+      });
+    }
+    if (y2026Wins + y2026Losses > 0) {
+      records.push({
+        year: 2026,
+        wins: y2026Wins,
+        losses: y2026Losses,
+        rate:
+          player.currentYearWinRate ||
+          Math.round((y2026Wins / (y2026Wins + y2026Losses)) * 1000) / 1000,
+      });
+    }
+
+    if (records.length > 0) {
+      return records;
+    }
+
+    return player.yearRecords || [];
+  }, [player]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +172,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player }) 
           </div>
           <div className="text-xs text-emerald-400 font-bold mt-2">
             {hasYearStats
-              ? `勝率 ${(player.currentYearWinRate * 100).toFixed(1)}%${player.currentYearStreak > 0 ? ` (連勝 ${player.currentYearStreak})` : ''}`
+              ? `勝率 ${(player.currentYearWinRate * 100).toFixed(1)}%`
               : '公式戦対局'}
           </div>
         </div>
@@ -115,119 +216,388 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player }) 
           </button>
         </div>
 
-        {/* Tab 1: Accurate SVG Yearly Bar & Line Chart */}
+        {/* Tab 1: Enhanced Clear Yearly Clustered Bar & Line Chart with Breakdown Table */}
         {activeTab === 'yearly' && (
           <div>
-            {player.yearRecords.length > 0 ? (
+            {effectiveYearRecords.length > 0 ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span className="font-semibold text-zinc-200 font-serif-jp">年度別勝敗数と勝率推移グラフ</span>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> 勝数
+                {/* Header with Title and Legend */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div>
+                    <h4 className="font-bold text-zinc-100 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <TrendingUp size={16} className="text-amber-400" />
+                      <span>年度別 勝敗数・勝率推移グラフ</span>
+                    </h4>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">
+                      各年度の勝数・敗数（棒）と勝率（折れ線）の比較推移
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-zinc-800 text-[11px] self-start sm:self-auto">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded bg-emerald-500 inline-block" />
+                      <span className="text-zinc-300 font-medium">勝数</span>
                     </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> 敗数
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded bg-rose-500 inline-block" />
+                      <span className="text-zinc-300 font-medium">敗数</span>
                     </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> 勝率(%)
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-zinc-900 inline-block" />
+                      <span className="text-amber-300 font-bold">勝率(%)</span>
                     </span>
                   </div>
                 </div>
 
+                {/* Selected Year Inspector Card */}
+                {(() => {
+                  const activeRecord =
+                    selectedYearIndex !== null && effectiveYearRecords[selectedYearIndex]
+                      ? effectiveYearRecords[selectedYearIndex]
+                      : effectiveYearRecords[effectiveYearRecords.length - 1];
+                  const totalGames = activeRecord.wins + activeRecord.losses;
+                  return (
+                    <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950/30 border border-amber-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-amber-500 text-zinc-950 shadow">
+                          {activeRecord.year}年度
+                        </span>
+                        <span className="text-zinc-300 font-medium">
+                          総対局 <strong className="text-white text-sm font-bold">{totalGames}</strong> 局
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1">
+                          <span>○ 勝数:</span>
+                          <strong className="text-sm text-emerald-400">{activeRecord.wins}</strong>
+                        </span>
+                        <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-1">
+                          <span>● 敗数:</span>
+                          <strong className="text-sm text-rose-400">{activeRecord.losses}</strong>
+                        </span>
+                        <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1">
+                          <span>勝率:</span>
+                          <strong className="text-sm font-mono text-amber-200">
+                            {(activeRecord.rate * 100).toFixed(1)}%
+                          </strong>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* SVG Visual Chart */}
-                <div className="w-full bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
-                  <div className="relative h-56 w-full">
-                    <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
-                      {/* Horizontal grid lines for win rate % */}
-                      {[0, 25, 50, 75, 100].map((pct, i) => {
-                        const y = 20 + (150 * (100 - pct)) / 100;
-                        return (
-                          <g key={i}>
-                            <line x1="35" y1={y} x2="480" y2={y} stroke="#27272a" strokeDasharray="4 4" strokeWidth="1" />
-                            <text x="30" y={y + 3} fill="#a1a1aa" fontSize="9" textAnchor="end">{pct}%</text>
-                          </g>
-                        );
-                      })}
+                <div className="w-full bg-zinc-950/80 p-3 sm:p-4 rounded-2xl border border-zinc-800 shadow-inner overflow-hidden">
+                  <div className="relative h-60 sm:h-64 w-full">
+                    {(() => {
+                      const records = effectiveYearRecords;
+                      const maxBarVal = Math.max(...records.map((r) => Math.max(r.wins, r.losses)), 5);
+                      const ceilingVal = Math.max(10, Math.ceil(maxBarVal / 5) * 5);
+                      const numGroups = records.length;
+                      const plotX = 42;
+                      const plotW = 476;
+                      const plotY = 25;
+                      const plotH = 175;
+                      const bottomY = plotY + plotH;
 
-                      {/* Bars for each year */}
-                      {player.yearRecords.map((item, index, arr) => {
-                        const maxVal = Math.max(...arr.map((r) => r.wins + r.losses), 60);
-                        const barWidth = 26;
-                        const spacing = (430 - arr.length * barWidth) / Math.max(1, arr.length - 1);
-                        const x = 50 + index * (barWidth + spacing);
+                      const groupWidth = plotW / numGroups;
+                      const barWidth = Math.min(22, Math.max(10, groupWidth * 0.28));
+                      const gap = 3;
 
-                        const winH = (item.wins / maxVal) * 130;
-                        const lossH = (item.losses / maxVal) * 130;
-                        const winY = 170 - winH;
-                        const lossY = winY - lossH;
-                        const winRate = item.rate * 100;
-                        const rateY = 170 - (winRate / 100) * 130;
+                      return (
+                        <svg viewBox="0 0 560 235" className="w-full h-full overflow-visible select-none">
+                          {/* Horizontal Grid lines with Dual Axis Labels */}
+                          {[0, 0.25, 0.5, 0.75, 1.0].map((ratio, i) => {
+                            const y = bottomY - ratio * plotH;
+                            const gamesVal = Math.round(ceilingVal * ratio);
+                            const rateVal = Math.round(ratio * 100);
+                            return (
+                              <g key={i}>
+                                <line
+                                  x1={plotX}
+                                  y1={y}
+                                  x2={plotX + plotW}
+                                  y2={y}
+                                  stroke="#27272a"
+                                  strokeDasharray="3 3"
+                                  strokeWidth="1"
+                                />
+                                {/* Left axis: Games count */}
+                                <text
+                                  x={plotX - 6}
+                                  y={y + 3.5}
+                                  fill="#71717a"
+                                  fontSize="9"
+                                  textAnchor="end"
+                                  fontFamily="monospace"
+                                >
+                                  {gamesVal}局
+                                </text>
+                                {/* Right axis: Win rate % */}
+                                <text
+                                  x={plotX + plotW + 6}
+                                  y={y + 3.5}
+                                  fill="#a1a1aa"
+                                  fontSize="9"
+                                  textAnchor="start"
+                                  fontFamily="monospace"
+                                >
+                                  {rateVal}%
+                                </text>
+                              </g>
+                            );
+                          })}
 
-                        return (
-                          <g key={item.year} className="group cursor-pointer">
-                            {/* Wins bar (emerald) */}
-                            <rect
-                              x={x}
-                              y={winY}
-                              width={barWidth}
-                              height={winH}
-                              fill="#10b981"
-                              rx="3"
-                              className="transition-all duration-300 hover:fill-emerald-400"
-                            />
-                            {/* Losses bar stacked on top (rose) */}
-                            <rect
-                              x={x}
-                              y={lossY}
-                              width={barWidth}
-                              height={lossH}
-                              fill="#f43f5e"
-                              rx="3"
-                              className="transition-all duration-300 hover:fill-rose-400 opacity-90"
-                            />
+                          {/* Groups of Side-by-Side Bars */}
+                          {records.map((item, index) => {
+                            const groupCenterX = plotX + (index + 0.5) * groupWidth;
+                            const isSelected =
+                              selectedYearIndex === index ||
+                              (selectedYearIndex === null && index === records.length - 1);
 
-                            {/* Win rate point on line */}
-                            <circle
-                              cx={x + barWidth / 2}
-                              cy={rateY}
-                              r="4"
-                              fill="#fbbf24"
-                              stroke="#18181b"
-                              strokeWidth="2"
-                            />
+                            const winHeight = Math.max(2, (item.wins / ceilingVal) * plotH);
+                            const winY = bottomY - winHeight;
 
-                            {/* Year text */}
-                            <text x={x + barWidth / 2} y="188" fill="#d4d4d8" fontSize="11" fontWeight="bold" textAnchor="middle">
-                              {item.year.toString().slice(-2)}年
-                            </text>
+                            const lossHeight = Math.max(2, (item.losses / ceilingVal) * plotH);
+                            const lossY = bottomY - lossHeight;
 
-                            {/* Tooltip on hover */}
-                            <title>{`${item.year}年度: ${item.wins}勝 ${item.losses}敗 (勝率 ${(item.rate * 100).toFixed(1)}%)`}</title>
-                          </g>
-                        );
-                      })}
+                            const winX = groupCenterX - barWidth - gap / 2;
+                            const lossX = groupCenterX + gap / 2;
 
-                      {/* Connecting Line for Win Rate */}
-                      <polyline
-                        fill="none"
-                        stroke="#fbbf24"
-                        strokeWidth="2.5"
-                        points={player.yearRecords.map((item, index, arr) => {
-                          const barWidth = 26;
-                          const spacing = (430 - arr.length * barWidth) / Math.max(1, arr.length - 1);
-                          const x = 50 + index * (barWidth + spacing) + barWidth / 2;
-                          const winRate = item.rate * 100;
-                          const rateY = 170 - (winRate / 100) * 130;
-                          return `${x},${rateY}`;
-                        }).join(' ')}
-                      />
-                    </svg>
+                            return (
+                              <g
+                                key={`group-${item.year}`}
+                                className="cursor-pointer transition-all"
+                                onClick={() => setSelectedYearIndex(index)}
+                              >
+                                {/* Clickable Column Highlight Background */}
+                                <rect
+                                  x={groupCenterX - groupWidth / 2 + 2}
+                                  y={plotY - 5}
+                                  width={groupWidth - 4}
+                                  height={plotH + 35}
+                                  fill={isSelected ? 'rgba(245, 158, 11, 0.12)' : 'transparent'}
+                                  rx="8"
+                                  className="transition-all hover:fill-amber-500/10"
+                                />
+
+                                {/* Wins Bar (Emerald) */}
+                                <rect
+                                  x={winX}
+                                  y={winY}
+                                  width={barWidth}
+                                  height={winHeight}
+                                  fill="#10b981"
+                                  rx="3"
+                                  className="transition-all hover:brightness-110"
+                                />
+                                {item.wins > 0 && (
+                                  <text
+                                    x={winX + barWidth / 2}
+                                    y={Math.max(winY - 3, 14)}
+                                    fill="#34d399"
+                                    fontSize="9"
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                  >
+                                    {item.wins}
+                                  </text>
+                                )}
+
+                                {/* Losses Bar (Rose) */}
+                                <rect
+                                  x={lossX}
+                                  y={lossY}
+                                  width={barWidth}
+                                  height={lossHeight}
+                                  fill="#f43f5e"
+                                  rx="3"
+                                  className="transition-all hover:brightness-110"
+                                />
+                                {item.losses > 0 && (
+                                  <text
+                                    x={lossX + barWidth / 2}
+                                    y={Math.max(lossY - 3, 14)}
+                                    fill="#fb7185"
+                                    fontSize="9"
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                  >
+                                    {item.losses}
+                                  </text>
+                                )}
+
+                                {/* Year Label at bottom */}
+                                <text
+                                  x={groupCenterX}
+                                  y={bottomY + 16}
+                                  fill={isSelected ? '#fbbf24' : '#d4d4d8'}
+                                  fontSize="10.5"
+                                  fontWeight={isSelected ? 'bold' : 'normal'}
+                                  textAnchor="middle"
+                                >
+                                  {item.year.toString().slice(-2)}年
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Connecting Polyline for Win Rate */}
+                          <polyline
+                            fill="none"
+                            stroke="#f59e0b"
+                            strokeWidth="2.5"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                            points={records
+                              .map((item, index) => {
+                                const groupCenterX = plotX + (index + 0.5) * groupWidth;
+                                const rateY = bottomY - Math.min(1, Math.max(0, item.rate)) * plotH;
+                                return `${groupCenterX},${rateY}`;
+                              })
+                              .join(' ')}
+                          />
+
+                          {/* Win Rate Point Markers & Direct Numerical Badges */}
+                          {records.map((item, index) => {
+                            const groupCenterX = plotX + (index + 0.5) * groupWidth;
+                            const rateY = bottomY - Math.min(1, Math.max(0, item.rate)) * plotH;
+                            const isSelected =
+                              selectedYearIndex === index ||
+                              (selectedYearIndex === null && index === records.length - 1);
+                            const ratePercent = (item.rate * 100).toFixed(1);
+
+                            return (
+                              <g
+                                key={`point-${item.year}`}
+                                className="cursor-pointer"
+                                onClick={() => setSelectedYearIndex(index)}
+                              >
+                                {/* Glowing outer circle on selected */}
+                                {isSelected && (
+                                  <circle
+                                    cx={groupCenterX}
+                                    cy={rateY}
+                                    r="8"
+                                    fill="rgba(245, 158, 11, 0.3)"
+                                  />
+                                )}
+                                {/* Main gold point node */}
+                                <circle
+                                  cx={groupCenterX}
+                                  cy={rateY}
+                                  r="4.5"
+                                  fill="#fbbf24"
+                                  stroke="#09090b"
+                                  strokeWidth="2"
+                                />
+
+                                {/* Win Rate text badge directly above node */}
+                                <rect
+                                  x={groupCenterX - 18}
+                                  y={Math.max(rateY - 18, 5)}
+                                  width={36}
+                                  height={12}
+                                  fill="#18181b"
+                                  stroke={isSelected ? '#f59e0b' : '#3f3f46'}
+                                  strokeWidth="0.8"
+                                  rx="3"
+                                />
+                                <text
+                                  x={groupCenterX}
+                                  y={Math.max(rateY - 9, 14)}
+                                  fill={isSelected ? '#fbbf24' : '#fde68a'}
+                                  fontSize="8.5"
+                                  fontWeight="extrabold"
+                                  textAnchor="middle"
+                                >
+                                  {ratePercent}%
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Structured Breakdown Table for All Years */}
+                <div className="bg-zinc-950/60 rounded-xl border border-zinc-800 overflow-hidden">
+                  <div className="px-3 py-2 border-b border-zinc-800 flex items-center justify-between text-xs">
+                    <span className="font-bold text-zinc-300 font-serif-jp flex items-center gap-1.5">
+                      <BarChart2 size={13} className="text-amber-400" />
+                      年度別 成績詳細一覧表
+                    </span>
+                    <span className="text-[10px] text-zinc-500">行をタップしてグラフ上の年度を選択</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-zinc-900/80 text-zinc-400 font-semibold border-b border-zinc-800">
+                        <tr>
+                          <th className="py-2 px-3 text-center">年度</th>
+                          <th className="py-2 px-3 text-center">対局数</th>
+                          <th className="py-2 px-3 text-center text-emerald-400">勝数 (○)</th>
+                          <th className="py-2 px-3 text-center text-rose-400">敗数 (●)</th>
+                          <th className="py-2 px-3 text-center text-amber-300">勝率</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/60">
+                        {[...effectiveYearRecords].reverse().map((r) => {
+                          const originalIdx = effectiveYearRecords.findIndex(
+                            (rec) => rec.year === r.year
+                          );
+                          const isSelected =
+                            selectedYearIndex === originalIdx ||
+                            (selectedYearIndex === null &&
+                              originalIdx === effectiveYearRecords.length - 1);
+                          const total = r.wins + r.losses;
+                          const isBestRate =
+                            r.rate ===
+                            Math.max(...effectiveYearRecords.map((item) => item.rate));
+
+                          return (
+                            <tr
+                              key={r.year}
+                              onClick={() => setSelectedYearIndex(originalIdx)}
+                              className={`cursor-pointer transition ${
+                                isSelected
+                                  ? 'bg-amber-500/15 text-white font-bold'
+                                  : 'hover:bg-zinc-850/60 text-zinc-300'
+                              }`}
+                            >
+                              <td className="py-2 px-3 text-center font-bold">
+                                <span className="inline-flex items-center gap-1">
+                                  {r.year}年度
+                                  {isBestRate && (
+                                    <span
+                                      className="px-1 py-0.2 rounded text-[9px] bg-amber-500/30 text-amber-300 font-normal border border-amber-500/40"
+                                      title="最高勝率"
+                                    >
+                                      最高
+                                    </span>
+                                  )}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-center font-medium">{total}局</td>
+                              <td className="py-2 px-3 text-center font-bold text-emerald-400">
+                                {r.wins}勝
+                              </td>
+                              <td className="py-2 px-3 text-center font-bold text-rose-400">
+                                {r.losses}敗
+                              </td>
+                              <td className="py-2 px-3 text-center font-mono font-bold text-amber-300">
+                                {(r.rate * 100).toFixed(1)}%
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
                 <p className="text-[11px] text-zinc-500 text-right">
-                  ※ 日本将棋連盟公式戦年度記録ベース（緑: 勝数, 赤: 敗数, 黄線: 勝率推移）
+                  ※ 日本将棋連盟公式戦記録準拠（年度: 4月〜翌年3月）
                 </p>
               </div>
             ) : (

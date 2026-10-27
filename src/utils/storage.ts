@@ -70,7 +70,7 @@ export function getDefaultNotifications(): PushNotificationItem[] {
     {
       id: 'notif-2',
       title: '【対局結果】西山 朋佳 白玲が防衛を果たしました！',
-      body: '第4期 白玲戦 七番勝負 第6局にて、西山白玲が福間女流五冠に127手で勝利し白玲を防衛！棋譜速報が公開されました。',
+      body: '第4期 白玲戦 七番勝負 第6局にて、西山白玲が福間女流四冠に127手で勝利し白玲を防衛！棋譜速報が公開されました。',
       type: 'match_result',
       matchId: 'match-fin-02',
       playerId: 'nishiyama-tomoka',
