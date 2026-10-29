@@ -343,19 +343,7 @@ export default function App() {
 
 
     const rawNotifs = getStoredNotifications(matchesList);
-    const synchronizedNotifs = rawNotifs.map((n) => {
-      if (n.id === 'notif-1' && (!n.timestamp.startsWith(todayStr) || n.body.includes('順位戦 A級'))) {
-        return {
-          ...n,
-          timestamp: `${todayStr}T08:00:00`,
-          title: '【本日対局】藤本 渚 五段の対局日です！',
-          body: `本日 ${todayInfo.shortDisplay} 09:00〜 ALSOK杯王将戦 挑決リーグ (vs 西田拓也 五段)。関西将棋会館にて対局中！`,
-          matchId: 'shogiorjp-2026-10-24-pro-nagisa_fujimoto-pro-takuya_nishida',
-          playerId: 'pro-nagisa_fujimoto',
-        };
-      }
-      return n;
-    });
+    const synchronizedNotifs = rawNotifs;
 
     const validNotifs = synchronizedNotifs.filter((n) => isTodayOrResultNotification(n, matchesList));
     setNotifications(validNotifs);

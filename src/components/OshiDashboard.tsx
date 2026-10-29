@@ -317,6 +317,22 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                     </div>
                   </div>
 
+                  {/* Next Match Info */}
+                  <div className="w-full md:w-auto my-2 md:my-0 px-2">
+                    {nextMatch ? (
+                      <div className="bg-zinc-800/40 rounded-lg p-2 text-[10px] border border-zinc-700/50">
+                        <span className="text-amber-400 font-bold">次回対局:</span> {nextMatch.date} {nextMatch.time}〜
+                        <div className="text-zinc-300">
+                           {nextMatch.tournament} (vs {opponent?.name || '対戦相手未定'})
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-950/40 rounded-lg p-2 text-[10px] border border-zinc-800/50 text-zinc-500">
+                        本日対局なし
+                      </div>
+                    )}
+                  </div>
+
                   {/* Right Stats & Actions */}
                   <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-zinc-800/70">
                     <div className="flex items-center gap-3 bg-zinc-950/60 px-3 py-2 rounded-xl border border-zinc-800/60 text-xs">

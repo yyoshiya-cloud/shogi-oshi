@@ -85,20 +85,21 @@ export function matchesRankFilter(playerOrRank: Player | string, filter: string)
   return normRank.includes(normFilter);
 }
 
-export const PRO_RANKS = ['四段', '五段', '六段', '七段', '八段', '九段'];
-export const WOMEN_RANKS = ['女流2級', '女流1級', '女流初段', '女流二段', '女流三段', '女流四段', '女流五段', '女流六段', '女流七段'];
+export const PRO_RANKS = ['九段', '八段', '七段', '六段', '五段', '四段'];
+export const WOMEN_RANKS = ['女流七段', '女流六段', '女流五段', '女流四段', '女流三段', '女流二段', '女流初段', '女流1級', '女流2級'];
 
 interface PlayerCardItemProps {
   player: Player;
   isFollowed: boolean;
   followConfig?: FollowedPlayerConfig;
   onSelectPlayer: (player: Player) => void;
+  onToggleFollow: (config: FollowedPlayerConfig) => void;
 }
 
 /**
  * Optimized and memoized Player Card component ensuring immediate, efficient rendering of career title badges.
  */
-const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer }: PlayerCardItemProps) => {
+const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer, onToggleFollow }: PlayerCardItemProps) => {
   const badgeStyle = isFollowed && followConfig ? BADGE_COLORS[followConfig.badge] : null;
   const aff: PlayerAffiliation = player.affiliation || '日本将棋連盟';
   const affStyle = AFFILIATION_COLORS[aff];
@@ -121,14 +122,14 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer 
       {/* Left Accent Strip */}
       <div
         className="absolute top-0 bottom-0 left-0 w-1.5 transition-all"
-        style={{ backgroundColor: isFollowed && followConfig ? followConfig.color : player.colorAccent }}
+        style={{ backgroundColor: isFollowed && followConfig ? followConfig.color : (player.type === 'women' ? '#ec4899' : '#3b82f6') }}
       />
 
       {/* Left Info: Avatar/Initial, Name, Rank, Affiliation */}
       <div className="flex items-center gap-3.5 min-w-0">
         <div
           className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black font-serif-jp shadow-md border border-white/20 bg-zinc-900 text-amber-400 flex-shrink-0 overflow-hidden relative"
-          style={{ backgroundColor: player.colorAccent }}
+          style={{ backgroundColor: player.type === 'women' ? '#ec4899' : '#3b82f6' }}
         >
           {player.photoUrl ? (
             <img
@@ -246,10 +247,31 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer 
               <span>推し中</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold shadow hover:brightness-110 transition">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFollow({
+                  playerId: player.id,
+                  badge: '注目',
+                  color: '#f59e0b',
+                  cheeringNote: '',
+                  notificationsEnabled: true,
+                  notifyTiming: {
+                    dayBefore: false,
+                    morningOf: true,
+                    matchStart: true,
+                    resultImmediately: true
+                  },
+                  cheerCount: 0,
+                  followedAt: new Date().toISOString(),
+                  fanComments: []
+                });
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold shadow hover:brightness-110 transition"
+            >
               <Heart size={13} />
               <span>推し登録</span>
-            </span>
+            </button>
           )}
           <ChevronRight size={16} className="text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition" />
         </div>
@@ -318,7 +340,10 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           if (tB !== tA) return tB - tA;
           return b.careerWins - a.careerWins;
         }
-        return (a.playerNumber || 999) - (b.playerNumber || 999);
+        return (
+          (a.type === 'women' ? 1 : 0) - (b.type === 'women' ? 1 : 0) ||
+          (a.playerNumber || 999) - (b.playerNumber || 999)
+        );
       });
   }, [players, followedMap, filterType, affiliationFilter, rankFilter, searchQuery, sortBy, showOnlyFollowed]);
 
@@ -541,6 +566,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 isFollowed={isFollowed}
                 followConfig={followConfig}
                 onSelectPlayer={onSelectPlayer}
+                onToggleFollow={onToggleFollow}
               />
             );
           })

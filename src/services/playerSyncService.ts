@@ -167,12 +167,7 @@ function getStyleForPlayer(rank: string, master: string): '居飛車' | '振り�
 }
 
 function getAccentColor(type: PlayerType, affiliation: PlayerAffiliation, rank: string): string {
-  if (affiliation === 'LPSA') return '#06b6d4'; // cyan
-  if (rank.includes('竜王') || rank.includes('名人') || rank.includes('白玲') || rank.includes('清麗')) {
-    return '#f59e0b'; // gold
-  }
   if (type === 'women') return '#ec4899'; // pink
-  if (rank.includes('九段') || rank.includes('八段')) return '#8b5cf6'; // purple
   return '#3b82f6'; // blue
 }
 

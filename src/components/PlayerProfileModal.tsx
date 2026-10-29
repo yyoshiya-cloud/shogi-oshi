@@ -328,7 +328,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             <div className="flex items-center gap-4">
               <div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-serif-jp shadow-2xl border-2 border-white/20 overflow-hidden bg-zinc-900 flex-shrink-0"
-                style={{ backgroundColor: activePlayer.colorAccent }}
+                style={{ backgroundColor: activePlayer.type === 'women' ? '#ec4899' : '#3b82f6' }}
               >
                 {activePlayer.photoUrl ? (
                   <img
