@@ -622,7 +622,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           <div className="flex flex-col">
             <span className="text-[10px] text-zinc-400">先手勝率 vs 後手勝率</span>
             <span className="text-xs font-semibold text-zinc-200 mt-0.5">
-              ▲{monthStats.senteRate}% / △{monthStats.goteRate}%
+              ☗{monthStats.senteRate}% / ☖{monthStats.goteRate}%
             </span>
           </div>
           <div className="flex flex-col">
@@ -1075,7 +1075,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                         >
                           <div className="flex flex-col items-center flex-shrink-0">
                             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
-                              ▲先手
+                              ☗先手
                             </span>
                             <div className="mt-1">
                               {isSenteWinner ? (
@@ -1157,7 +1157,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
                           <div className="flex flex-col items-center flex-shrink-0">
                             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                              △後手
+                              ☖後手
                             </span>
                             <div className="mt-1">
                               {isGoteWinner ? (

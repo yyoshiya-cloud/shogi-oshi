@@ -308,7 +308,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
               title="現在の日付に対局カレンダーを合わせる"
             >
               <Clock size={12} className="text-amber-400" />
-              <span>本日 ({todayInfo.shortDisplay})</span>
+              <span>本日 {todayInfo.shortDisplay}</span>
             </button>
 
             {onRefreshMatches && (
@@ -633,7 +633,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                       {/* Versus */}
                       <div className="flex items-center justify-between my-2">
                         <div className="text-left">
-                          <span className="text-xs text-amber-400 font-bold mr-1">▲</span>
+                          <span className="text-xs text-amber-400 font-bold mr-1">☗</span>
                           <span className="font-bold text-sm text-zinc-100 font-serif-jp">
                             {p1.name}
                           </span>
@@ -641,7 +641,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                         </div>
                         <span className="text-xs font-black text-zinc-500">VS</span>
                         <div className="text-right">
-                          <span className="text-xs text-sky-400 font-bold mr-1">△</span>
+                          <span className="text-xs text-sky-400 font-bold mr-1">☖</span>
                           <span className="font-bold text-sm text-zinc-100 font-serif-jp">
                             {p2.name}
                           </span>

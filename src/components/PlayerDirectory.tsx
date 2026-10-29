@@ -348,7 +348,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               }`}
             >
               <Heart size={14} className={showOnlyFollowed ? 'fill-current' : ''} />
-              <span>推しメンのみ ({followedList.length})</span>
+              <span>推し棋士のみ ({followedList.length})</span>
             </button>
           </div>
         </div>

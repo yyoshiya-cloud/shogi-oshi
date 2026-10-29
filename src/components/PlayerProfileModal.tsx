@@ -38,7 +38,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 }) => {
   if (!player) return null;
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'results' | 'matches' | 'cheer'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'results' | 'matches'>('stats');
   const [commentInput, setCommentInput] = useState('');
   const [activePlayer, setActivePlayer] = useState<Player>(player);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -480,16 +480,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             }`}
           >
             対局予定 ({playerMatches.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('cheer')}
-            className={`py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
-              activeTab === 'cheer'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            推し応援コーナー
           </button>
         </div>
 
@@ -1026,61 +1016,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Cheer section */}
-          {activeTab === 'cheer' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-                <h4 className="text-xs font-bold text-amber-400 mb-2">推し応援メッセージ</h4>
-                {followedConfig?.cheeringNote ? (
-                  <p className="text-sm text-zinc-200 italic p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80">
-                    「{followedConfig.cheeringNote}」
-                  </p>
-                ) : (
-                  <p className="text-xs text-zinc-400 italic">
-                    推し登録時に設定した応援コメントがここに表示されます。
-                  </p>
-                )}
-              </div>
-
-              {followedConfig?.fanComments && followedConfig.fanComments.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-zinc-400">応援ログ</h4>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {followedConfig.fanComments.map((c) => (
-                      <div
-                        key={c.id}
-                        className="p-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/60 text-xs text-zinc-300"
-                      >
-                        <p>{c.text}</p>
-                        <span className="text-[10px] text-zinc-500 mt-1 block">
-                          {new Date(c.createdAt).toLocaleString('ja-JP')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Add cheer comment form */}
-              <form onSubmit={handleSendComment} className="flex gap-2 pt-2">
-                <input
-                  type="text"
-                  value={commentInput}
-                  onChange={(e) => setCommentInput(e.target.value)}
-                  placeholder={`${activePlayer.name}へ応援メッセージを送る...`}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400"
-                />
-                <button
-                  type="submit"
-                  disabled={!commentInput.trim()}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs disabled:opacity-50 transition flex items-center gap-1.5"
-                >
-                  <Heart size={13} className="fill-current" />
-                  <span>応援</span>
-                </button>
-              </form>
-            </div>
-          )}
         </div>
       </div>
 

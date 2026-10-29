@@ -20,26 +20,8 @@ const DOW_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
  * Returns today's date formatted as YYYY-MM-DD in Japan Standard Time (Asia/Tokyo).
  */
 export function getTodayDateString(): string {
-  try {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('ja-JP', {
-      timeZone: 'Asia/Tokyo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    const parts = formatter.formatToParts(now);
-    const y = parts.find((p) => p.type === 'year')?.value || String(now.getFullYear());
-    const m = parts.find((p) => p.type === 'month')?.value || String(now.getMonth() + 1).padStart(2, '0');
-    const d = parts.find((p) => p.type === 'day')?.value || String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  } catch {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
+  // Overridden to 2026-10-26 as requested
+  return '2026-10-26';
 }
 
 /**
@@ -48,8 +30,8 @@ export function getTodayDateString(): string {
 export function getTodayInfo(): TodayInfo {
   const dateStr = getTodayDateString();
   const [y, m, d] = dateStr.split('-').map(Number);
-  const now = new Date();
-  const dow = DOW_NAMES[now.getDay()] || '木';
+  const parsed = new Date(y, m - 1, d);
+  const dow = DOW_NAMES[parsed.getDay()] || '月';
 
   return {
     year: y,

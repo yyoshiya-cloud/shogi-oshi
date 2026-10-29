@@ -121,7 +121,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
                   3. 棋士・女流棋士名鑑 (連盟・LPSA・無所属)
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  現役プロ棋士・女流棋士のプロフィール、タイトル履歴、通算・今年度成績、レーティング、詳細データを網羅。
+                  現役プロ棋士・女流棋士のプロフィール、タイトル履歴、通算・今年度成績、詳細データを網羅。
                 </p>
               </div>
             </div>
@@ -136,20 +136,6 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
                   日本将棋連盟公式（shogi.or.jp/game/?month=YYYYMM）の年度別（4月〜翌年3月）対局結果を全網羅。棋士・女流棋士の勝敗、先手後手、携帯中継・棋譜リンク、推し棋士絞り込みに対応。
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80">
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 mt-0.5">
-                <Sparkles size={16} />
-              </div>
-              <div>
-                <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  5. 盤面・棋譜ステップ再生ビューア
-                </strong>
-                <p className="text-zinc-400 leading-relaxed">
-                  実際の棋譜データを一手ずつ進めて盤面と駒の動きを確認できるインタラクティブなステップ再生機能。
                 </p>
               </div>
             </div>

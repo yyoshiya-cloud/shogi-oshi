@@ -222,7 +222,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm sm:text-base font-black text-zinc-100 font-serif-jp">
-                  通知速報（本日: {getTodayInfo().shortDisplay}）
+                  通知速報 本日:{getTodayInfo().shortDisplay}
                 </h3>
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
