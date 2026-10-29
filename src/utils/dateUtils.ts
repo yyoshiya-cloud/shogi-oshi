@@ -20,8 +20,12 @@ const DOW_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
  * Returns today's date formatted as YYYY-MM-DD in Japan Standard Time (Asia/Tokyo).
  */
 export function getTodayDateString(): string {
-  // Overridden to 2026-10-26 as requested
-  return '2026-10-26';
+  const now = new Date();
+  const jstDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  const y = jstDate.getFullYear();
+  const m = String(jstDate.getMonth() + 1).padStart(2, '0');
+  const d = String(jstDate.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**

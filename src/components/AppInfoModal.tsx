@@ -19,7 +19,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
               <h3 className="text-base sm:text-lg font-black font-serif-jp text-zinc-100">
                 機能一覧 & アプリ情報
               </h3>
-              <p className="text-xs text-zinc-400">将棋推し活アプリ Ver1.0.0</p>
+              <p className="text-xs text-zinc-400">将棋推し活アプリ Ver1.1.0</p>
             </div>
           </div>
           <button
