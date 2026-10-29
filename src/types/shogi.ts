@@ -8,6 +8,7 @@ export interface YearRecord {
   wins: number;
   losses: number;
   rate: number;
+  isPreDebut?: boolean;
 }
 
 export interface OpeningStat {

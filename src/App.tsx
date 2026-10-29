@@ -22,6 +22,7 @@ import {
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
+import { getPlayerTotalTitles } from './utils/titleUtils';
 import { OshiDashboard } from './components/OshiDashboard';
 import { CalendarScheduleView } from './components/CalendarScheduleView';
 import { PlayerDirectory } from './components/PlayerDirectory';
@@ -60,16 +61,21 @@ export default function App() {
         return false;
       });
 
+      const needsTitleUpdate = stored.some((p) => {
+        const verified = getPlayerTotalTitles(p);
+        return verified > 0 && p.totalTitles !== verified;
+      });
+
       const needsCleanup =
         missingStatic.length > 0 ||
         needsLpsaOrNakaiUpdate ||
+        needsTitleUpdate ||
         stored.some(
           (p) =>
             (p.rank && p.rank.length > 25) ||
             (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
             (p.heldTitles && p.heldTitles.some((t) => t.includes('段') || t.includes('級'))) ||
-            (!p.danRank && (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'nishiyama-tomoka' || p.id === 'fukuma-kana' || p.id === 'shimizu-ichiyo')) ||
-            ((p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) && p.totalTitles !== 4)
+            (!p.danRank && (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'nishiyama-tomoka' || p.id === 'fukuma-kana' || p.id === 'shimizu-ichiyo'))
         );
       if (needsCleanup) {
         const cleaned = [...stored, ...missingStatic].map((p) => {
@@ -91,10 +97,8 @@ export default function App() {
             else if (p.id === 'fukuma-kana' || p.name.includes('福間 香奈')) danRank = '女流六段';
             else if (p.id === 'shimizu-ichiyo' || p.name.includes('清水 市代')) danRank = '女流七段';
           }
-          let totalTitles = p.totalTitles;
-          if (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) {
-            totalTitles = 4;
-          }
+          const verifiedTitles = getPlayerTotalTitles(p);
+          const totalTitles = verifiedTitles > 0 ? verifiedTitles : (p.totalTitles || 0);
           const staticP = staticMap.get(p.id);
           let careerWins = p.careerWins;
           let careerLosses = p.careerLosses;
@@ -137,9 +141,15 @@ export default function App() {
         saveStoredPlayers(cleaned);
         return cleaned;
       }
-      return stored;
+      return stored.map((p) => {
+        const v = getPlayerTotalTitles(p);
+        return v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+      });
     }
-    return PLAYERS_DATA;
+    return PLAYERS_DATA.map((p) => {
+      const v = getPlayerTotalTitles(p);
+      return v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+    });
   });
   const [matchesList, setMatchesList] = useState<Match[]>(() => {
     const stored = getStoredMatches();
@@ -268,16 +278,22 @@ export default function App() {
   };
 
   const handleUpdatePlayer = (updatedPlayer: Player) => {
+    const verifiedTitles = getPlayerTotalTitles(updatedPlayer);
+    const playerToSave =
+      verifiedTitles > 0 && updatedPlayer.totalTitles !== verifiedTitles
+        ? { ...updatedPlayer, totalTitles: verifiedTitles }
+        : updatedPlayer;
+
     setPlayersList((prev) => {
-      const idx = prev.findIndex((p) => p.id === updatedPlayer.id);
+      const idx = prev.findIndex((p) => p.id === playerToSave.id);
       if (idx === -1) return prev;
       const updated = [...prev];
-      updated[idx] = updatedPlayer;
+      updated[idx] = playerToSave;
       saveStoredPlayers(updated);
       return updated;
     });
-    if (selectedPlayer?.id === updatedPlayer.id) {
-      setSelectedPlayer(updatedPlayer);
+    if (selectedPlayer?.id === playerToSave.id) {
+      setSelectedPlayer(playerToSave);
     }
   };
 

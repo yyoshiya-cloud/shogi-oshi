@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
-import { PlayerStatsCharts } from './PlayerStatsCharts';
+import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
+import { getPlayerTotalTitles } from '../utils/titleUtils';
 import results2026Json from '../data/results2026.json';
 import {
   X,
@@ -8,11 +9,7 @@ import {
   Trophy,
   ExternalLink,
   Loader2,
-  Calendar,
-  BookOpen,
   Filter,
-  CheckCircle2,
-  ChevronRight,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -48,13 +45,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const [resultsFiscalYear, setResultsFiscalYear] = useState<number>(2026);
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
   const [resultsOutcomeFilter, setResultsOutcomeFilter] = useState<'all' | 'win' | 'loss'>('all');
+  const [isChartZoomOpen, setIsChartZoomOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (player && (player.id === 'ito-takumi' || (player.name && player.name.includes('伊藤 匠'))) && player.totalTitles !== 4) {
-      setActivePlayer({ ...player, totalTitles: 4 });
-    } else {
-      setActivePlayer(player);
-    }
+    setActivePlayer(player);
   }, [player]);
 
   // On-demand detail enrichment if official link is available and basic bio is missing
@@ -431,29 +425,34 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           )}
 
           {/* Past / Career Titles Won */}
-          {activePlayer.totalTitles > 0 && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10 text-xs">
-              <span className="text-amber-300/90 flex items-center gap-1 mr-1 font-bold">
-                <Trophy size={13} className="text-amber-400/80" />
-                通算タイトル獲得:
-              </span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-black bg-amber-500/20 text-amber-200 border border-amber-400/40">
-                {activePlayer.totalTitles}期
-              </span>
-              {activePlayer.titleHistory && (
-                <span className="text-[11px] text-zinc-300 ml-1">
-                  ({activePlayer.titleHistory})
+          {(() => {
+            const totalTitles = getPlayerTotalTitles(activePlayer);
+            if (totalTitles <= 0) return null;
+            return (
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10 text-xs">
+                <span className="text-amber-300/90 flex items-center gap-1 mr-1 font-bold">
+                  <Trophy size={13} className="text-amber-400/80" />
+                  通算タイトル獲得:
                 </span>
-              )}
-            </div>
-          )}
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm flex items-center gap-1">
+                  <span>通算獲得</span>
+                  <strong className="text-amber-300">{totalTitles}期</strong>
+                </span>
+                {activePlayer.titleHistory && (
+                  <span className="text-[11px] text-zinc-300 ml-1">
+                    ({activePlayer.titleHistory})
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Tab Navigation */}
         <div className="flex border-b border-zinc-800 bg-zinc-900/60 px-4 sm:px-6 pt-2 overflow-x-auto scrollbar-none gap-1">
           <button
             onClick={() => setActiveTab('stats')}
-            className={`py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
+            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'stats'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -463,7 +462,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-1.5 ${
+            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'results'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -474,7 +473,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('matches')}
-            className={`py-3 px-3 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
+            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'matches'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -645,7 +644,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
 
               {/* Statistical Charts Component */}
-              <PlayerStatsCharts player={activePlayer} />
+              <PlayerStatsCharts
+                player={activePlayer}
+                onOpenZoom={() => setIsChartZoomOpen(true)}
+              />
 
               {/* External Links */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -697,7 +699,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-zinc-200'
                       }`}
                     >
-                      2026年度 (2026年4月〜2027年3月)
+                      2026年度
                     </button>
                     <button
                       onClick={() => {
@@ -710,24 +712,16 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-zinc-200'
                       }`}
                     >
-                      2025年度 (2025年4月〜2026年3月)
+                      2025年度
                     </button>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        {resultsFiscalYear}年度 公式記録
-                      </span>
-                      <h4 className="text-sm sm:text-base font-bold text-zinc-100 font-serif-jp">
-                        {activePlayer.name} の{resultsFiscalYear}年度 公式対局戦績
-                      </h4>
-                    </div>
-                    <p className="text-xs text-zinc-400 mt-1">
-                      日本将棋連盟公式（shogi.or.jp {resultsFiscalYear}年4月〜{resultsFiscalYear + 1}年3月）の全公式戦記録
-                    </p>
+                    <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      {resultsFiscalYear}年度 公式記録
+                    </span>
                   </div>
 
                   <div className="flex items-baseline gap-2 bg-zinc-950/80 px-3.5 py-2 rounded-xl border border-zinc-800">
@@ -819,7 +813,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-emerald-400'
                       }`}
                     >
-                      ○ 勝利のみ ({playerFiscalStats.wins})
+                      ○ 勝利 ({playerFiscalStats.wins})
                     </button>
                     <button
                       onClick={() => setResultsOutcomeFilter('loss')}
@@ -829,7 +823,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           : 'text-zinc-400 hover:text-rose-400'
                       }`}
                     >
-                      ● 敗戦のみ ({playerFiscalStats.losses})
+                      ● 敗戦 ({playerFiscalStats.losses})
                     </button>
                   </div>
                 </div>
@@ -1089,6 +1083,15 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Fullscreen Overlay Modal for Enlarged Statistics Chart */}
+      {isChartZoomOpen && (
+        <YearlyChartZoomModal
+          player={activePlayer}
+          isOpen={isChartZoomOpen}
+          onClose={() => setIsChartZoomOpen(false)}
+        />
+      )}
     </div>
   );
 };

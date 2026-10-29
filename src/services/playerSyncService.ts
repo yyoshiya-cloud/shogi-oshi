@@ -1,6 +1,8 @@
 import * as cheerio from 'cheerio';
 import { Player, PlayerType, PlayerAffiliation } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
+import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
+import { getPlayerTotalTitles } from '../utils/titleUtils';
 
 export interface ScrapeResult {
   success: boolean;
@@ -423,15 +425,18 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               existing.id === 'ito-takumi' || existing.name.includes('伊藤 匠')
                 ? 4
                 : existing.totalTitles;
-            scrapedPlayers.push({
+            const updated: Player = {
               ...existing,
-              totalTitles,
               affiliation: existing.affiliation || '日本将棋連盟',
               rank: sanitizeRank(existing.rank.length > 25 ? finalRank : existing.rank || finalRank),
               danRank: profileDan || existing.danRank,
               playerNumber: playerNumber || existing.playerNumber,
               photoUrl: photoUrl || existing.photoUrl,
               heldTitles: heldTitles.length > 0 ? heldTitles : existing.heldTitles,
+              totalTitles:
+                existing.totalTitles > 0
+                  ? existing.totalTitles
+                  : getPlayerTotalTitles({ name: cleanName, id }),
               careerWins: career ? career.wins : existing.careerWins,
               careerLosses: career ? career.losses : existing.careerLosses,
               careerWinRate: career ? career.winRate : existing.careerWinRate,
@@ -442,10 +447,12 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 ...existing.externalLinks,
                 officialProfile: `https://www.shogi.or.jp${href}`,
               },
-            });
+            };
+            updated.yearRecords = generateCompleteYearRecords(updated);
+            scrapedPlayers.push(updated);
           } else {
             const accent = getAccentColor('pro', '日本将棋連盟', finalRank);
-            scrapedPlayers.push({
+            const newPlayer: Player = {
               id,
               name: cleanName,
               kana: '',
@@ -463,7 +470,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               ryuoClass: finalRank.includes('竜王') ? '竜王' : '竜王戦参加',
               junisenClass: finalRank.includes('名人') ? '名人' : '順位戦参加',
               heldTitles,
-              totalTitles: 0,
+              totalTitles: getPlayerTotalTitles({ name: cleanName, id }),
               titleHistory: '',
               careerWins,
               careerLosses,
@@ -487,7 +494,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
                 wikipedia: `https://ja.wikipedia.org/wiki/${encodeURIComponent(cleanName.replace(/\s+/g, ''))}`,
               },
-            });
+            };
+            newPlayer.yearRecords = generateCompleteYearRecords(newPlayer);
+            scrapedPlayers.push(newPlayer);
           }
         }
       });
@@ -590,7 +599,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               : existing?.goteWinRate || 0.5;
 
           if (existing) {
-            scrapedPlayers.push({
+            const updated: Player = {
               ...existing,
               affiliation: existing.affiliation || '日本将棋連盟',
               rank: sanitizeRank(existing.rank.length > 25 ? finalRank : existing.rank || finalRank),
@@ -598,6 +607,10 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               playerNumber: playerNumber || existing.playerNumber,
               photoUrl: photoUrl || existing.photoUrl,
               heldTitles: heldTitles.length > 0 ? heldTitles : existing.heldTitles,
+              totalTitles:
+                existing.totalTitles > 0
+                  ? existing.totalTitles
+                  : getPlayerTotalTitles({ name: cleanName, id }),
               careerWins: career ? career.wins : existing.careerWins,
               careerLosses: career ? career.losses : existing.careerLosses,
               careerWinRate: career ? career.winRate : existing.careerWinRate,
@@ -608,10 +621,12 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 ...existing.externalLinks,
                 officialProfile: `https://www.shogi.or.jp${href}`,
               },
-            });
+            };
+            updated.yearRecords = generateCompleteYearRecords(updated);
+            scrapedPlayers.push(updated);
           } else {
             const accent = getAccentColor('women', '日本将棋連盟', finalRank);
-            scrapedPlayers.push({
+            const newPlayer: Player = {
               id,
               name: cleanName,
               kana: '',
@@ -629,7 +644,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               ryuoClass: '-',
               junisenClass: '-',
               heldTitles,
-              totalTitles: 0,
+              totalTitles: getPlayerTotalTitles({ name: cleanName, id }),
               titleHistory: '',
               careerWins,
               careerLosses,
@@ -653,7 +668,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
                 wikipedia: `https://ja.wikipedia.org/wiki/${encodeURIComponent(cleanName.replace(/\s+/g, ''))}`,
               },
-            });
+            };
+            newPlayer.yearRecords = generateCompleteYearRecords(newPlayer);
+            scrapedPlayers.push(newPlayer);
           }
         }
       });
@@ -805,7 +822,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
           (img ? (img.startsWith('http') ? img : `https://joshi-shogi.com${img}`) : undefined);
 
         if (existing) {
-          scrapedPlayers.push({
+          const updated: Player = {
             ...existing,
             affiliation: 'LPSA',
             rank: sanitizeRank(finalRank),
@@ -828,9 +845,11 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               ...existing.externalLinks,
               officialProfile: 'https://joshi-shogi.com/profile/',
             },
-          });
+          };
+          updated.yearRecords = generateCompleteYearRecords(updated);
+          scrapedPlayers.push(updated);
         } else {
-          scrapedPlayers.push({
+          const newPlayer: Player = {
             id,
             name: cleanName,
             kana,
@@ -847,7 +866,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             ryuoClass: '女流棋士',
             junisenClass: '白玲戦参加',
             heldTitles: [],
-            totalTitles: achievements.includes('女流王位獲得') ? 1 : 0,
+            totalTitles:
+              getPlayerTotalTitles({ name: cleanName, id }) ||
+              (achievements.includes('女流王位獲得') ? 1 : 0),
             titleHistory: achievements || '日本女子プロ将棋協会（LPSA）所属の現役女流棋士。',
             careerWins,
             careerLosses,
@@ -880,7 +901,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
               wikipedia: `https://ja.wikipedia.org/wiki/${encodeURIComponent(cleanName.replace(/\s+/g, ''))}`,
             },
-          });
+          };
+          newPlayer.yearRecords = generateCompleteYearRecords(newPlayer);
+          scrapedPlayers.push(newPlayer);
         }
       }
     }
@@ -910,8 +933,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
           ? Math.max(0.05, Math.round((careerWinRate - 0.035) * 1000) / 1000)
           : p.goteWinRate || 0.5;
 
-      scrapedPlayers.push({
+      const updatedStatic: Player = {
         ...p,
+        totalTitles: getPlayerTotalTitles(p),
         careerWins,
         careerLosses,
         careerWinRate,
@@ -920,7 +944,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
         currentYearWinRate,
         senteWinRate,
         goteWinRate,
-      });
+      };
+      updatedStatic.yearRecords = generateCompleteYearRecords(updatedStatic);
+      scrapedPlayers.push(updatedStatic);
     }
   }
 
