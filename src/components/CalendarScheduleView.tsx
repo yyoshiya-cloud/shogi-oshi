@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Match, Player, FollowedPlayerConfig } from '../types/shogi';
 import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
 import { getTodayDateString, getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
+import { formatPlayerName } from '../utils/playerUtils';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -79,10 +80,12 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   const getPlayer = (id: string): Player => {
     const existing = playerMap.get(id);
     if (existing) return existing;
-    const clean = id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' ');
+    const clean = id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' ').replace(/\s+/g, '');
+    const byName = players.find((p) => p.name.replace(/\s+/g, '') === clean);
+    if (byName) return byName;
     return {
       id,
-      name: clean,
+      name: id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' '),
       kana: '',
       romaji: clean,
       type: 'pro',
@@ -635,7 +638,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                         <div className="text-left">
                           <span className="text-xs text-amber-400 font-bold mr-1">☗</span>
                           <span className="font-bold text-sm text-zinc-100 font-serif-jp">
-                            {p1.name}
+                            {formatPlayerName(p1.name)}
                           </span>
                           <span className="text-[11px] text-zinc-400 block">{p1.rank}</span>
                         </div>
@@ -643,7 +646,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                         <div className="text-right">
                           <span className="text-xs text-sky-400 font-bold mr-1">☖</span>
                           <span className="font-bold text-sm text-zinc-100 font-serif-jp">
-                            {p2.name}
+                            {formatPlayerName(p2.name)}
                           </span>
                           <span className="text-[11px] text-zinc-400 block">{p2.rank}</span>
                         </div>
@@ -746,7 +749,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                     <div>
                       <span className="text-xs text-amber-400 font-bold mr-1">☗ 先手</span>
                       <span className="font-bold text-sm text-zinc-100 font-serif-jp">
-                        {p1.name}
+                        {formatPlayerName(p1.name)}
                       </span>
                       <span className="text-xs text-zinc-400 ml-1.5">{p1.rank}</span>
                     </div>
@@ -761,7 +764,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                     <div>
                       <span className="text-xs text-sky-400 font-bold mr-1">☖ 後手</span>
                       <span className="font-bold text-sm text-zinc-100 font-serif-jp">
-                        {p2.name}
+                        {formatPlayerName(p2.name)}
                       </span>
                       <span className="text-xs text-zinc-400 ml-1.5">{p2.rank}</span>
                     </div>

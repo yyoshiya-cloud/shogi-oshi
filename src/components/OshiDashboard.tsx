@@ -2,6 +2,7 @@ import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getGoogleCalendarUrl } from '../utils/calendarExport';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
+import { formatPlayerName } from '../utils/playerUtils';
 import {
   Heart,
   Calendar,
@@ -66,12 +67,14 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   );
 
   const getPlayer = (id: string): Player => {
-    const p = followedPlayerMap.get(id);
+    const p = followedPlayerMap.get(id) || players.find((pl) => pl.id === id);
     if (p) return p;
-    const clean = id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' ');
+    const clean = id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' ').replace(/\s+/g, '');
+    const byName = players.find((pl) => pl.name.replace(/\s+/g, '') === clean);
+    if (byName) return byName;
     return {
       id,
-      name: clean,
+      name: id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' '),
       rank: '棋士',
     } as unknown as Player;
   };
@@ -100,14 +103,16 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                      {m.status === 'live' ? '対局中' : '本日対局'}
+                      {m.status === 'live' && 
+                       new Date().toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }) >= m.time
+                       ? '対局中' : '本日対局'}
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-zinc-100 font-serif-jp">
                       {m.tournament}
                     </span>
                   </div>
                   <p className="text-xs text-amber-300 font-semibold mt-1">
-                    ☗ {p1.name} ({p1.rank}) vs ☖ {p2.name} ({p2.rank})
+                    ☗ {formatPlayerName(p1.name)} ({p1.rank}) vs ☖ {formatPlayerName(p2.name)} ({p2.rank})
                   </p>
                   <p className="text-[11px] text-zinc-400 mt-0.5">
                     会場: {m.venue} / 持ち時間: {m.timeControl}
@@ -297,7 +302,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
 
                       <div className="flex items-baseline gap-2.5 flex-wrap">
                         <h4 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
-                          {player.name}
+                          {formatPlayerName(player.name)}
                         </h4>
                         <span className="text-xs font-bold text-amber-400 font-serif-jp">
                           {player.danRank && !player.rank.includes(player.danRank)
@@ -323,7 +328,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                       <div className="bg-zinc-800/40 rounded-lg p-2 text-[10px] border border-zinc-700/50">
                         <span className="text-amber-400 font-bold">次回対局:</span> {nextMatch.date} {nextMatch.time}〜
                         <div className="text-zinc-300">
-                           {nextMatch.tournament} (vs {opponent?.name || '対戦相手未定'})
+                           {nextMatch.tournament} (vs {opponent ? formatPlayerName(opponent.name) : '対戦相手未定'})
                         </div>
                       </div>
                     ) : (

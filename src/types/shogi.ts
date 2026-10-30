@@ -34,7 +34,7 @@ export interface Player {
   affiliation?: PlayerAffiliation; // 日本将棋連盟 | LPSA | 無所属
   rank: string; // 竜王・名人, 九段, 女流五冠, etc.
   danRank?: string; // 公式個人プロフィールから取得した段位 (九段, 七段, 女流五段, 女流六段, etc.)
-  playerNumber: number; // 棋士番号 / 女流番号
+  playerNumber?: number; // 棋士番号 / 女流番号
   photoUrl?: string;
   birthDate: string; // YYYY-MM-DD
   birthPlace: string;

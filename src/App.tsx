@@ -23,6 +23,7 @@ import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
+import { formatPlayerName } from './utils/playerUtils';
 import { OshiDashboard } from './components/OshiDashboard';
 import { CalendarScheduleView } from './components/CalendarScheduleView';
 import { PlayerDirectory } from './components/PlayerDirectory';
@@ -72,6 +73,7 @@ export default function App() {
         needsTitleUpdate ||
         stored.some(
           (p) =>
+            (p.name && !p.name.includes(' ') && !p.name.includes('\u3000') && p.name.length >= 3) ||
             (p.rank && p.rank.length > 25) ||
             (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
             (p.heldTitles && p.heldTitles.some((t) => t.includes('段') || t.includes('級'))) ||
@@ -79,7 +81,7 @@ export default function App() {
         );
       if (needsCleanup) {
         const cleaned = [...stored, ...missingStatic].map((p) => {
-          let name = p.name ? p.name.replace(/[※＊\*\s]/g, ' ').replace(/\s+/g, ' ').trim() : p.name;
+          let name = p.name ? formatPlayerName(p.name) : p.name;
           let rank = p.rank || '現役棋士';
           rank = rank.replace(/１/g, '1').replace(/２/g, '2');
           if (rank.length > 25) {
@@ -123,6 +125,14 @@ export default function App() {
               currentYearWinRate = staticP.currentYearWinRate;
             }
           }
+          let junisenClass = p.junisenClass;
+          let ryuoClass = p.ryuoClass;
+          if (staticP && (!junisenClass || junisenClass === '-' || junisenClass === '参加棋戦')) {
+            junisenClass = staticP.junisenClass;
+          }
+          if (staticP && (!ryuoClass || ryuoClass === '-' || ryuoClass === '参加棋戦')) {
+            ryuoClass = staticP.ryuoClass;
+          }
           return {
             ...p,
             name,
@@ -136,6 +146,8 @@ export default function App() {
             currentYearWins,
             currentYearLosses,
             currentYearWinRate,
+            junisenClass: junisenClass || p.junisenClass,
+            ryuoClass: ryuoClass || p.ryuoClass,
           };
         });
         saveStoredPlayers(cleaned);

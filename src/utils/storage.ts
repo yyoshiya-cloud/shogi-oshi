@@ -1,4 +1,6 @@
 import { FollowedPlayerConfig, PushNotificationItem, Match, Player } from '../types/shogi';
+import { PLAYERS_DATA } from '../data/shogiDatabase';
+import { applyPlayerOverrides } from './playerUtils';
 import { filterBulletinNotifications } from './notificationFilter';
 import { getTodayDateString, getTodayInfo } from './dateUtils';
 
@@ -138,13 +140,17 @@ export function saveStoredFollowed(data: FollowedPlayerConfig[], userEmail?: str
   }
 }
 
-export function getStoredPlayers(): Player[] | null {
+export function getStoredPlayers(): Player[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
-    if (!raw) return null;
-    return JSON.parse(raw);
+    if (!raw) return PLAYERS_DATA.map(applyPlayerOverrides);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length < 50) {
+      return PLAYERS_DATA.map(applyPlayerOverrides);
+    }
+    return parsed.map(applyPlayerOverrides);
   } catch {
-    return null;
+    return PLAYERS_DATA.map(applyPlayerOverrides);
   }
 }
 

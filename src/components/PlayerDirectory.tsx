@@ -1,7 +1,8 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerType, PlayerAffiliation } from '../types/shogi';
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
+import { formatPlayerName } from '../utils/playerUtils';
 import {
   Search,
   Heart,
@@ -18,7 +19,8 @@ import {
   Globe,
   Building,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -182,7 +184,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
 
           <div className="flex items-baseline gap-2.5 flex-wrap">
             <h3 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
-              {player.name}
+              {formatPlayerName(player.name)}
             </h3>
             <span className="text-xs font-bold text-amber-400 font-serif-jp">
               {player.danRank && !player.rank.includes(player.danRank)
@@ -302,6 +304,30 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     return new Map(followedList.map((f) => [f.playerId, f]));
   }, [followedList]);
 
+  // Helper to count matching players for a given rank under current filterType & affiliationFilter
+  const getRankCount = (rank: string) => {
+    return players.filter((p) => {
+      if (filterType === 'pro' && p.type === 'women') return false;
+      if (filterType === 'women' && p.type !== 'women') return false;
+      if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+      return matchesRankFilter(p, rank);
+    }).length;
+  };
+
+  // When filterType becomes 'pro', restrict affiliationFilter to '日本将棋連盟'
+  useEffect(() => {
+    if (filterType === 'pro' && affiliationFilter !== '日本将棋連盟') {
+      setAffiliationFilter('日本将棋連盟');
+    }
+  }, [filterType, affiliationFilter]);
+
+  // If selected rankFilter has 0 matching players under current filterType & affiliationFilter, reset to 'all'
+  useEffect(() => {
+    if (rankFilter !== 'all' && getRankCount(rankFilter) === 0) {
+      setRankFilter('all');
+    }
+  }, [filterType, affiliationFilter, rankFilter, players]);
+
   // Filter and sort players with guaranteed total titles and reactive recalculation
   const filteredPlayers = useMemo(() => {
     return players
@@ -401,8 +427,18 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="棋士名、かな、棋士番号、師匠、出身地、タイトル名で検索..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-amber-500/60 transition"
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-amber-500/60 transition"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1 rounded-md transition"
+                title="検索入力をクリア"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -435,14 +471,17 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setFilterType('pro')}
+            onClick={() => {
+              setFilterType('pro');
+              setAffiliationFilter('日本将棋連盟');
+            }}
             className={`px-3.5 py-1.5 rounded-xl font-bold transition shrink-0 ${
               filterType === 'pro'
                 ? 'bg-amber-500 text-zinc-950 shadow-sm'
                 : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
             }`}
           >
-            男性棋士 ({players.filter((p) => p.type !== 'women').length})
+            棋士 ({players.filter((p) => p.type !== 'women').length})
           </button>
           <button
             type="button"
@@ -463,29 +502,40 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             <span className="text-zinc-400 font-semibold mr-1">所属:</span>
             <button
               type="button"
+              disabled={filterType === 'pro'}
               onClick={() => setAffiliationFilter('all')}
+              title={filterType === 'pro' ? '棋士選択時は日本将棋連盟固定' : undefined}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                affiliationFilter === 'all'
+                filterType === 'pro'
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : affiliationFilter === 'all'
                   ? 'bg-zinc-700 text-white font-bold'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
               }`}
             >
               すべて
             </button>
-            {(['日本将棋連盟', 'LPSA', '無所属'] as PlayerAffiliation[]).map((aff) => (
-              <button
-                key={aff}
-                type="button"
-                onClick={() => setAffiliationFilter(aff)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                  affiliationFilter === aff
-                    ? 'bg-zinc-700 text-white font-bold'
-                    : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-                }`}
-              >
-                {aff}
-              </button>
-            ))}
+            {(['日本将棋連盟', 'LPSA', '無所属'] as PlayerAffiliation[]).map((aff) => {
+              const isAffDisabled = filterType === 'pro' && aff !== '日本将棋連盟';
+              return (
+                <button
+                  key={aff}
+                  type="button"
+                  disabled={isAffDisabled}
+                  onClick={() => setAffiliationFilter(aff)}
+                  title={isAffDisabled ? '棋士選択時は日本将棋連盟のみ選択可' : undefined}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                    isAffDisabled
+                      ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                      : affiliationFilter === aff
+                      ? 'bg-zinc-700 text-white font-bold'
+                      : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                  }`}
+                >
+                  {aff}
+                </button>
+              );
+            })}
           </div>
 
           {/* Rank Quick Filters */}
@@ -505,14 +555,14 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
             {/* Pro Ranks */}
             {PRO_RANKS.map((rank) => {
-              const isProDisabled = filterType === 'women';
-              const count = players.filter((p) => (filterType === 'women' ? false : matchesRankFilter(p, rank))).length;
+              const count = getRankCount(rank);
+              const isProDisabled = filterType === 'women' || count === 0;
               return (
                 <button
                   key={rank}
                   disabled={isProDisabled}
                   onClick={() => setRankFilter(rank)}
-                  title={isProDisabled ? '女流選択時は不活性' : undefined}
+                  title={isProDisabled ? '該当棋士なし / 不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
                     isProDisabled
                       ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
@@ -521,21 +571,21 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                       : 'bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
-                  {rank} <span className="text-[9px] opacity-70">({isProDisabled ? 0 : count})</span>
+                  {rank} <span className="text-[9px] opacity-70">({count})</span>
                 </button>
               );
             })}
 
             {/* Women Ranks */}
             {WOMEN_RANKS.map((rank) => {
-              const isWomenDisabled = filterType === 'pro';
-              const count = players.filter((p) => (filterType === 'pro' ? false : matchesRankFilter(p, rank))).length;
+              const count = getRankCount(rank);
+              const isWomenDisabled = filterType === 'pro' || count === 0;
               return (
                 <button
                   key={rank}
                   disabled={isWomenDisabled}
                   onClick={() => setRankFilter(rank)}
-                  title={isWomenDisabled ? '棋士選択時は不活性' : undefined}
+                  title={isWomenDisabled ? '該当女流棋士なし / 不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
                     isWomenDisabled
                       ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
@@ -544,7 +594,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                       : 'bg-zinc-950 text-rose-300 hover:bg-zinc-800 border border-zinc-800/80'
                   }`}
                 >
-                  {rank} <span className="text-[9px] opacity-70">({isWomenDisabled ? 0 : count})</span>
+                  {rank} <span className="text-[9px] opacity-70">({count})</span>
                 </button>
               );
             })}
@@ -575,6 +625,20 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             <AlertCircle className="mx-auto text-zinc-500" size={32} />
             <p className="text-sm font-bold text-zinc-200 font-serif-jp">該当する棋士が見つかりませんでした</p>
             <p className="text-xs text-zinc-400">検索条件やフィルターを変更して再度お試しください。</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setFilterType('all');
+                setAffiliationFilter('all');
+                setRankFilter('all');
+                setShowOnlyFollowed(false);
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition shadow cursor-pointer"
+            >
+              <RefreshCw size={13} />
+              <span>フィルターをすべてリセット（全256名を表示）</span>
+            </button>
           </div>
         )}
       </div>

@@ -28,6 +28,7 @@ export const KNOWN_CAREER_TITLES: Record<string, number> = {
   '中村修': 2,
   '福崎文吾': 2,
   '森けい二': 2,
+  '森雞二': 2,
   '島朗': 1,
   '塚田泰明': 1,
   '田中寅彦': 1,

@@ -20,7 +20,7 @@ let cachedMatchResult: MatchSyncResult | null = null;
 let lastMatchScrapeTime = 0;
 const MATCH_CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutes cache
 
-async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string> {
+async function fetchWithTimeout(url: string, timeoutMs = 18000): Promise<string> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -34,9 +34,11 @@ async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string>
       },
     });
     if (!res.ok) {
-      throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+      return '';
     }
     return await res.text();
+  } catch {
+    return '';
   } finally {
     clearTimeout(id);
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
+import { formatPlayerName, formatBirthDateWithAge } from '../utils/playerUtils';
 import results2026Json from '../data/results2026.json';
 import {
   X,
@@ -23,6 +24,34 @@ interface PlayerProfileModalProps {
   onAddComment: (playerId: string, text: string) => void;
   onSelectMatch: (match: Match) => void;
   onUpdatePlayer?: (player: Player) => void;
+}
+
+function formatWomenJunisenClass(player: Player): string {
+  if (player.heldTitles && player.heldTitles.includes('白玲')) {
+    return '白玲（タイトル保持）';
+  }
+  if (player.junisenClass && player.junisenClass !== '-' && player.junisenClass !== '参加棋戦') {
+    let clean = player.junisenClass.replace(/^白玲戦/g, '').trim();
+    if (clean.endsWith('位') || clean.includes('級')) {
+      return clean;
+    }
+    return clean;
+  }
+  return '順位戦なし（女流クラス所属）';
+}
+
+function formatProRyuoClass(player: Player): string {
+  if (player.ryuoClass && player.ryuoClass !== '-' && player.ryuoClass !== '参加棋戦') {
+    return player.ryuoClass;
+  }
+  return '竜王戦参加';
+}
+
+function formatProJunisenClass(player: Player): string {
+  if (player.junisenClass && player.junisenClass !== '-' && player.junisenClass !== '参加棋戦') {
+    return player.junisenClass;
+  }
+  return '順位戦なし（フリークラス等）';
 }
 
 export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
@@ -374,7 +403,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   )}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider mt-1">
-                  {activePlayer.name}
+                  {formatPlayerName(activePlayer.name)}
                   {activePlayer.kana ? (
                     <span className="text-xs font-normal text-zinc-300 ml-2">
                       ({activePlayer.kana})
@@ -512,7 +541,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   <div>
                     <span className="text-zinc-500 block">生年月日</span>
                     <span className="font-semibold text-zinc-200">
-                      {activePlayer.birthDate || '公式名鑑参照'}
+                      {formatBirthDateWithAge(activePlayer.birthDate)}
                     </span>
                   </div>
                   <div>
@@ -546,6 +575,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                         <span className="text-zinc-500 block">女流棋士番号</span>
                         <span className="font-semibold text-zinc-200">
                           No.{activePlayer.playerNumber || '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-zinc-500 block">女流順位戦クラス</span>
+                        <span className="font-semibold text-amber-300 font-serif-jp">
+                          {formatWomenJunisenClass(activePlayer)}
                         </span>
                       </div>
                       {activePlayer.bloodType && (
@@ -592,13 +627,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       <div>
                         <span className="text-zinc-500 block">竜王戦クラス</span>
                         <span className="font-semibold text-zinc-200">
-                          {activePlayer.ryuoClass || '参加棋戦'}
+                          {formatProRyuoClass(activePlayer)}
                         </span>
                       </div>
                       <div>
                         <span className="text-zinc-500 block">順位戦クラス</span>
                         <span className="font-semibold text-zinc-200">
-                          {activePlayer.junisenClass || '参加棋戦'}
+                          {formatProJunisenClass(activePlayer)}
                         </span>
                       </div>
                     </>

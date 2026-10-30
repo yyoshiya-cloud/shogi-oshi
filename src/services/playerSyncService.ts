@@ -3,6 +3,7 @@ import { Player, PlayerType, PlayerAffiliation } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
+import { formatPlayerName, formatBirthDateWithAge } from '../utils/playerUtils';
 
 export interface ScrapeResult {
   success: boolean;
@@ -103,7 +104,7 @@ const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes in-memory cache
 const detailCache = new Map<string, { data: PlayerProfileDetail; timestamp: number }>();
 const DETAIL_CACHE_TTL_MS = 1000 * 60 * 60 * 2; // 2 hours
 
-async function fetchWithTimeout(url: string, timeoutMs = 9000): Promise<string> {
+async function fetchWithTimeout(url: string, timeoutMs = 18000): Promise<string> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -117,9 +118,11 @@ async function fetchWithTimeout(url: string, timeoutMs = 9000): Promise<string> 
       },
     });
     if (!res.ok) {
-      throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+      return '';
     }
     return await res.text();
+  } catch {
+    return '';
   } finally {
     clearTimeout(id);
   }
@@ -131,7 +134,8 @@ export function cleanPlayerName(name: string): string {
 }
 
 function normalizeName(name: string): string {
-  return name.replace(/[※＊\*\u3000]/g, '').replace(/\s+/g, ' ').trim();
+  const clean = name.replace(/[※＊\*\u3000]/g, '').replace(/\s+/g, ' ').trim();
+  return formatPlayerName(clean);
 }
 
 function sanitizeRank(rank: string): string {
@@ -176,6 +180,73 @@ function getAvatarBg(color: string): string {
 }
 
 /**
+ * Dynamically fetches the latest active term for ヒューリック杯 白玲戦・女流順位戦
+ * across A級, B級, C級, D級 and extracts player rank positions (e.g., "A級1位", "B級6位", "C級3位").
+ * Supports future terms (e.g., term 8, 9, 10...) automatically by testing from higher term numbers down.
+ */
+export async function fetchLatestHakureiLeagueMap(): Promise<{ term: number; map: Map<string, string> }> {
+  const leagues = [
+    { code: 'a', name: 'A級' },
+    { code: 'b', name: 'B級' },
+    { code: 'c', name: 'C級' },
+    { code: 'd', name: 'D級' },
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const maxTermEstimate = Math.max(7, currentYear - 2020 + 2);
+
+  for (let term = maxTermEstimate; term >= 1; term--) {
+    const termMap = new Map<string, string>();
+    let termFound = false;
+
+    await Promise.all(
+      leagues.map(async (l) => {
+        try {
+          const url = `https://www.shogi.or.jp/match/hakurei/${term}/${l.code}.html`;
+          const html = await fetchWithTimeout(url, 5000);
+          if (!html) return;
+
+          const $ = cheerio.load(html);
+          $('table')
+            .first()
+            .find('tr')
+            .each((i, tr) => {
+              if (i < 2) return;
+              const tds = $(tr).find('td, th');
+              let rankText = '';
+              let nameText = '';
+              if (tds.length >= 3) {
+                rankText = $(tds[1]).text().trim();
+                nameText = $(tds[2]).text().trim();
+              } else if (tds.length === 2) {
+                rankText = $(tds[0]).text().trim();
+                nameText = $(tds[1]).text().trim();
+              }
+              const rankNum = parseInt(rankText, 10);
+              if (!isNaN(rankNum) && nameText) {
+                const cleanName = nameText
+                  .replace(/[※＊\*👑\(\)（）\s\u3000]+/g, '')
+                  .replace(/(女流)?(四冠|三冠|二冠|冠|九段|八段|七段|六段|五段|四段|三段|二段|初段|1級|2級|１級|２級)$/, '')
+                  .trim();
+                if (cleanName) {
+                  termMap.set(cleanName, `${l.name}${rankNum}位`);
+                  termFound = true;
+                }
+              }
+            });
+        } catch {}
+      })
+    );
+
+    if (termFound && termMap.size > 0) {
+      return { term, map: termMap };
+    }
+  }
+
+  return { term: 7, map: new Map() };
+}
+
+/**
  * Scrape all active shogi players from Japan Shogi Association and LPSA,
  * and merge with official career win/loss records.
  */
@@ -200,8 +271,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
   const scrapedPlayers: Player[] = [];
   const registeredIds = new Set<string>();
 
-  // Fetch official sources in parallel (including career tables & year result tables)
-  const [proHtml, ladyHtml, lpsaHtml, menAllHtml, ladyAllHtml, yearResultHtml, yearResultLadyHtml] = await Promise.all([
+  // Fetch official sources & latest Hakurei league map in parallel
+  const [{ term: hakureiTerm, map: hakureiLeagueMap }, proHtml, ladyHtml, lpsaHtml, menAllHtml, ladyAllHtml, yearResultHtml, yearResultLadyHtml] = await Promise.all([
+    fetchLatestHakureiLeagueMap().catch(() => ({ term: 7, map: new Map<string, string>() })),
     fetchWithTimeout('https://www.shogi.or.jp/player/index.php').catch((err) => {
       console.warn('Could not fetch shogi.or.jp pros:', err);
       return '';
@@ -593,6 +665,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               ? Math.max(0.05, Math.round((careerWinRate - 0.035) * 1000) / 1000)
               : existing?.goteWinRate || 0.5;
 
+          const hakureiClass = hakureiLeagueMap.get(cleanName.replace(/\s+/g, '')) || hakureiLeagueMap.get(cleanPlayerName(cleanName)) || 'フリークラス';
+
           if (existing) {
             const updated: Player = {
               ...existing,
@@ -601,6 +675,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               danRank: profileDan || existing.danRank,
               playerNumber: playerNumber || existing.playerNumber,
               photoUrl: photoUrl || existing.photoUrl,
+              junisenClass: hakureiClass !== 'フリークラス' ? hakureiClass : (existing.junisenClass || 'フリークラス'),
               heldTitles: heldTitles.length > 0 ? heldTitles : existing.heldTitles,
               totalTitles:
                 existing.totalTitles > 0
@@ -637,7 +712,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               master: '',
               style: '居飛車',
               ryuoClass: '-',
-              junisenClass: '-',
+              junisenClass: hakureiClass,
               heldTitles,
               totalTitles: getPlayerTotalTitles({ name: cleanName, id }),
               titleHistory: '',
@@ -771,7 +846,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
         if (!th && td && !kana) kana = td.replace(/\s+/g, ' ');
         if (th.includes('LPSA番号')) num = parseInt(td, 10) || 0;
         if (th.includes('出身')) birthPlace = td;
-        if (th.includes('生年月日')) birthDate = td;
+        if (th.includes('生年月日')) birthDate = formatBirthDateWithAge(td);
         if (th.includes('血液型')) bloodType = td;
         if (th.includes('座右の銘')) motto = td;
         if (th.includes('好きな駒')) favPiece = td;
@@ -816,6 +891,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
           OFFICIAL_LPSA_PHOTO_MAP[cleanNoSpace] ||
           (img ? (img.startsWith('http') ? img : `https://joshi-shogi.com${img}`) : undefined);
 
+        const lpsaHakureiClass = hakureiLeagueMap.get(cleanNoSpace) || hakureiLeagueMap.get(cleanPlayerName(cleanName)) || 'フリークラス';
+
         if (existing) {
           const updated: Player = {
             ...existing,
@@ -828,6 +905,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             motto: motto || existing.motto,
             favPiece: favPiece || existing.favPiece,
             achievements: achievements || existing.achievements,
+            junisenClass: lpsaHakureiClass !== 'フリークラス' ? lpsaHakureiClass : (existing.junisenClass || 'フリークラス'),
             careerWins: career ? career.wins : existing.careerWins,
             careerLosses: career ? career.losses : existing.careerLosses,
             careerWinRate: career ? career.winRate : existing.careerWinRate,
@@ -859,7 +937,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             master: '',
             style,
             ryuoClass: '女流棋士',
-            junisenClass: '白玲戦参加',
+            junisenClass: lpsaHakureiClass,
             heldTitles: [],
             totalTitles:
               getPlayerTotalTitles({ name: cleanName, id }) ||
@@ -1025,7 +1103,7 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
               const th = $(tr).find('th').text().trim();
               const td = $(tr).find('td').text().trim();
               if (!th && td && !kana) kana = td;
-              if (th.includes('生年月日')) birthDate = td;
+              if (th.includes('生年月日')) birthDate = formatBirthDateWithAge(td);
               if (th.includes('出身')) birthPlace = td;
               if (th.includes('血液型')) bloodType = td;
               if (th.includes('座右の銘')) motto = td;
@@ -1077,11 +1155,11 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
       });
 
       const danRank = info['段位'] ? sanitizeRank(info['段位']) : undefined;
-      const birthDate = info['生年月日'] || '';
+      const birthDate = info['生年月日'] ? formatBirthDateWithAge(info['生年月日']) : '';
       const birthPlace = info['出身地'] || '';
       const master = info['師匠'] || '';
       const ryuoClass = (info['竜王戦'] || '').split('\n')[0].trim();
-      const junisenClass = (info['順位戦'] || '').split('\n')[0].trim();
+      const junisenClass = (info['順位戦'] || info['女流順位戦'] || info['白玲戦'] || info['女流順位戦（白玲戦）'] || '').split('\n')[0].trim();
 
       let currentWins = 0;
       let currentLosses = 0;

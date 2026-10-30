@@ -1,22 +1,33 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Match, Player } from '../types/shogi';
-import { ShogiBoardViewer } from './ShogiBoardViewer';
-import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
-import { triggerPushNotification } from '../utils/storage';
+import { getTodayDateString } from '../utils/dateUtils';
+import { getDirectHeadToHead } from '../utils/headToHeadUtils';
 import {
   X,
   Calendar,
   Clock,
   MapPin,
-  Tv,
   ExternalLink,
-  Bell,
-  Download,
-  Share2,
-  Sparkles,
-  Trophy
+  Trophy,
+  Swords,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+
+function getLastName(fullName: string): string {
+  if (!fullName) return '';
+  const clean = fullName.replace(/[※＊\*\+\(\)（）\d段級]/g, '').trim();
+  const parts = clean.split(/[\s\u3000]+/);
+  if (parts.length > 1 && parts[0]) {
+    return parts[0];
+  }
+  if (clean.startsWith('佐々木')) return '佐々木';
+  if (clean.startsWith('長谷部')) return '長谷部';
+  if (clean.length >= 3) {
+    return clean.slice(0, 2);
+  }
+  return clean;
+}
 
 interface MatchDetailModalProps {
   match: Match | null;
@@ -30,52 +41,73 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   match,
   players,
   onClose,
-  onNotificationSent,
   onSelectPlayer,
 }) => {
-  if (!match) return null;
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
-  const player1 = players.find((p) => p.id === match.player1Id);
-  const player2 = players.find((p) => p.id === match.player2Id);
+  const player1 = match ? players.find((p) => p.id === match.player1Id) : null;
+  const player2 = match ? players.find((p) => p.id === match.player2Id) : null;
 
-  if (!player1 || !player2) return null;
+  // Calculate direct head-to-head record from past match database (Must run before any early return)
+  const h2h = useMemo(() => {
+    if (!player1 || !player2) {
+      return {
+        player1Name: '',
+        player2Name: '',
+        player1Wins: 0,
+        player2Wins: 0,
+        draws: 0,
+        totalMatches: 0,
+        recentMatches: [],
+        shogiDbSearchUrl: '',
+      };
+    }
+    return getDirectHeadToHead(player1, player2);
+  }, [player1, player2]);
+
+  if (!match || !player1 || !player2) return null;
 
   const winner = match.winnerId ? players.find((p) => p.id === match.winnerId) : null;
   const isFinished = match.status === 'finished';
-  const isLive = match.status === 'live';
 
-  const sentePlayer = (match.sentePlayerId ? players.find((p) => p.id === match.sentePlayerId) : null) ?? player1;
-  const gotePlayer = (match.gotePlayerId ? players.find((p) => p.id === match.gotePlayerId) : null) ?? player2;
+  // System time and status check (JST)
+  const todayStr = getTodayDateString();
+  const now = new Date();
+  const currentJSTTime = now.toLocaleTimeString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const isMatchToday = match.date === todayStr;
+  const isPastStartTime = isMatchToday && currentJSTTime >= (match.time || '10:00');
 
-  // Simulate pushing notification for this match result
-  const handleTestResultNotification = async () => {
-    if (isFinished && winner) {
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.7 }
-      });
-      await triggerPushNotification(
-        `【終局速報】${winner.name} ${winner.rank}が勝利！`,
-        `${match.tournament}にて、${winner.name}が${match.movesCount || '百数'}手で勝利を収めました。棋譜速報が公開されています。`,
-        'match_result',
-        match.id,
-        winner.id
-      );
+  // Determine badge text and style based on system date and time
+  let badgeText = '対局予定';
+  let badgeStyle = 'bg-zinc-800 text-zinc-300 border-zinc-700';
+
+  if (isFinished) {
+    badgeText = '終局';
+    badgeStyle = 'bg-zinc-800 text-zinc-300 border-zinc-700';
+  } else if (isMatchToday || match.status === 'live') {
+    if (isPastStartTime) {
+      badgeText = '対局中';
+      badgeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
     } else {
-      await triggerPushNotification(
-        `【対局開始】${match.tournament} が始まりました！`,
-        `${player1.name} ${player1.rank} vs ${player2.name} ${player2.rank} (${match.venue})。熱戦を見守りましょう！`,
-        'match_start',
-        match.id,
-        player1.id
-      );
+      badgeText = '本日対局';
+      badgeStyle = 'bg-sky-500/20 text-sky-300 border-sky-500/40';
     }
-    if (onNotificationSent) onNotificationSent();
-  };
+  } else {
+    badgeText = '対局予定';
+    badgeStyle = 'bg-zinc-800 text-zinc-300 border-zinc-700';
+  }
 
-  // Google Calendar URL
-  const gcalUrl = getGoogleCalendarUrl(match, player1, player2);
+  const p1LastName = getLastName(player1.name);
+  const p2LastName = getLastName(player2.name);
+
+  const p1Ratio = h2h.totalMatches > 0 ? (h2h.player1Wins / h2h.totalMatches) * 100 : 50;
+  const p2Ratio = h2h.totalMatches > 0 ? (h2h.player2Wins / h2h.totalMatches) * 100 : 50;
+  const visibleMatches = showAllHistory ? h2h.recentMatches : h2h.recentMatches.slice(0, 5);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto">
@@ -84,15 +116,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/60 sticky top-0 z-20 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                isLive
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : isFinished
-                  ? 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-              }`}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeStyle}`}
             >
-              {isLive ? '対局中' : isFinished ? '終局' : '対局予定'}
+              {badgeText}
             </span>
             <span className="text-xs font-semibold text-zinc-400">
               {match.category}
@@ -132,7 +158,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           {/* Versus Header Cards */}
           <div className="grid grid-cols-2 gap-3 relative">
-            {/* Center VS or WIN indicator */}
+            {/* Center VS indicator */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-amber-500/40 flex items-center justify-center shadow-lg">
                 <span className="text-xs font-black text-amber-400 font-serif-jp">VS</span>
@@ -194,133 +220,123 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Match Outcome details if Finished */}
-          {isFinished && (
-            <div className="bg-gradient-to-r from-amber-950/30 via-zinc-900/80 to-amber-950/30 border border-amber-900/40 p-4 rounded-2xl">
-              <div className="flex items-center gap-2 mb-2 text-amber-400 font-bold text-sm">
-                <Sparkles size={16} />
-                <span>対局結果・勝敗詳細</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div>
-                  <span className="text-zinc-500 block">勝者</span>
-                  <span className="font-bold text-zinc-100 font-serif-jp text-sm">
-                    {winner ? `${winner.name} ${winner.rank}` : '対局中'}
-                  </span>
+          {/* 直接対局記録（過去の対戦成績） */}
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                  <Swords size={16} />
                 </div>
-                <div>
-                  <span className="text-zinc-500 block">手数・決着</span>
-                  <span className="font-bold text-zinc-100 text-sm">
-                    {match.movesCount ? `${match.movesCount}手 (${match.endCondition || '投了'})` : '-'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-zinc-500 block">戦型</span>
-                  <span className="font-bold text-zinc-100 text-sm">
-                    {match.openingStrategy || '力戦'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Match Highlights */}
-          {match.highlights && (
-            <div className="bg-zinc-900/50 border border-zinc-800/80 p-3.5 rounded-xl">
-              <span className="text-xs font-semibold text-amber-300/90 block mb-1">
-                見どころ・解説
-              </span>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                {match.highlights}
-              </p>
-            </div>
-          )}
-
-          {/* Action Buttons: Calendar Registration & Direct Kifu Link */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <a
-              href={gcalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs sm:text-sm font-semibold transition"
-            >
-              <Calendar size={15} />
-              <span>Googleカレンダーに登録</span>
-            </a>
-
-            <button
-              onClick={() => downloadICSFile(match, player1, player2)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs sm:text-sm font-semibold transition"
-            >
-              <Download size={15} />
-              <span>.ics カレンダーファイル保存</span>
-            </button>
-          </div>
-
-          {/* Push Notification Trigger Test Button (Match result push notification) */}
-          <div className="bg-zinc-900/90 border border-amber-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-left">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 flex-shrink-0">
-                <Bell size={16} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-zinc-100">
-                  {isFinished ? '対局結果のプッシュ通知をテスト' : '対局当日の朝通知をテスト'}
-                </h4>
-                <p className="text-[11px] text-zinc-400">
-                  {isFinished ? '勝敗速報と棋譜通知を即座に受信・確認できます' : '対局開始リマインダー通知を受信できます'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleTestResultNotification}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs shadow-md transition whitespace-nowrap"
-            >
-              通知を今すぐ送信
-            </button>
-          </div>
-
-          {/* Broadcast Channels */}
-          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/40 px-3 py-2 rounded-lg">
-            <Tv size={14} className="text-zinc-500 flex-shrink-0" />
-            <span className="text-zinc-500">中継予定:</span>
-            <span className="text-zinc-300 font-medium">
-              {match.broadcast.join(' / ')}
-            </span>
-          </div>
-
-          {/* Direct Kifu Board Viewer (if moves exist or finished) */}
-          {match.kifuMoves && match.kifuMoves.length > 0 && (
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-zinc-100 font-serif-jp flex items-center gap-1.5">
-                  <span className="w-1.5 h-4 bg-amber-500 rounded-full inline-block" />
-                  盤面・棋譜ステップ再生
+                <h3 className="text-xs sm:text-sm font-bold text-zinc-100 font-serif-jp whitespace-pre-line leading-tight">
+                  過去の対局記録{'\n'}（対戦成績）
                 </h3>
-                {match.kifuUrl && (
-                  <a
-                    href={match.kifuUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-amber-400 hover:underline"
+              </div>
+              <a
+                href={h2h.shogiDbSearchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 font-medium transition shrink-0"
+              >
+                <span>将棋DB2で全記録</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
+
+            {/* 勝敗サマリー */}
+            <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-bold font-serif-jp">
+                <span className="text-amber-400 flex items-center gap-1">
+                  {p1LastName}:{h2h.player1Wins}勝
+                </span>
+                <span className="text-zinc-400 text-[11px] font-sans">
+                  {h2h.totalMatches > 0 ? `過去公式戦 計${h2h.totalMatches}局` : '初手合（直接対局なし）'}
+                  {h2h.draws > 0 && `（引分 ${h2h.draws}）`}
+                </span>
+                <span className="text-sky-400 flex items-center gap-1">
+                  {h2h.player2Wins}勝:{p2LastName}
+                </span>
+              </div>
+
+              {/* 比率バー */}
+              {h2h.totalMatches > 0 && (
+                <div className="w-full h-2 rounded-full overflow-hidden flex bg-zinc-800">
+                  <div
+                    className="bg-amber-500 transition-all duration-500"
+                    style={{ width: `${p1Ratio}%` }}
+                    title={`${p1LastName}: ${h2h.player1Wins}勝 (${p1Ratio.toFixed(0)}%)`}
+                  />
+                  <div
+                    className="bg-sky-500 transition-all duration-500"
+                    style={{ width: `${p2Ratio}%` }}
+                    title={`${p2LastName}: ${h2h.player2Wins}勝 (${p2Ratio.toFixed(0)}%)`}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 対戦履歴リスト */}
+            {h2h.recentMatches.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 font-semibold px-1">
+                  <span>直近の対局一覧 ({h2h.recentMatches.length}局)</span>
+                </div>
+                <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                  {visibleMatches.map((item) => {
+                    const isP1Win = item.winnerPlayerId === player1.id || item.winnerName === player1.name;
+                    const isP2Win = item.winnerPlayerId === player2.id || item.winnerName === player2.name;
+                    const winnerLastName = item.winnerName ? getLastName(item.winnerName) : '';
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/70 text-xs hover:border-zinc-700 transition"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                            {item.date}
+                          </span>
+                          <span className="text-zinc-300 font-medium truncate">
+                            {item.tournament}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] text-zinc-400">
+                            ☗{getLastName(item.senteName)} vs ☖{getLastName(item.goteName)}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              isP1Win
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : isP2Win
+                                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                                : 'bg-zinc-800 text-zinc-400'
+                            }`}
+                          >
+                            {winnerLastName ? `${winnerLastName} 〇` : '結果'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {h2h.recentMatches.length > 5 && (
+                  <button
+                    onClick={() => setShowAllHistory(!showAllHistory)}
+                    className="w-full py-1.5 text-[11px] font-semibold text-zinc-400 hover:text-amber-300 flex items-center justify-center gap-1 transition"
                   >
-                    <span>公式棋譜へ直接リンク</span>
-                    <ExternalLink size={12} />
-                  </a>
+                    <span>{showAllHistory ? '表示をたたむ' : `さらに過去の対局を表示 (全${h2h.recentMatches.length}局)`}</span>
+                    {showAllHistory ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>
                 )}
               </div>
-
-              <ShogiBoardViewer
-                moves={match.kifuMoves}
-                kifuUrl={match.kifuUrl}
-                tournament={match.tournament}
-                senteName={`${sentePlayer.name} ${sentePlayer.rank}`}
-                goteName={`${gotePlayer.name} ${gotePlayer.rank}`}
-                totalMovesCount={match.movesCount}
-                endCondition={match.endCondition}
-              />
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-4 px-2 text-xs text-zinc-500 bg-zinc-950/40 rounded-xl border border-zinc-800/60">
+                過去の公式戦データベースに対局記録がありません（初手合の可能性があります）
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
