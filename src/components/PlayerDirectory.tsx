@@ -31,6 +31,7 @@ interface PlayerDirectoryProps {
   onRemoveFollow: (playerId: string) => void;
   onSelectPlayer: (player: Player) => void;
   onImportScrapedPlayer?: (player: Player) => void;
+  onUpdateAllPlayers?: (players: Player[]) => void;
   isSyncingPlayers?: boolean;
   lastSyncTime?: string | null;
   onSyncPlayers?: (force?: boolean) => void;
@@ -182,18 +183,25 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             )}
           </div>
 
-          <div className="flex items-baseline gap-2.5 flex-wrap">
+          {/* 1段目: 氏名 段位 */}
+          <div className="flex items-baseline gap-2.5">
             <h3 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
               {formatPlayerName(player.name)}
             </h3>
-            <span className="text-xs font-bold text-amber-400 font-serif-jp">
+            <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp">
               {player.danRank && !player.rank.includes(player.danRank)
                 ? `${player.rank} (${player.danRank})`
                 : player.rank}
             </span>
-            <span className="text-[11px] text-zinc-400">
-              {player.master ? `${player.master}門下 / ` : player.birthPlace ? `${player.birthPlace} / ` : ''}{player.style || '居飛車'}
-            </span>
+          </div>
+
+          {/* 2段目: 門下 / 得意戦型 */}
+          <div className="text-[11px] text-zinc-400 mt-0.5 font-medium leading-tight">
+            {player.master
+              ? `${player.master}門下 / ${player.style || '居飛車'}`
+              : player.birthPlace
+              ? `${player.birthPlace} / ${player.style || '居飛車'}`
+              : player.style || '居飛車'}
           </div>
 
           {/* Titles / Career Titles Badges */}
@@ -237,7 +245,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
           <div>
             <span className="text-[9px] text-zinc-500 block">今年度勝率</span>
             <span className="font-bold text-emerald-400 font-serif-jp">
-              {hasYearStats ? `${(player.currentYearWinRate * 100).toFixed(0)}%` : '対局中'}
+              {hasYearStats ? `${(player.currentYearWinRate * 100).toFixed(0)}%` : ''}
             </span>
           </div>
         </div>
@@ -289,6 +297,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   onRemoveFollow,
   onSelectPlayer,
   onImportScrapedPlayer,
+  onUpdateAllPlayers,
   isSyncingPlayers = false,
   lastSyncTime,
   onSyncPlayers,
@@ -296,6 +305,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'pro' | 'women'>('all');
   const [affiliationFilter, setAffiliationFilter] = useState<PlayerAffiliation | 'all'>('all');
+  const [titleFilter, setTitleFilter] = useState<'all' | 'hasTitle' | 'noTitle'>('all');
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'number' | 'wins' | 'winrate' | 'titles'>('number');
   const [showOnlyFollowed, setShowOnlyFollowed] = useState(false);
@@ -304,12 +314,14 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     return new Map(followedList.map((f) => [f.playerId, f]));
   }, [followedList]);
 
-  // Helper to count matching players for a given rank under current filterType & affiliationFilter
+  // Helper to count matching players for a given rank under current filterType, affiliationFilter & titleFilter
   const getRankCount = (rank: string) => {
     return players.filter((p) => {
       if (filterType === 'pro' && p.type === 'women') return false;
       if (filterType === 'women' && p.type !== 'women') return false;
       if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+      if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
+      if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
       return matchesRankFilter(p, rank);
     }).length;
   };
@@ -321,12 +333,12 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     }
   }, [filterType, affiliationFilter]);
 
-  // If selected rankFilter has 0 matching players under current filterType & affiliationFilter, reset to 'all'
+  // If selected rankFilter has 0 matching players under current filterType, affiliationFilter & titleFilter, reset to 'all'
   useEffect(() => {
     if (rankFilter !== 'all' && getRankCount(rankFilter) === 0) {
       setRankFilter('all');
     }
-  }, [filterType, affiliationFilter, rankFilter, players]);
+  }, [filterType, affiliationFilter, titleFilter, rankFilter, players]);
 
   // Filter and sort players with guaranteed total titles and reactive recalculation
   const filteredPlayers = useMemo(() => {
@@ -338,6 +350,9 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
         if (filterType === 'women' && p.type !== 'women') return false;
 
         if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+
+        if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
+        if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
 
         if (!matchesRankFilter(p, rankFilter)) return false;
 
@@ -371,7 +386,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           (a.playerNumber || 999) - (b.playerNumber || 999)
         );
       });
-  }, [players, followedMap, filterType, affiliationFilter, rankFilter, searchQuery, sortBy, showOnlyFollowed]);
+  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, searchQuery, sortBy, showOnlyFollowed]);
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -408,7 +423,9 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           <KishibetsuSyncPanel
             players={players}
             onPlayersSynced={(updated) => {
-              if (onImportScrapedPlayer) {
+              if (onUpdateAllPlayers) {
+                onUpdateAllPlayers(updated);
+              } else if (onImportScrapedPlayer) {
                 updated.forEach((p) => onImportScrapedPlayer(p));
               }
             }}
@@ -536,6 +553,49 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 </button>
               );
             })}
+          </div>
+
+          {/* Title Filter (タイトル: あり / なし) */}
+          <div className="flex items-center gap-2 flex-wrap pt-0.5">
+            <span className="text-zinc-400 font-semibold mr-1">タイトル:</span>
+            <button
+              type="button"
+              onClick={() => setTitleFilter((prev) => (prev === 'hasTitle' ? 'all' : 'hasTitle'))}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
+                titleFilter === 'hasTitle'
+                  ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                  : 'bg-zinc-950 text-amber-400 hover:text-amber-300 border border-zinc-800'
+              }`}
+            >
+              <span>あり</span>
+              <span className="text-[10px] opacity-80">
+                ({players.filter((p) => {
+                  if (filterType === 'pro' && p.type === 'women') return false;
+                  if (filterType === 'women' && p.type !== 'women') return false;
+                  if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+                  return p.heldTitles && p.heldTitles.length > 0;
+                }).length})
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTitleFilter((prev) => (prev === 'noTitle' ? 'all' : 'noTitle'))}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
+                titleFilter === 'noTitle'
+                  ? 'bg-zinc-700 text-white font-bold shadow-sm'
+                  : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+              }`}
+            >
+              <span>なし</span>
+              <span className="text-[10px] opacity-80">
+                ({players.filter((p) => {
+                  if (filterType === 'pro' && p.type === 'women') return false;
+                  if (filterType === 'women' && p.type !== 'women') return false;
+                  if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+                  return !p.heldTitles || p.heldTitles.length === 0;
+                }).length})
+              </span>
+            </button>
           </div>
 
           {/* Rank Quick Filters */}

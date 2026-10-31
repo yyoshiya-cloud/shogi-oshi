@@ -126,7 +126,7 @@ export function calculateAge(year: number, month: number, day: number): number {
 }
 
 /**
- * Formats a birthdate string into "YYYY年MM月DD日（満XX歳）".
+ * Formats a birthdate string into "YYYY年MM月DD日\n（XX歳）".
  * Handles YYYY-MM-DD, YYYY/MM/DD, and YYYY年MM月DD日 formats.
  */
 export function formatBirthDateWithAge(birthDateStr?: string | null): string {
@@ -143,7 +143,7 @@ export function formatBirthDateWithAge(birthDateStr?: string | null): string {
     const age = calculateAge(y, m, d);
     const mm = String(m).padStart(2, '0');
     const dd = String(d).padStart(2, '0');
-    return `${y}年${mm}月${dd}日（満${age}歳）`;
+    return `${y}年${mm}月${dd}日\n（${age}歳）`;
   }
 
   // Pattern 2: YYYY年M月D日 or YYYY年MM月DD日
@@ -155,7 +155,7 @@ export function formatBirthDateWithAge(birthDateStr?: string | null): string {
     const age = calculateAge(y, m, d);
     const mm = String(m).padStart(2, '0');
     const dd = String(d).padStart(2, '0');
-    return `${y}年${mm}月${dd}日（満${age}歳）`;
+    return `${y}年${mm}月${dd}日\n（${age}歳）`;
   }
 
   return clean;

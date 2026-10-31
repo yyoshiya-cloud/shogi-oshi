@@ -105,12 +105,12 @@ export const PlayerYearlyChartSvg: React.FC<PlayerYearlyChartSvgProps> = ({
         const isSelected =
           selectedYearIndex === index ||
           (selectedYearIndex === null && index === records.length - 1);
-        const isPreDebut = item.isPreDebut || item.wins + item.losses === 0;
+        const isPreDebut = item.isPreDebut === true;
 
-        const winHeight = Math.max(2, (item.wins / ceilingVal) * plotH);
+        const winHeight = item.wins > 0 ? Math.max(2, (item.wins / ceilingVal) * plotH) : 0;
         const winY = bottomY - winHeight;
 
-        const lossHeight = Math.max(2, (item.losses / ceilingVal) * plotH);
+        const lossHeight = item.losses > 0 ? Math.max(2, (item.losses / ceilingVal) * plotH) : 0;
         const lossY = bottomY - lossHeight;
 
         const winX = groupCenterX - barWidth - gap / 2;
@@ -485,7 +485,8 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                       ? effectiveYearRecords[selectedYearIndex]
                       : effectiveYearRecords[effectiveYearRecords.length - 1];
                   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
-                  const isPreDebut = activeRecord?.isPreDebut || totalGames === 0;
+                  const isPreDebut = activeRecord?.isPreDebut === true;
+                  const isZeroGames = totalGames === 0;
 
                   return (
                     <div className="bg-gradient-to-r from-zinc-900/90 via-zinc-900 to-amber-950/20 border border-zinc-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -500,6 +501,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                         )}
                         {isPreDebut ? (
                           <span className="text-zinc-400 font-medium">プロ入り前（公式戦未出場）</span>
+                        ) : isZeroGames ? (
+                          <span className="text-zinc-400 font-medium">
+                            総対局数 <strong className="text-white text-sm font-bold">0</strong> 局
+                          </span>
                         ) : (
                           <span className="text-zinc-300 font-medium">
                             総対局数 <strong className="text-white text-sm font-bold">{totalGames}</strong> 局
@@ -512,6 +517,15 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                           <span className="px-2.5 py-1 rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                             奨励会・研修会等在籍期間
                           </span>
+                        ) : isZeroGames ? (
+                          <>
+                            <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 font-medium text-xs">
+                              0勝 0敗
+                            </span>
+                            <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 font-medium text-xs">
+                              勝率: －
+                            </span>
+                          </>
                         ) : (
                           <>
                             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1">
@@ -632,12 +646,13 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                             (selectedYearIndex === null &&
                               originalIdx === effectiveYearRecords.length - 1);
                           const total = r.wins + r.losses;
-                          const isPreDebut = r.isPreDebut || total === 0;
+                          const isPreDebut = r.isPreDebut === true;
+                          const isZeroGames = total === 0;
                           const activeRates = effectiveYearRecords
                             .filter((item) => item.wins + item.losses > 0 && !item.isPreDebut)
                             .map((item) => item.rate);
                           const isBestRate =
-                            !isPreDebut && activeRates.length > 0 && r.rate === Math.max(...activeRates);
+                            !isPreDebut && !isZeroGames && activeRates.length > 0 && r.rate === Math.max(...activeRates);
 
                           return (
                             <tr
@@ -672,7 +687,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                               </td>
                               <td className="py-2 px-3 text-center font-medium">
                                 {isPreDebut ? (
-                                  <span className="text-zinc-500">0局</span>
+                                  <span className="text-zinc-500">－</span>
                                 ) : (
                                   `${total}局`
                                 )}
@@ -695,6 +710,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                 {isPreDebut ? (
                                   <span className="text-zinc-500 font-sans text-[11px] font-normal">
                                     － (プロ入り前)
+                                  </span>
+                                ) : isZeroGames ? (
+                                  <span className="text-zinc-500 font-sans text-[11px] font-normal">
+                                    －
                                   </span>
                                 ) : (
                                   <span className="text-amber-300">{(r.rate * 100).toFixed(1)}%</span>
@@ -908,7 +927,8 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
       ? records[selectedYearIndex]
       : records[records.length - 1];
   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
-  const isPreDebut = activeRecord?.isPreDebut || totalGames === 0;
+  const isPreDebut = activeRecord?.isPreDebut === true;
+  const isZeroGames = totalGames === 0;
 
   return (
     <div
@@ -1004,6 +1024,10 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
               <span className="text-zinc-400 font-medium text-sm">
                 プロ入り前（公式戦未出場）
               </span>
+            ) : isZeroGames ? (
+              <span className="text-zinc-400 font-medium text-sm">
+                総対局数 <strong className="text-white text-base font-bold">0</strong> 局
+              </span>
             ) : (
               <span className="text-zinc-300 font-medium text-sm">
                 総対局数 <strong className="text-white text-base font-bold">{totalGames}</strong> 局
@@ -1015,6 +1039,15 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
               <span className="px-3 py-1.5 rounded-xl bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                 奨励会・研修会等在籍期間
               </span>
+            ) : isZeroGames ? (
+              <>
+                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-zinc-800 text-zinc-400 font-medium text-xs">
+                  0勝 0敗
+                </div>
+                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-zinc-800 text-zinc-500 font-medium text-xs">
+                  勝率: －
+                </div>
+              </>
             ) : (
               <>
                 <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5">

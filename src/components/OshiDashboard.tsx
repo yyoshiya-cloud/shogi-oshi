@@ -300,18 +300,25 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-baseline gap-2.5 flex-wrap">
+                      {/* 1段目: 氏名 段位 */}
+                      <div className="flex items-baseline gap-2.5">
                         <h4 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
                           {formatPlayerName(player.name)}
                         </h4>
-                        <span className="text-xs font-bold text-amber-400 font-serif-jp">
+                        <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp">
                           {player.danRank && !player.rank.includes(player.danRank)
                             ? `${player.rank} (${player.danRank})`
                             : player.rank}
                         </span>
-                        <span className="text-[11px] text-zinc-400">
-                          {player.master} 門下 • {player.style}
-                        </span>
+                      </div>
+
+                      {/* 2段目: 門下 / 得意戦型 */}
+                      <div className="text-[11px] text-zinc-400 mt-0.5 font-medium leading-tight">
+                        {player.master
+                          ? `${player.master}門下 / ${player.style || '居飛車'}`
+                          : player.birthPlace
+                          ? `${player.birthPlace} / ${player.style || '居飛車'}`
+                          : player.style || '居飛車'}
                       </div>
 
                       {config.cheeringNote && (
@@ -350,7 +357,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                       <div className="border-l border-zinc-800 pl-3">
                         <span className="text-[9px] text-zinc-500 block">今年度勝率</span>
                         <span className="font-bold text-emerald-400 font-serif-jp">
-                          {(player.currentYearWinRate * 100).toFixed(0)}%
+                          {player.currentYearWins + player.currentYearLosses > 0 ? `${(player.currentYearWinRate * 100).toFixed(0)}%` : ''}
                         </span>
                       </div>
                     </div>

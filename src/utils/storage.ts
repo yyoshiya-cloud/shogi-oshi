@@ -1,6 +1,7 @@
 import { FollowedPlayerConfig, PushNotificationItem, Match, Player } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import { applyPlayerOverrides } from './playerUtils';
+import { initializePlayerRecords } from './yearRecordsGenerator';
 import { filterBulletinNotifications } from './notificationFilter';
 import { getTodayDateString, getTodayInfo } from './dateUtils';
 
@@ -8,8 +9,8 @@ const STORAGE_KEYS = {
   FOLLOWED: 'shogi_oshi_followed_v2',
   NOTIFICATIONS: 'shogi_oshi_notifications_v2',
   SETTINGS: 'shogi_oshi_settings_v2',
-  PLAYERS: 'shogi_oshi_all_players_v3',
-  LAST_SYNC: 'shogi_oshi_players_last_sync_v3',
+  PLAYERS: 'shogi_oshi_all_players_v8',
+  LAST_SYNC: 'shogi_oshi_players_last_sync_v8',
   MATCHES: 'shogi_oshi_all_matches_v1',
   MATCH_LAST_SYNC: 'shogi_oshi_matches_last_sync_v1',
 };
@@ -142,15 +143,34 @@ export function saveStoredFollowed(data: FollowedPlayerConfig[], userEmail?: str
 
 export function getStoredPlayers(): Player[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
-    if (!raw) return PLAYERS_DATA.map(applyPlayerOverrides);
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length < 50) {
-      return PLAYERS_DATA.map(applyPlayerOverrides);
+    let raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
+    if (!raw) {
+      const oldRaw = localStorage.getItem('shogi_oshi_all_players_v3');
+      if (oldRaw) {
+        raw = oldRaw;
+        try {
+          localStorage.removeItem('shogi_oshi_all_players_v3');
+        } catch {}
+      }
     }
-    return parsed.map(applyPlayerOverrides);
+    let players: Player[];
+    if (!raw) {
+      players = PLAYERS_DATA;
+    } else {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length < 20) {
+        players = PLAYERS_DATA;
+      } else {
+        players = parsed;
+      }
+    }
+    const initialized = players.map(initializePlayerRecords);
+    saveStoredPlayers(initialized);
+    return initialized;
   } catch {
-    return PLAYERS_DATA.map(applyPlayerOverrides);
+    const initialized = PLAYERS_DATA.map(initializePlayerRecords);
+    saveStoredPlayers(initialized);
+    return initialized;
   }
 }
 

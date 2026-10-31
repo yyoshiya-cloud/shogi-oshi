@@ -540,7 +540,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   </div>
                   <div>
                     <span className="text-zinc-500 block">生年月日</span>
-                    <span className="font-semibold text-zinc-200">
+                    <span className="font-semibold text-zinc-200 whitespace-pre-line">
                       {formatBirthDateWithAge(activePlayer.birthDate)}
                     </span>
                   </div>

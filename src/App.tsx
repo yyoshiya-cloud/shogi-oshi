@@ -24,6 +24,7 @@ import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
 import { formatPlayerName } from './utils/playerUtils';
+import { initializePlayerRecords } from './utils/yearRecordsGenerator';
 import { OshiDashboard } from './components/OshiDashboard';
 import { CalendarScheduleView } from './components/CalendarScheduleView';
 import { PlayerDirectory } from './components/PlayerDirectory';
@@ -150,17 +151,20 @@ export default function App() {
             ryuoClass: ryuoClass || p.ryuoClass,
           };
         });
-        saveStoredPlayers(cleaned);
-        return cleaned;
+        const fullyInitialized = cleaned.map(initializePlayerRecords);
+        saveStoredPlayers(fullyInitialized);
+        return fullyInitialized;
       }
       return stored.map((p) => {
         const v = getPlayerTotalTitles(p);
-        return v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+        const withTitles = v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+        return initializePlayerRecords(withTitles);
       });
     }
     return PLAYERS_DATA.map((p) => {
       const v = getPlayerTotalTitles(p);
-      return v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+      const withTitles = v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+      return initializePlayerRecords(withTitles);
     });
   });
   const [matchesList, setMatchesList] = useState<Match[]>(() => {
@@ -320,10 +324,8 @@ export default function App() {
           // Keep custom added players
           const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
           const merged = [...data.players, ...customPlayers].map((p) => {
-            if (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) {
-              return { ...p, totalTitles: 4 };
-            }
-            return p;
+            const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
+            return initializePlayerRecords(withTitles);
           });
           saveStoredPlayers(merged);
           return merged;
@@ -645,6 +647,10 @@ export default function App() {
             onRemoveFollow={handleRemoveFollow}
             onSelectPlayer={(p) => setSelectedPlayer(p)}
             onImportScrapedPlayer={handleImportScrapedPlayer}
+            onUpdateAllPlayers={(updated) => {
+              setPlayersList(updated);
+              saveStoredPlayers(updated);
+            }}
             isSyncingPlayers={isSyncingPlayers}
             lastSyncTime={lastSyncTime}
             onSyncPlayers={handleSyncPlayers}
