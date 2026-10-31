@@ -10,11 +10,13 @@ import { saveStoredPlayers, getStoredPlayers } from '../utils/storage';
 interface KishibetsuSyncPanelProps {
   players?: Player[];
   onPlayersSynced?: (updatedPlayers: Player[]) => void;
+  onRefreshMatches?: () => void;
 }
 
 export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
   players = [],
   onPlayersSynced,
+  onRefreshMatches,
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncComplete, setSyncComplete] = useState(false);
@@ -35,6 +37,20 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
       if (onPlayersSynced) {
         onPlayersSynced(updated);
       }
+
+      // 当該年度の対局結果（対局スケジュール・月別勝敗結果）を最新更新
+      try {
+        if (onRefreshMatches) {
+          onRefreshMatches();
+        }
+        await Promise.all([
+          fetch('/api/matches/sync?force=true').catch(() => {}),
+          fetch('/api/matches/results?all=true&force=true').catch(() => {}),
+        ]);
+      } catch (mErr) {
+        console.warn('Match results sync notice:', mErr);
+      }
+
       setSyncCount(updated.length);
       setSyncComplete(true);
     } catch (err) {
@@ -44,7 +60,7 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
     }
   };
 
-  const handleVerifyAndReloadAll = () => {
+  const handleVerifyAndReloadAll = async () => {
     setIsVerifying(true);
     setVerifyMsg(null);
     try {
@@ -57,7 +73,21 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
       if (onPlayersSynced) {
         onPlayersSynced(reloaded);
       }
-      setVerifyMsg(`全 ${reloaded.length} 名（プロ棋士・女流棋士）の2021〜2026年度成績を対局データから完全初期化・再計算し、ステータス（休場・引退・順位戦クラス）の検証・適用が完了しました。`);
+
+      // 当該年度の対局結果（対局スケジュール・月別勝敗結果）を最新更新
+      try {
+        if (onRefreshMatches) {
+          onRefreshMatches();
+        }
+        await Promise.all([
+          fetch('/api/matches/sync?force=true').catch(() => {}),
+          fetch('/api/matches/results?all=true&force=true').catch(() => {}),
+        ]);
+      } catch (mErr) {
+        console.warn('Match results refresh notice:', mErr);
+      }
+
+      setVerifyMsg(`全 ${reloaded.length} 名（プロ棋士・女流棋士）の2021〜2026年度成績および当該年度対局結果を完全初期化・最新反映いたしました。`);
     } catch (e) {
       console.error('Verify error:', e);
     } finally {

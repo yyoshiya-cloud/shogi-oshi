@@ -35,6 +35,7 @@ interface PlayerDirectoryProps {
   isSyncingPlayers?: boolean;
   lastSyncTime?: string | null;
   onSyncPlayers?: (force?: boolean) => void;
+  onRefreshMatches?: () => void;
 }
 
 const BADGE_COLORS: Record<OshiBadge, { bg: string; text: string; border: string }> = {
@@ -301,14 +302,14 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   isSyncingPlayers = false,
   lastSyncTime,
   onSyncPlayers,
+  onRefreshMatches,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'pro' | 'women'>('all');
-  const [affiliationFilter, setAffiliationFilter] = useState<PlayerAffiliation | 'all'>('all');
+  const [affiliationFilter, setAffiliationFilter] = useState<PlayerAffiliation | 'all' | 'oshi'>('all');
   const [titleFilter, setTitleFilter] = useState<'all' | 'hasTitle' | 'noTitle'>('all');
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'number' | 'wins' | 'winrate' | 'titles'>('number');
-  const [showOnlyFollowed, setShowOnlyFollowed] = useState(false);
 
   const followedMap = useMemo(() => {
     return new Map(followedList.map((f) => [f.playerId, f]));
@@ -319,16 +320,20 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     return players.filter((p) => {
       if (filterType === 'pro' && p.type === 'women') return false;
       if (filterType === 'women' && p.type !== 'women') return false;
-      if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+      if (affiliationFilter === 'oshi') {
+        if (!followedMap.has(p.id)) return false;
+      } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
+        return false;
+      }
       if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
       if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
       return matchesRankFilter(p, rank);
     }).length;
   };
 
-  // When filterType becomes 'pro', restrict affiliationFilter to '日本将棋連盟'
+  // When filterType becomes 'pro', restrict affiliationFilter if it was LPSA or 無所属
   useEffect(() => {
-    if (filterType === 'pro' && affiliationFilter !== '日本将棋連盟') {
+    if (filterType === 'pro' && (affiliationFilter === 'LPSA' || affiliationFilter === '無所属')) {
       setAffiliationFilter('日本将棋連盟');
     }
   }, [filterType, affiliationFilter]);
@@ -342,19 +347,22 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
   // Filter and sort players with guaranteed total titles and reactive recalculation
   const filteredPlayers = useMemo(() => {
-    return players
-      .filter((p) => {
-        if (showOnlyFollowed && !followedMap.has(p.id)) return false;
-
+    return players.filter((p) => {
         if (filterType === 'pro' && p.type === 'women') return false;
         if (filterType === 'women' && p.type !== 'women') return false;
 
-        if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+        if (affiliationFilter === 'oshi') {
+          if (!followedMap.has(p.id)) return false;
+        } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
+          return false;
+        }
 
-        if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
-        if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
+        if (affiliationFilter !== 'oshi') {
+          if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
+          if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
 
-        if (!matchesRankFilter(p, rankFilter)) return false;
+          if (!matchesRankFilter(p, rankFilter)) return false;
+        }
 
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
@@ -386,7 +394,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           (a.playerNumber || 999) - (b.playerNumber || 999)
         );
       });
-  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, searchQuery, sortBy, showOnlyFollowed]);
+  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, searchQuery, sortBy]);
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -402,21 +410,6 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               日本将棋連盟・LPSA所属プロの公式戦通算成績、獲得タイトル、戦型データを網羅
             </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowOnlyFollowed(!showOnlyFollowed)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm ${
-                showOnlyFollowed
-                  ? 'bg-rose-600 text-white shadow-rose-600/30'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
-            >
-              <Heart size={14} className={showOnlyFollowed ? 'fill-current' : ''} />
-              <span>推し棋士のみ ({followedList.length})</span>
-            </button>
-          </div>
         </div>
 
         {onSyncPlayers && (
@@ -429,6 +422,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 updated.forEach((p) => onImportScrapedPlayer(p));
               }
             }}
+            onRefreshMatches={onRefreshMatches}
           />
         )}
       </div>
@@ -553,16 +547,39 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 </button>
               );
             })}
+
+            {/* 推し棋士ボタン */}
+            <button
+              type="button"
+              onClick={() => setAffiliationFilter((prev) => (prev === 'oshi' ? 'all' : 'oshi'))}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
+                affiliationFilter === 'oshi'
+                  ? 'bg-rose-600 text-white font-bold shadow-sm shadow-rose-600/30'
+                  : 'bg-zinc-950 text-rose-300 hover:text-rose-200 border border-rose-500/40'
+              }`}
+            >
+              <Heart size={11} className="fill-current text-rose-400" />
+              <span>推し棋士</span>
+              <span className="text-[10px] opacity-80">
+                ({followedList.length})
+              </span>
+            </button>
           </div>
 
           {/* Title Filter (タイトル: あり / なし) */}
           <div className="flex items-center gap-2 flex-wrap pt-0.5">
-            <span className="text-zinc-400 font-semibold mr-1">タイトル:</span>
+            <span className={`font-semibold mr-1 transition-colors ${affiliationFilter === 'oshi' ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              タイトル:
+            </span>
             <button
               type="button"
+              disabled={affiliationFilter === 'oshi'}
               onClick={() => setTitleFilter((prev) => (prev === 'hasTitle' ? 'all' : 'hasTitle'))}
+              title={affiliationFilter === 'oshi' ? '推し棋士選択時は不活性' : undefined}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
-                titleFilter === 'hasTitle'
+                affiliationFilter === 'oshi'
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : titleFilter === 'hasTitle'
                   ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
                   : 'bg-zinc-950 text-amber-400 hover:text-amber-300 border border-zinc-800'
               }`}
@@ -572,16 +589,24 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 ({players.filter((p) => {
                   if (filterType === 'pro' && p.type === 'women') return false;
                   if (filterType === 'women' && p.type !== 'women') return false;
-                  if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+                  if (affiliationFilter === 'oshi') {
+                    if (!followedMap.has(p.id)) return false;
+                  } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
+                    return false;
+                  }
                   return p.heldTitles && p.heldTitles.length > 0;
                 }).length})
               </span>
             </button>
             <button
               type="button"
+              disabled={affiliationFilter === 'oshi'}
               onClick={() => setTitleFilter((prev) => (prev === 'noTitle' ? 'all' : 'noTitle'))}
+              title={affiliationFilter === 'oshi' ? '推し棋士選択時は不活性' : undefined}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 ${
-                titleFilter === 'noTitle'
+                affiliationFilter === 'oshi'
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : titleFilter === 'noTitle'
                   ? 'bg-zinc-700 text-white font-bold shadow-sm'
                   : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
               }`}
@@ -591,7 +616,11 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 ({players.filter((p) => {
                   if (filterType === 'pro' && p.type === 'women') return false;
                   if (filterType === 'women' && p.type !== 'women') return false;
-                  if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) return false;
+                  if (affiliationFilter === 'oshi') {
+                    if (!followedMap.has(p.id)) return false;
+                  } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
+                    return false;
+                  }
                   return !p.heldTitles || p.heldTitles.length === 0;
                 }).length})
               </span>
@@ -600,12 +629,18 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
           {/* Rank Quick Filters */}
           <div className="flex items-center gap-1.5 flex-wrap pt-1">
-            <span className="text-zinc-400 font-semibold mr-1">段位:</span>
+            <span className={`font-semibold mr-1 transition-colors ${affiliationFilter === 'oshi' ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              段位:
+            </span>
             <button
               type="button"
+              disabled={affiliationFilter === 'oshi'}
               onClick={() => setRankFilter('all')}
+              title={affiliationFilter === 'oshi' ? '推し棋士選択時は不活性' : undefined}
               className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
-                rankFilter === 'all'
+                affiliationFilter === 'oshi'
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : rankFilter === 'all'
                   ? 'bg-amber-500 text-stone-950 font-bold shadow-sm'
                   : 'bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'
               }`}
@@ -616,13 +651,13 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             {/* Pro Ranks */}
             {PRO_RANKS.map((rank) => {
               const count = getRankCount(rank);
-              const isProDisabled = filterType === 'women' || count === 0;
+              const isProDisabled = affiliationFilter === 'oshi' || filterType === 'women' || count === 0;
               return (
                 <button
                   key={rank}
                   disabled={isProDisabled}
                   onClick={() => setRankFilter(rank)}
-                  title={isProDisabled ? '該当棋士なし / 不活性' : undefined}
+                  title={isProDisabled ? '不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
                     isProDisabled
                       ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
@@ -639,19 +674,19 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             {/* Women Ranks */}
             {WOMEN_RANKS.map((rank) => {
               const count = getRankCount(rank);
-              const isWomenDisabled = filterType === 'pro' || count === 0;
+              const isWomenDisabled = affiliationFilter === 'oshi' || filterType === 'pro' || count === 0;
               return (
                 <button
                   key={rank}
                   disabled={isWomenDisabled}
                   onClick={() => setRankFilter(rank)}
-                  title={isWomenDisabled ? '該当女流棋士なし / 不活性' : undefined}
+                  title={isWomenDisabled ? '不活性' : undefined}
                   className={`px-2 py-1 rounded-lg text-[11px] font-medium transition ${
                     isWomenDisabled
                       ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
                       : rankFilter === rank
                       ? 'bg-rose-500 text-white font-bold shadow-sm'
-                      : 'bg-zinc-950 text-rose-300 hover:bg-zinc-800 border border-zinc-800/80'
+                      : 'bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
                   {rank} <span className="text-[9px] opacity-70">({count})</span>
@@ -692,7 +727,6 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 setFilterType('all');
                 setAffiliationFilter('all');
                 setRankFilter('all');
-                setShowOnlyFollowed(false);
               }}
               className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition shadow cursor-pointer"
             >

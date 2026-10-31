@@ -238,10 +238,11 @@ export default function App() {
 
   const handleLogoutGoogle = () => {
     setGoogleUser(null);
+    setFollowedList([]); // クリア
     try {
       localStorage.removeItem('shogi_oshi_google_user');
     } catch {}
-    setSyncToast(`Googleアカウントからログアウトしました。`);
+    setSyncToast(`Googleアカウントからログアウトしました。推し棋士一覧をクリアしました。`);
     setTimeout(() => setSyncToast(null), 3000);
   };
 
@@ -433,6 +434,11 @@ export default function App() {
 
   // Follow/unfollow handlers
   const handleToggleFollow = (config: FollowedPlayerConfig) => {
+    if (!googleUser) {
+      setSyncToast('推し棋士を登録するにはGoogleアカウントでログインしてください。');
+      setTimeout(() => setSyncToast(null), 3500);
+      return;
+    }
     const idx = followedList.findIndex((f) => f.playerId === config.playerId);
     let updated: FollowedPlayerConfig[];
     if (idx >= 0) {
@@ -651,6 +657,7 @@ export default function App() {
               setPlayersList(updated);
               saveStoredPlayers(updated);
             }}
+            onRefreshMatches={() => handleSyncMatches(true)}
             isSyncingPlayers={isSyncingPlayers}
             lastSyncTime={lastSyncTime}
             onSyncPlayers={handleSyncPlayers}
