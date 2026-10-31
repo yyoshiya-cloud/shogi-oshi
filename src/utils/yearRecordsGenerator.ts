@@ -14,9 +14,10 @@ function cleanName(s?: string): string {
   return s ? s.replace(/[\s\u3000※＊\*]/g, '') : '';
 }
 
-function indexMatchesOnce(): void {
-  if (matchesIndexed) return;
-  const data = results2026Json as Record<string, ShogiMonthlyResult[]>;
+export function updateMatchStatsData(customData?: Record<string, ShogiMonthlyResult[]>): void {
+  matchStatsMap.clear();
+  const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
+  const data = customData ? { ...base, ...customData } : base;
   for (const month of Object.keys(data)) {
     const list = data[month];
     if (!Array.isArray(list)) continue;
@@ -54,6 +55,11 @@ function indexMatchesOnce(): void {
     }
   }
   matchesIndexed = true;
+}
+
+function indexMatchesOnce(): void {
+  if (matchesIndexed) return;
+  updateMatchStatsData();
 }
 
 /**

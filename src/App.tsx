@@ -17,14 +17,15 @@ import {
   getStoredMatchLastSync,
   saveStoredMatchLastSync,
   triggerPushNotification,
-  deduplicateMatches
+  deduplicateMatches,
+  getStoredFiscalResults
 } from './utils/storage';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
 import { formatPlayerName } from './utils/playerUtils';
-import { initializePlayerRecords } from './utils/yearRecordsGenerator';
+import { initializePlayerRecords, updateMatchStatsData } from './utils/yearRecordsGenerator';
 import { OshiDashboard } from './components/OshiDashboard';
 import { CalendarScheduleView } from './components/CalendarScheduleView';
 import { PlayerDirectory } from './components/PlayerDirectory';
@@ -48,6 +49,8 @@ type TabType = 'dashboard' | 'calendar' | 'directory' | 'notifications';
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [playersList, setPlayersList] = useState<Player[]>(() => {
+    // 起動時に2025・2026両年度の対局結果データをインデックス化
+    updateMatchStatsData(getStoredFiscalResults());
     const stored = getStoredPlayers();
     if (stored && stored.length > 0) {
       // Check if any static player from PLAYERS_DATA is missing in stored, or if cleanup/normalization is needed
@@ -68,10 +71,24 @@ export default function App() {
         return verified > 0 && p.totalTitles !== verified;
       });
 
+      const needs2025Restore = stored.some((p) => {
+        const r2025 = (p.yearRecords || []).find((r) => r.year === 2025);
+        return (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'habu-yoshiharu') && (!r2025 || (r2025.wins === 0 && r2025.losses === 0));
+      });
+
+      const needsLeaveStatsUpdate = stored.some((p) => {
+        if (p.name && p.name.includes('山田朱未') && p.careerWins < 104) return true;
+        if (p.name && p.name.includes('早水千紗') && p.careerWins < 195) return true;
+        if (p.name && p.name.includes('井道千尋') && p.careerWins < 125) return true;
+        return false;
+      });
+
       const needsCleanup =
         missingStatic.length > 0 ||
         needsLpsaOrNakaiUpdate ||
         needsTitleUpdate ||
+        needs2025Restore ||
+        needsLeaveStatsUpdate ||
         stored.some(
           (p) =>
             (p.name && !p.name.includes(' ') && !p.name.includes('\u3000') && p.name.length >= 3) ||

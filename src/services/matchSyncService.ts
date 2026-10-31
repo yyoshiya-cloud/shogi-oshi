@@ -522,10 +522,31 @@ export async function getAllFiscalYearResults(fiscalYear = 2026): Promise<Record
 }
 
 /**
- * Get results for current 2026 fiscal year (2026年度: 2026年4月〜2027年3月)
+ * Get results for multiple fiscal years (2025 and 2026),
+ * keeping complete historical archive for 2025 and live scraping for 2026.
+ */
+export async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<string, ShogiMonthlyResult[]>> {
+  const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
+  const res: Record<string, ShogiMonthlyResult[]> = { ...bundled };
+
+  // Dynamically refresh 2026 fiscal year months
+  if (years.includes(2026)) {
+    const months2026 = getFiscalYearMonths(2026);
+    for (const m of months2026) {
+      const data = await scrapeMonthlyResults(m, false);
+      if (data.results && data.results.length > 0) {
+        res[m] = data.results;
+      }
+    }
+  }
+  return res;
+}
+
+/**
+ * Get results for fiscal years (includes 2025 and 2026)
  */
 export async function getAll2026Results(): Promise<Record<string, ShogiMonthlyResult[]>> {
-  return getAllFiscalYearResults(2026);
+  return getAllMultiYearResults([2025, 2026]);
 }
 
 

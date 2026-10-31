@@ -163,14 +163,50 @@ export function formatBirthDateWithAge(birthDateStr?: string | null): string {
 
 import { Player } from '../types/shogi';
 
+export function isPlayerOnLeave(player: { highlights?: string[]; shortBio?: string; name?: string }): boolean {
+  if (player.highlights && player.highlights.some(h => h.includes('休場'))) return true;
+  if (player.shortBio && player.shortBio.includes('休場中')) return true;
+  const nameClean = player.name ? player.name.replace(/[\s\u3000※＊\*]/g, '') : '';
+  if (nameClean.includes('山田朱未') || nameClean.includes('早水千紗') || nameClean.includes('井道千尋')) return true;
+  return false;
+}
+
 export function applyPlayerOverrides(p: Player): Player {
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
-  if (nameClean.includes('早水千紗') || nameClean.includes('山田朱未')) {
+  if (nameClean.includes('山田朱未')) {
     return {
       ...p,
-      careerWins: 0,
-      careerLosses: 0,
-      careerWinRate: 0,
+      careerWins: 104,
+      careerLosses: 117,
+      careerWinRate: 0.471,
+      currentYearWins: 0,
+      currentYearLosses: 0,
+      currentYearWinRate: 0,
+      yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
+      highlights: ['休場中'],
+      shortBio: `${p.affiliation || '日本将棋連盟'}所属の女流棋士（${p.rank}）。現在は休場中。`,
+    };
+  }
+  if (nameClean.includes('早水千紗')) {
+    return {
+      ...p,
+      careerWins: 195,
+      careerLosses: 182,
+      careerWinRate: 0.517,
+      currentYearWins: 0,
+      currentYearLosses: 0,
+      currentYearWinRate: 0,
+      yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
+      highlights: ['休場中'],
+      shortBio: `${p.affiliation || '日本将棋連盟'}所属の女流棋士（${p.rank}）。現在は休場中。`,
+    };
+  }
+  if (nameClean.includes('井道千尋')) {
+    return {
+      ...p,
+      careerWins: 125,
+      careerLosses: 149,
+      careerWinRate: 0.456,
       currentYearWins: 0,
       currentYearLosses: 0,
       currentYearWinRate: 0,

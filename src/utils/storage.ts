@@ -1,5 +1,6 @@
-import { FollowedPlayerConfig, PushNotificationItem, Match, Player } from '../types/shogi';
+import { FollowedPlayerConfig, PushNotificationItem, Match, Player, ShogiMonthlyResult } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
+import results2026Json from '../data/results2026.json';
 import { applyPlayerOverrides } from './playerUtils';
 import { initializePlayerRecords } from './yearRecordsGenerator';
 import { filterBulletinNotifications } from './notificationFilter';
@@ -13,6 +14,7 @@ const STORAGE_KEYS = {
   LAST_SYNC: 'shogi_oshi_players_last_sync_v8',
   MATCHES: 'shogi_oshi_all_matches_v1',
   MATCH_LAST_SYNC: 'shogi_oshi_matches_last_sync_v1',
+  RESULTS_2026: 'shogi_oshi_results_2026_v2',
 };
 
 const DEFAULT_FOLLOWED: FollowedPlayerConfig[] = [
@@ -372,3 +374,26 @@ export async function triggerPushNotification(
 
   return newItem;
 }
+
+export function getStoredFiscalResults(): Record<string, ShogiMonthlyResult[]> {
+  const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.RESULTS_2026);
+    if (!raw) return base;
+    const parsed = JSON.parse(raw);
+    return { ...base, ...parsed };
+  } catch {
+    return base;
+  }
+}
+
+export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[]>): void {
+  try {
+    const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
+    const merged = { ...base, ...data };
+    localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(merged));
+  } catch (e) {
+    console.error('Failed to save fiscal results', e);
+  }
+}
+

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShogiMonthlyResult, Player, FollowedPlayerConfig, Match } from '../types/shogi';
+import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import {
   Trophy,
@@ -75,7 +76,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // Newest date first by default
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [monthlyData, setMonthlyData] = useState<Record<string, ShogiMonthlyResult[]>>(() => {
-    return results2026Json as Record<string, ShogiMonthlyResult[]>;
+    return getStoredFiscalResults() || (results2026Json as Record<string, ShogiMonthlyResult[]>);
   });
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 

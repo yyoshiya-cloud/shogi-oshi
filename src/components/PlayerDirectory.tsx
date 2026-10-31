@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerType, PlayerAffiliation } from '../types/shogi';
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave } from '../utils/playerUtils';
 import {
   Search,
   Heart,
@@ -111,6 +111,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
   // Memoized total titles calculation
   const totalTitles = useMemo(() => getPlayerTotalTitles(player), [player]);
 
+  const onLeave = isPlayerOnLeave(player);
   const hasCareerStats = player.careerWins > 0 || player.careerLosses > 0;
   const hasYearStats = player.currentYearWins > 0 || player.currentYearLosses > 0;
 
@@ -171,6 +172,12 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             {(player.rank.includes('引退') || player.shortBio?.includes('引退') || player.titleHistory?.includes('引退')) && (
               <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-300 border border-zinc-600">
                 引退
+              </span>
+            )}
+
+            {onLeave && (
+              <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                休場中
               </span>
             )}
 
@@ -244,9 +251,15 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
           </div>
           <div className="w-px h-6 bg-zinc-800" />
           <div>
-            <span className="text-[9px] text-zinc-500 block">今年度勝率</span>
+            <span className="text-[9px] text-zinc-500 block">今年度成績</span>
             <span className="font-bold text-emerald-400 font-serif-jp">
-              {hasYearStats ? `${(player.currentYearWinRate * 100).toFixed(0)}%` : ''}
+              {onLeave ? (
+                <span className="text-amber-400 text-[11px] font-bold">休場中</span>
+              ) : hasYearStats ? (
+                `${(player.currentYearWinRate * 100).toFixed(0)}%`
+              ) : (
+                <span className="text-zinc-600 font-normal">-</span>
+              )}
             </span>
           </div>
         </div>

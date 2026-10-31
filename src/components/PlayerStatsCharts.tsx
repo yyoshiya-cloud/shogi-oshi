@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, YearRecord } from '../types/shogi';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
+import { isPlayerOnLeave } from '../utils/playerUtils';
 import {
   Trophy,
   TrendingUp,
@@ -336,6 +337,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
     };
   }, [isZoomModalOpen]);
 
+  const onLeave = isPlayerOnLeave(player);
   const hasCareerStats = player.careerWins > 0 || player.careerLosses > 0;
   const hasYearStats = player.currentYearWins > 0 || player.currentYearLosses > 0;
 
@@ -381,10 +383,14 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
         <div className="bg-zinc-900/70 border border-zinc-800 rounded-xl p-4 flex flex-col justify-between shadow-md">
           <div className="flex items-center justify-between text-zinc-400 text-xs">
             <span>今年度成績</span>
-            <TrendingUp size={16} className="text-emerald-400" />
+            <TrendingUp size={16} className={onLeave ? 'text-amber-400' : 'text-emerald-400'} />
           </div>
           <div className="mt-3">
-            {hasYearStats ? (
+            {onLeave ? (
+              <span className="text-2xl sm:text-3xl font-black text-amber-400 font-serif-jp flex items-center gap-1.5">
+                休場中
+              </span>
+            ) : hasYearStats ? (
               <>
                 <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-serif-jp">
                   {player.currentYearWins}
@@ -401,8 +407,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
               </span>
             )}
           </div>
-          <div className="text-xs text-emerald-400 font-bold mt-2">
-            {hasYearStats
+          <div className={`text-xs font-bold mt-2 ${onLeave ? 'text-amber-400/90' : 'text-emerald-400'}`}>
+            {onLeave
+              ? '公式戦休場届提出中'
+              : hasYearStats
               ? `勝率 ${(player.currentYearWinRate * 100).toFixed(1)}%`
               : '今年度公式記録ベース'}
           </div>
