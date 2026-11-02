@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShogiMonthlyResult, Player, FollowedPlayerConfig, Match } from '../types/shogi';
-import { getStoredFiscalResults } from '../utils/storage';
+import { getStoredFiscalResults, saveStoredFiscalResults } from '../utils/storage';
+import { updateMatchStatsData } from '../utils/yearRecordsGenerator';
+import { clearPlayerMatchCache } from '../services/shogiDbMatchEnrichment';
 import results2026Json from '../data/results2026.json';
 import {
   Trophy,
@@ -29,6 +31,7 @@ interface MonthlyResultsViewProps {
   followedList: FollowedPlayerConfig[];
   onSelectPlayer: (player: Player) => void;
   onSelectMatch?: (match: Match) => void;
+  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
 }
 
 export const FISCAL_YEARS = [
@@ -65,6 +68,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   followedList,
   onSelectPlayer,
   onSelectMatch,
+  onUpdateResults,
 }) => {
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<number>(2026);
   const activeFiscalYearMonths = useMemo(() => getFiscalYearMonths(selectedFiscalYear), [selectedFiscalYear]);
@@ -238,6 +242,17 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   }, [selectedMonth, currentMonthResults, followedPlayerNames]);
 
 
+  // Listen for storage updates
+  useEffect(() => {
+    const handleResultsUpdated = (e: any) => {
+      if (e.detail) {
+        setMonthlyData((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('shogi_results_updated', handleResultsUpdated);
+    return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
+  }, []);
+
   // Manual refresh for current selected month from server/official site
   const handleRefreshMonth = async () => {
     setIsRefreshing(true);
@@ -247,11 +262,16 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success && json.results) {
-        setMonthlyData((prev) => ({
-          ...prev,
+        const updated = {
+          ...monthlyData,
           [selectedMonth]: json.results,
-        }));
-        setRefreshMessage(`最新の対局結果（${json.results.length}局）を日本将棋連盟から更新しました`);
+        };
+        setMonthlyData(updated);
+        saveStoredFiscalResults(updated);
+        updateMatchStatsData(updated);
+        clearPlayerMatchCache();
+        onUpdateResults?.(updated);
+        setRefreshMessage(`最新の対局結果（${json.results.length}局）を更新し、棋士プロフィール成績へ同期しました`);
       } else {
         setRefreshMessage('現在のデータを最新として維持しています');
       }

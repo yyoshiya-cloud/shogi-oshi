@@ -441,15 +441,27 @@ export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[
   try {
     pruneOldStorage();
     const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
-    const delta: Record<string, ShogiMonthlyResult[]> = {};
+    let existingDelta: Record<string, ShogiMonthlyResult[]> = {};
+    const raw = localStorage.getItem(STORAGE_KEYS.RESULTS_2026);
+    if (raw) {
+      try {
+        existingDelta = JSON.parse(raw);
+      } catch {}
+    }
+
+    const mergedDelta: Record<string, ShogiMonthlyResult[]> = { ...existingDelta };
     for (const key of Object.keys(data)) {
-      if (!base[key] || base[key].length !== data[key]?.length) {
-        delta[key] = data[key];
+      if (data[key] && Array.isArray(data[key])) {
+        // Save whenever data exists for the month
+        mergedDelta[key] = data[key];
       }
     }
-    // Only write if there are actual new months, staying well under quota
-    if (Object.keys(delta).length > 0) {
-      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(delta));
+
+    if (Object.keys(mergedDelta).length > 0) {
+      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(mergedDelta));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('shogi_results_updated', { detail: mergedDelta }));
+      }
     }
   } catch {}
 }

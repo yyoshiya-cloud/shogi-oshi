@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Match, Player, FollowedPlayerConfig } from '../types/shogi';
+import { Match, Player, FollowedPlayerConfig, ShogiMonthlyResult } from '../types/shogi';
 import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
 import { getTodayDateString, getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
 import { formatPlayerName } from '../utils/playerUtils';
@@ -38,6 +38,7 @@ interface CalendarScheduleViewProps {
   onRefreshMatches?: () => void;
   activeSubTab?: 'schedule' | 'results';
   onChangeSubTab?: (tab: 'schedule' | 'results') => void;
+  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
 }
 
 export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
@@ -52,7 +53,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   onRefreshMatches,
   activeSubTab,
   onChangeSubTab,
-
+  onUpdateResults,
 }) => {
   // Reliably obtain current date upon launch in local/JST time
   const todayInfo = getTodayInfo();
@@ -255,6 +256,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
           followedList={followedList}
           onSelectPlayer={onSelectPlayer || (() => {})}
           onSelectMatch={onSelectMatch}
+          onUpdateResults={onUpdateResults}
         />
       ) : (
         <>

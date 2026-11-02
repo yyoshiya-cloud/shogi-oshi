@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Player, Match, FollowedPlayerConfig, PushNotificationItem } from './types/shogi';
+import { Player, Match, FollowedPlayerConfig, PushNotificationItem, ShogiMonthlyResult } from './types/shogi';
 import { PLAYERS_DATA, MATCHES_DATA } from './data/shogiDatabase';
 import {
   getStoredFollowed,
@@ -26,6 +26,7 @@ import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
 import { formatPlayerName } from './utils/playerUtils';
 import { initializePlayerRecords, updateMatchStatsData } from './utils/yearRecordsGenerator';
+import { clearPlayerMatchCache } from './services/shogiDbMatchEnrichment';
 import { OshiDashboard } from './components/OshiDashboard';
 import { CalendarScheduleView } from './components/CalendarScheduleView';
 import { PlayerDirectory } from './components/PlayerDirectory';
@@ -475,6 +476,21 @@ export default function App() {
     });
   };
 
+  // Handler when monthly results are updated/refreshed
+  const handleUpdateFiscalResults = (updatedResults: Record<string, ShogiMonthlyResult[]>) => {
+    updateMatchStatsData(updatedResults);
+    clearPlayerMatchCache();
+    setPlayersList((prev) => {
+      const updated = prev.map((p) => initializePlayerRecords(p));
+      saveStoredPlayers(updated);
+      return updated;
+    });
+    setSelectedPlayer((cur) => {
+      if (!cur) return null;
+      return initializePlayerRecords(cur);
+    });
+  };
+
   // Follow/unfollow handlers
   const handleToggleFollow = (config: FollowedPlayerConfig) => {
     if (!googleUser) {
@@ -685,6 +701,7 @@ export default function App() {
             onRefreshMatches={() => handleSyncMatches(true)}
             activeSubTab={calendarSubTab}
             onChangeSubTab={(tab) => setCalendarSubTab(tab)}
+            onUpdateResults={handleUpdateFiscalResults}
           />
         )}
 

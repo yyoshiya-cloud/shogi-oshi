@@ -14,6 +14,10 @@ export interface EnrichedPlayerMatch extends ShogiMonthlyResult {
 const playerMatchCache = new Map<string, { timestamp: number; matches: EnrichedPlayerMatch[] }>();
 const CACHE_TTL = 1000 * 60 * 15; // 15 mins
 
+export function clearPlayerMatchCache(): void {
+  playerMatchCache.clear();
+}
+
 /**
  * ShogiDB2 棋譜検索URLの生成
  */

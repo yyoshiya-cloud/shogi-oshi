@@ -79,10 +79,24 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
   const [resultsOutcomeFilter, setResultsOutcomeFilter] = useState<'all' | 'win' | 'loss'>('all');
   const [isChartZoomOpen, setIsChartZoomOpen] = useState<boolean>(false);
+  const [resultsRevision, setResultsRevision] = useState(0);
 
   useEffect(() => {
-    setActivePlayer(player);
-  }, [player]);
+    const handleResultsUpdated = () => {
+      setResultsRevision((prev) => prev + 1);
+    };
+    window.addEventListener('shogi_results_updated', handleResultsUpdated);
+    return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
+  }, []);
+
+  useEffect(() => {
+    const latest = allPlayers?.find((p) => p.id === player.id);
+    if (latest) {
+      setActivePlayer(latest);
+    } else {
+      setActivePlayer(player);
+    }
+  }, [player, allPlayers, resultsRevision]);
 
   // On-demand detail enrichment if official link is available and basic bio is missing
   useEffect(() => {
@@ -192,7 +206,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       }
     }
     return enrichPlayerMatches(activePlayer, resultsFiscalYear, flatResults);
-  }, [activePlayer, resultsFiscalYear, fiscalYearMonths]);
+  }, [activePlayer, resultsFiscalYear, fiscalYearMonths, resultsRevision]);
 
   // Player's statistics calculated from actual official match results in fiscal year
   const playerFiscalStats = useMemo(() => {
