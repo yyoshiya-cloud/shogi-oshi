@@ -8,21 +8,54 @@ import { getTodayDateString, getTodayInfo } from './dateUtils';
 
 const STORAGE_KEYS = {
   FOLLOWED: 'shogi_oshi_followed_v2',
-  NOTIFICATIONS: 'shogi_oshi_notifications_v2',
+  NOTIFICATIONS: 'shogi_oshi_notifications_v3',
   SETTINGS: 'shogi_oshi_settings_v2',
-  PLAYERS: 'shogi_oshi_all_players_v8',
-  LAST_SYNC: 'shogi_oshi_players_last_sync_v8',
+  PLAYERS: 'shogi_oshi_all_players_v16',
+  LAST_SYNC: 'shogi_oshi_players_last_sync_v16',
   MATCHES: 'shogi_oshi_all_matches_v1',
   MATCH_LAST_SYNC: 'shogi_oshi_matches_last_sync_v1',
   RESULTS_2026: 'shogi_oshi_results_2026_v2',
 };
+
+/**
+ * Automatically purges legacy storage keys from previous versions to keep
+ * localStorage usage well under the browser's 5MB quota.
+ */
+export function pruneOldStorage(): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.startsWith('shogi_oshi_all_players_') && k !== STORAGE_KEYS.PLAYERS) {
+        keysToRemove.push(k);
+      }
+      if (k.startsWith('shogi_oshi_players_last_sync_') && k !== STORAGE_KEYS.LAST_SYNC) {
+        keysToRemove.push(k);
+      }
+      if (k.startsWith('shogi_oshi_results_2026_') && k !== STORAGE_KEYS.RESULTS_2026) {
+        keysToRemove.push(k);
+      }
+      if (k.startsWith('shogi_oshi_notifications_') && k !== STORAGE_KEYS.NOTIFICATIONS) {
+        keysToRemove.push(k);
+      }
+    }
+    for (const k of keysToRemove) {
+      localStorage.removeItem(k);
+    }
+  } catch {}
+}
+
+// Proactive initial cleanup
+pruneOldStorage();
 
 const DEFAULT_FOLLOWED: FollowedPlayerConfig[] = [
   {
     playerId: 'fujii-sota',
     badge: '本命',
     color: '#6366f1',
-    cheeringNote: '全冠防衛＆永世称号獲得を全力応援！',
+    cheeringNote: '',
     notificationsEnabled: true,
     notifyTiming: {
       dayBefore: true,
@@ -41,7 +74,7 @@ const DEFAULT_FOLLOWED: FollowedPlayerConfig[] = [
     playerId: 'fukuma-kana',
     badge: '神推し',
     color: '#ec4899',
-    cheeringNote: '出雲のイナズマ！タイトル60期へ向かって応援！',
+    cheeringNote: '',
     notificationsEnabled: true,
     notifyTiming: {
       dayBefore: true,
@@ -64,13 +97,13 @@ export function getDefaultNotifications(): PushNotificationItem[] {
   return [
     {
       id: 'notif-1',
-      title: '【本日対局】藤本 渚 五段の対局日です！',
-      body: `本日 ${todayInfo.shortDisplay} 09:00〜 ALSOK杯王将戦 挑決リーグ (vs 西田拓也 五段)。関西将棋会館にて対局中！`,
+      title: '【本日対局】藤井 聡太 竜王・名人の対局日です！',
+      body: `本日 ${todayInfo.shortDisplay} 09:00〜 竜王戦 七番勝負 (vs 服部慎一郎 七段)。京都・仁和寺にて対局中！`,
       type: 'match_day',
-      matchId: 'shogiorjp-2026-10-24-pro-nagisa_fujimoto-pro-takuya_nishida',
-      playerId: 'pro-nagisa_fujimoto',
+      matchId: 'match-fin-01',
+      playerId: 'fujii-sota',
       timestamp: `${todayStr}T08:00:00`,
-      read: false,
+      read: true,
     },
     {
       id: 'notif-2',
@@ -94,12 +127,12 @@ export function getDefaultNotifications(): PushNotificationItem[] {
     },
     {
       id: 'notif-4',
-      title: '【対局結果】中井 広恵 女流六段が112手で勝利！',
-      body: '第18期 マイナビ女子オープン本戦 2回戦にて、中井女流六段が渡部愛女流四段に勝利。終局までの112手棋譜を再生できます。',
+      title: '【対局結果】福間 香奈 女流四冠が勝利しました！',
+      body: '第18期 マイナビ女子オープン本戦 2回戦にて勝利。終局までの棋譜を再生できます。',
       type: 'match_result',
       matchId: 'match-fin-04',
-      playerId: 'nakai-hiroe',
-      timestamp: '2026-10-18T18:30:00',
+      playerId: 'fukuma-kana',
+      timestamp: `${todayStr}T18:30:00`,
       read: true,
     }
   ];
@@ -145,16 +178,8 @@ export function saveStoredFollowed(data: FollowedPlayerConfig[], userEmail?: str
 
 export function getStoredPlayers(): Player[] {
   try {
-    let raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
-    if (!raw) {
-      const oldRaw = localStorage.getItem('shogi_oshi_all_players_v3');
-      if (oldRaw) {
-        raw = oldRaw;
-        try {
-          localStorage.removeItem('shogi_oshi_all_players_v3');
-        } catch {}
-      }
-    }
+    pruneOldStorage();
+    const raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
     let players: Player[];
     if (!raw) {
       players = PLAYERS_DATA;
@@ -163,24 +188,49 @@ export function getStoredPlayers(): Player[] {
       if (!Array.isArray(parsed) || parsed.length < 20) {
         players = PLAYERS_DATA;
       } else {
-        players = parsed;
+        // Merge stored overrides with PLAYERS_DATA base
+        const staticMap = new Map<string, Player>(PLAYERS_DATA.map((p) => [p.id, p]));
+        players = parsed.map((p: any) => {
+          const base = staticMap.get(p.id) || p;
+          return {
+            ...base,
+            ...p,
+          };
+        });
       }
     }
-    const initialized = players.map(initializePlayerRecords);
-    saveStoredPlayers(initialized);
-    return initialized;
+    return players.map(initializePlayerRecords);
   } catch {
-    const initialized = PLAYERS_DATA.map(initializePlayerRecords);
-    saveStoredPlayers(initialized);
-    return initialized;
+    return PLAYERS_DATA.map(initializePlayerRecords);
   }
 }
 
 export function saveStoredPlayers(data: Player[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(data));
-  } catch (e) {
-    console.error('Failed to save players', e);
+    pruneOldStorage();
+    // Save lightweight delta containing only dynamic and stats fields to keep size under 25KB
+    const slim = data.map((p) => ({
+      id: p.id,
+      name: p.name,
+      currentYearWins: p.currentYearWins,
+      currentYearLosses: p.currentYearLosses,
+      currentYearWinRate: p.currentYearWinRate,
+      careerWins: p.careerWins,
+      careerLosses: p.careerLosses,
+      careerWinRate: p.careerWinRate,
+      yearRecords: p.yearRecords,
+      rank: p.rank,
+      heldTitles: p.heldTitles,
+      totalTitles: p.totalTitles,
+      junisenClass: p.junisenClass,
+      ryuoClass: p.ryuoClass,
+    }));
+    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(slim));
+  } catch {
+    // If quota is still somehow exceeded, attempt emergency prune and silently fail
+    try {
+      pruneOldStorage();
+    } catch {}
   }
 }
 
@@ -389,11 +439,18 @@ export function getStoredFiscalResults(): Record<string, ShogiMonthlyResult[]> {
 
 export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[]>): void {
   try {
+    pruneOldStorage();
     const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
-    const merged = { ...base, ...data };
-    localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(merged));
-  } catch (e) {
-    console.error('Failed to save fiscal results', e);
-  }
+    const delta: Record<string, ShogiMonthlyResult[]> = {};
+    for (const key of Object.keys(data)) {
+      if (!base[key] || base[key].length !== data[key]?.length) {
+        delta[key] = data[key];
+      }
+    }
+    // Only write if there are actual new months, staying well under quota
+    if (Object.keys(delta).length > 0) {
+      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(delta));
+    }
+  } catch {}
 }
 

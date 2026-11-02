@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, YearRecord } from '../types/shogi';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
-import { isPlayerOnLeave } from '../utils/playerUtils';
+import { isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
 import {
   Trophy,
   TrendingUp,
@@ -105,7 +105,7 @@ export const PlayerYearlyChartSvg: React.FC<PlayerYearlyChartSvgProps> = ({
         const groupCenterX = plotX + (index + 0.5) * groupWidth;
         const isSelected =
           selectedYearIndex === index ||
-          (selectedYearIndex === null && index === records.length - 1);
+          (selectedYearIndex === null && index === 0);
         const isPreDebut = item.isPreDebut === true;
 
         const winHeight = item.wins > 0 ? Math.max(2, (item.wins / ceilingVal) * plotH) : 0;
@@ -242,7 +242,7 @@ export const PlayerYearlyChartSvg: React.FC<PlayerYearlyChartSvgProps> = ({
         const rateY = bottomY - Math.min(1, Math.max(0, item.rate)) * plotH;
         const isSelected =
           selectedYearIndex === index ||
-          (selectedYearIndex === null && index === records.length - 1);
+          (selectedYearIndex === null && index === 0);
         const ratePercent = (item.rate * 100).toFixed(1);
         const badgeW = isZoomed ? 44 : 36;
         const badgeH = isZoomed ? 15 : 12;
@@ -356,27 +356,17 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
             <Trophy size={16} className="text-amber-400" />
           </div>
           <div className="mt-3">
-            {hasCareerStats ? (
-              <>
-                <span className="text-2xl sm:text-3xl font-black text-zinc-100 font-serif-jp">
-                  {player.careerWins}
-                </span>
-                <span className="text-xs text-zinc-400 ml-0.5">勝 </span>
-                <span className="text-xl sm:text-2xl font-bold text-zinc-300 font-serif-jp ml-1">
-                  {player.careerLosses}
-                </span>
-                <span className="text-xs text-zinc-400 ml-0.5">敗</span>
-              </>
-            ) : (
-              <span className="text-lg font-bold text-zinc-200 font-serif-jp">
-                公式戦現役
-              </span>
-            )}
+            <span className="text-2xl sm:text-3xl font-black text-zinc-100 font-serif-jp">
+              {player.careerWins || 0}
+            </span>
+            <span className="text-xs text-zinc-400 ml-0.5">勝 </span>
+            <span className="text-xl sm:text-2xl font-bold text-zinc-300 font-serif-jp ml-1">
+              {player.careerLosses || 0}
+            </span>
+            <span className="text-xs text-zinc-400 ml-0.5">敗</span>
           </div>
-          <div className="text-xs text-amber-400 font-bold mt-2">
-            {hasCareerStats
-              ? `通算勝率 ${(player.careerWinRate * 100).toFixed(1)}%`
-              : '連盟公式記録ベース'}
+          <div className="text-xs text-amber-400 font-bold mt-2 font-mono">
+            通算勝率 {formatWinRate(player.careerWinRate)} ({( (player.careerWinRate || 0) * 100).toFixed(1)}%)
           </div>
         </div>
 
@@ -390,29 +380,23 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
               <span className="text-2xl sm:text-3xl font-black text-amber-400 font-serif-jp flex items-center gap-1.5">
                 休場中
               </span>
-            ) : hasYearStats ? (
+            ) : (
               <>
                 <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-serif-jp">
-                  {player.currentYearWins}
+                  {player.currentYearWins || 0}
                 </span>
                 <span className="text-xs text-zinc-400 ml-0.5">勝 </span>
                 <span className="text-xl sm:text-2xl font-bold text-zinc-300 font-serif-jp ml-1">
-                  {player.currentYearLosses}
+                  {player.currentYearLosses || 0}
                 </span>
                 <span className="text-xs text-zinc-400 ml-0.5">敗</span>
               </>
-            ) : (
-              <span className="text-lg font-bold text-zinc-200 font-serif-jp">
-                今年度公式戦対局中
-              </span>
             )}
           </div>
-          <div className={`text-xs font-bold mt-2 ${onLeave ? 'text-amber-400/90' : 'text-emerald-400'}`}>
+          <div className={`text-xs font-bold mt-2 font-mono ${onLeave ? 'text-amber-400/90' : 'text-emerald-400'}`}>
             {onLeave
               ? '公式戦休場届提出中'
-              : hasYearStats
-              ? `勝率 ${(player.currentYearWinRate * 100).toFixed(1)}%`
-              : '今年度公式記録ベース'}
+              : `勝率 ${formatWinRate(player.currentYearWinRate)} (${((player.currentYearWinRate || 0) * 100).toFixed(1)}%)`}
           </div>
         </div>
       </div>
@@ -468,7 +452,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                   {effectiveYearRecords.map((r, idx) => {
                     const isSelected =
                       selectedYearIndex === idx ||
-                      (selectedYearIndex === null && idx === effectiveYearRecords.length - 1);
+                      (selectedYearIndex === null && idx === 0);
                     return (
                       <button
                         key={r.year}
@@ -491,7 +475,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                   const activeRecord =
                     selectedYearIndex !== null && effectiveYearRecords[selectedYearIndex]
                       ? effectiveYearRecords[selectedYearIndex]
-                      : effectiveYearRecords[effectiveYearRecords.length - 1];
+                      : effectiveYearRecords[0];
                   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
                   const isPreDebut = activeRecord?.isPreDebut === true;
                   const isZeroGames = totalGames === 0;
@@ -547,8 +531,9 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                             <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1">
                               <span>勝率:</span>
                               <strong className="text-sm font-mono text-amber-200">
-                                {(activeRecord.rate * 100).toFixed(1)}%
+                                {formatWinRate(activeRecord.rate)}
                               </strong>
+                              <span className="text-[11px] text-zinc-400">({(activeRecord.rate * 100).toFixed(1)}%)</span>
                             </span>
                           </>
                         )}
@@ -645,14 +630,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/60">
-                        {[...effectiveYearRecords].reverse().map((r) => {
-                          const originalIdx = effectiveYearRecords.findIndex(
-                            (rec) => rec.year === r.year
-                          );
+                        {effectiveYearRecords.map((r, originalIdx) => {
                           const isSelected =
                             selectedYearIndex === originalIdx ||
-                            (selectedYearIndex === null &&
-                              originalIdx === effectiveYearRecords.length - 1);
+                            (selectedYearIndex === null && originalIdx === 0);
                           const total = r.wins + r.losses;
                           const isPreDebut = r.isPreDebut === true;
                           const isZeroGames = total === 0;
@@ -724,7 +705,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                     －
                                   </span>
                                 ) : (
-                                  <span className="text-amber-300">{(r.rate * 100).toFixed(1)}%</span>
+                                  <>
+                                    <span className="text-amber-300 font-mono font-bold">{formatWinRate(r.rate)}</span>
+                                    <span className="text-zinc-400 text-xs ml-1 font-normal">({(r.rate * 100).toFixed(1)}%)</span>
+                                  </>
                                 )}
                               </td>
                             </tr>
@@ -910,7 +894,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
   }, [player]);
 
   const [selectedYearIndex, setSelectedYearIndex] = useState<number | null>(
-    initialYearIndex !== null ? initialYearIndex : effectiveYearRecords.length - 1
+    initialYearIndex !== null ? initialYearIndex : 0
   );
 
   useEffect(() => {
@@ -933,7 +917,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
   const activeRecord =
     selectedYearIndex !== null && records[selectedYearIndex]
       ? records[selectedYearIndex]
-      : records[records.length - 1];
+      : records[0];
   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
   const isPreDebut = activeRecord?.isPreDebut === true;
   const isZeroGames = totalGames === 0;
@@ -999,7 +983,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
           {records.map((r, idx) => {
             const isSelected =
               selectedYearIndex === idx ||
-              (selectedYearIndex === null && idx === records.length - 1);
+              (selectedYearIndex === null && idx === 0);
             return (
               <button
                 key={r.year}
@@ -1073,8 +1057,9 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
                 <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5">
                   <span>勝率:</span>
                   <strong className="text-base font-mono text-amber-200">
-                    {((activeRecord?.rate ?? 0) * 100).toFixed(1)}%
+                    {formatWinRate(activeRecord?.rate)}
                   </strong>
+                  <span className="text-xs text-zinc-400">({((activeRecord?.rate ?? 0) * 100).toFixed(1)}%)</span>
                 </div>
               </>
             )}

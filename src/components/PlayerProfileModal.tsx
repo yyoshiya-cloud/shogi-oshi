@@ -2,9 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
+import { enrichPlayerMatches, getShogiDbSearchUrl, EnrichedPlayerMatch } from '../services/shogiDbMatchEnrichment';
 import {
   X,
   Heart,
@@ -41,18 +42,20 @@ function formatWomenJunisenClass(player: Player): string {
   return '順位戦なし（女流クラス所属）';
 }
 
-function formatProRyuoClass(player: Player): string {
-  if (player.ryuoClass && player.ryuoClass !== '-' && player.ryuoClass !== '参加棋戦') {
+export function formatProRyuoClass(player: Player): string {
+  if (player.type === 'women') return '未参加';
+  if (player.ryuoClass && player.ryuoClass !== '-' && player.ryuoClass !== '参加棋戦' && player.ryuoClass !== '竜王戦参加') {
     return player.ryuoClass;
   }
-  return '竜王戦参加';
+  return '未参加';
 }
 
-function formatProJunisenClass(player: Player): string {
-  if (player.junisenClass && player.junisenClass !== '-' && player.junisenClass !== '参加棋戦') {
+export function formatProJunisenClass(player: Player): string {
+  if (player.type === 'women') return '未参加';
+  if (player.junisenClass && player.junisenClass !== '-' && player.junisenClass !== '参加棋戦' && player.junisenClass !== '順位戦参加') {
     return player.junisenClass;
   }
-  return '順位戦なし（フリークラス等）';
+  return '未参加';
 }
 
 export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
@@ -178,47 +181,18 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     return list;
   }, [resultsFiscalYear]);
 
-  // Complete official match results for this player in selected fiscal year (4月〜翌年3月) from shogi.or.jp
+  // Complete official match results for this player in selected fiscal year (4月〜翌年3月) with external ShogiDB2 enrichment
   const playerOfficialResults = useMemo(() => {
-    const list: (ShogiMonthlyResult & {
-      isPlayerWinner: boolean;
-      opponentName: string;
-      isPlayerSente: boolean;
-    })[] = [];
-
-    const targetClean = activePlayer.name.replace(/\s+/g, '');
-    const data = getStoredFiscalResults() || (results2026Json as Record<string, ShogiMonthlyResult[]>);
+    const rawData = getStoredFiscalResults() || (results2026Json as Record<string, ShogiMonthlyResult[]>);
     const validMonthsSet = new Set(fiscalYearMonths);
-    const months = Object.keys(data)
-      .filter((m) => validMonthsSet.has(m))
-      .sort((a, b) => b.localeCompare(a));
-
-    for (const m of months) {
-      for (const r of data[m] || []) {
-        const sClean = r.sente.replace(/\s+/g, '');
-        const gClean = r.gote.replace(/\s+/g, '');
-        const isSente = sClean === targetClean || r.sentePlayerId === activePlayer.id;
-        const isGote = gClean === targetClean || r.gotePlayerId === activePlayer.id;
-
-        if (isSente || isGote) {
-          const isPlayerWinner =
-            r.winner.replace(/\s+/g, '') === targetClean ||
-            (isSente && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
-            (isGote && (r.goteMark.includes('○') || r.goteMark.includes('□')));
-          const opponentName = isSente ? r.gote : r.sente;
-
-          list.push({
-            ...r,
-            isPlayerWinner,
-            opponentName,
-            isPlayerSente: isSente,
-          });
-        }
+    const flatResults: ShogiMonthlyResult[] = [];
+    for (const m of Object.keys(rawData)) {
+      if (validMonthsSet.has(m)) {
+        flatResults.push(...(rawData[m] || []));
       }
     }
-    // Sort strictly in descending order of year/month/day (最新の対局日が先頭)
-    return list.sort((a, b) => b.date.localeCompare(a.date));
-  }, [activePlayer, fiscalYearMonths]);
+    return enrichPlayerMatches(activePlayer, resultsFiscalYear, flatResults);
+  }, [activePlayer, resultsFiscalYear, fiscalYearMonths]);
 
   // Player's statistics calculated from actual official match results in fiscal year
   const playerFiscalStats = useMemo(() => {
@@ -243,7 +217,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     }
 
     const decisive = wins + losses;
-    const rate = decisive > 0 ? (wins / decisive).toFixed(3) : '.000';
+    const rate = decisive > 0 ? formatWinRate(wins / decisive) : '0.000';
     const ratePercent = decisive > 0 ? ((wins / decisive) * 100).toFixed(1) : '0.0';
 
     return {
@@ -715,37 +689,49 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             <div className="space-y-4">
               {/* Fiscal Year Switcher & Annual Summary Metrics Card */}
               <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/30 rounded-2xl p-4 border border-amber-500/30 shadow-md">
-                {/* Fiscal Year Selection Buttons */}
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-800/80">
-                  <span className="text-xs font-bold text-zinc-300">年度切替:</span>
-                  <div className="inline-flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
-                    <button
-                      onClick={() => {
-                        setResultsFiscalYear(2026);
-                        setResultsMonthFilter('all');
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                        resultsFiscalYear === 2026
-                          ? 'bg-amber-500 text-zinc-950 shadow-sm'
-                          : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      2026年度
-                    </button>
-                    <button
-                      onClick={() => {
-                        setResultsFiscalYear(2025);
-                        setResultsMonthFilter('all');
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                        resultsFiscalYear === 2025
-                          ? 'bg-amber-500 text-zinc-950 shadow-sm'
-                          : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      2025年度
-                    </button>
+                {/* Fiscal Year Selection Buttons & ShogiDB2 Quick Search */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-zinc-800/80">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-zinc-300">年度切替:</span>
+                    <div className="inline-flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
+                      <button
+                        onClick={() => {
+                          setResultsFiscalYear(2026);
+                          setResultsMonthFilter('all');
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                          resultsFiscalYear === 2026
+                            ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                            : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        2026年度
+                      </button>
+                      <button
+                        onClick={() => {
+                          setResultsFiscalYear(2025);
+                          setResultsMonthFilter('all');
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                          resultsFiscalYear === 2025
+                            ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                            : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        2025年度
+                      </button>
+                    </div>
                   </div>
+
+                  <a
+                    href={getShogiDbSearchUrl(activePlayer.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950/80 hover:bg-zinc-800 border border-amber-500/30 text-amber-300 text-xs font-bold transition shadow-sm shrink-0"
+                  >
+                    <ExternalLink size={12} />
+                    <span>ShogiDB2で全棋譜を検索</span>
+                  </a>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -758,7 +744,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   <div className="flex items-baseline gap-2 bg-zinc-950/80 px-3.5 py-2 rounded-xl border border-zinc-800">
                     <span className="text-xs text-zinc-400 font-medium">勝率:</span>
                     <span className="text-lg font-bold text-amber-300 font-mono">
-                      .{playerFiscalStats.rate.replace(/^0\./, '')}
+                      {playerFiscalStats.rate}
                     </span>
                     <span className="text-xs text-zinc-400">({playerFiscalStats.ratePercent}%)</span>
                   </div>
@@ -862,17 +848,26 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
               {/* Match Cards List */}
               {filteredPlayerResults.length === 0 ? (
-                <div className="py-10 text-center text-xs text-zinc-400 bg-zinc-900/40 rounded-2xl border border-zinc-800/60 space-y-2">
-                  <p className="font-bold text-zinc-300">
+                <div className="py-10 text-center text-xs text-zinc-400 bg-zinc-900/40 rounded-2xl border border-zinc-800/60 space-y-3">
+                  <p className="font-bold text-zinc-200 text-sm">
                     {playerOfficialResults.length === 0
                       ? `${resultsFiscalYear}年度の公式戦対局データはありません`
                       : '該当する対局結果がありません'}
                   </p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[11px] text-zinc-400 max-w-md mx-auto">
                     {playerOfficialResults.length === 0
-                      ? '日本将棋連盟または将棋DB2で過去の棋譜を検索できます。'
+                      ? '日本将棋連盟またはShogiDB2（棋譜データベース）にて全過去対局を直接検索・閲覧できます。'
                       : '条件をリセットするか、他の月をお試しください。'}
                   </p>
+                  <a
+                    href={getShogiDbSearchUrl(activePlayer.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition shadow-sm"
+                  >
+                    <ExternalLink size={12} />
+                    <span>ShogiDB2で「{activePlayer.name}」の棋譜を検索</span>
+                  </a>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -958,25 +953,32 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                         {/* Bottom: Links & Actions */}
                         <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-800/60 text-xs">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            {r.links && r.links.length > 0 ? (
-                              r.links.map((link, idx) => (
-                                <a
-                                  key={idx}
-                                  href={link.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/20 transition"
-                                >
-                                  <ExternalLink size={10} />
-                                  <span>{link.title}</span>
-                                </a>
-                              ))
-                            ) : (
-                              <span className="text-[10px] text-zinc-500">日本将棋連盟公式記録</span>
-                            )}
+                            <a
+                              href={r.kifuUrl || getShogiDbSearchUrl(activePlayer.name, r.opponentName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/20 transition"
+                            >
+                              <ExternalLink size={10} />
+                              <span>ShogiDB2 棋譜</span>
+                            </a>
+
+                            <a
+                              href="https://www.shogi.or.jp/game/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 bg-zinc-800/60 hover:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700/60 transition"
+                            >
+                              <ExternalLink size={10} />
+                              <span>連盟公式</span>
+                            </a>
                           </div>
 
+                          <span className="text-[10px] text-zinc-500 font-mono">
+                            連盟公式記録
+                          </span>
                         </div>
                       </div>
                     );

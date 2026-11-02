@@ -12,8 +12,8 @@
     "birthPlace": "愛知県瀬戸市",
     "master": "杉本昌隆八段",
     "style": "居飛車",
-    "ryuoClass": "竜王 (防衛期中)",
-    "junisenClass": "名人 (防衛期中)",
+    "ryuoClass": "竜王",
+    "junisenClass": "名人",
     "heldTitles": [
       "竜王",
       "名人",
@@ -172,7 +172,7 @@
     "master": "宮田利男八段",
     "style": "居飛車",
     "ryuoClass": "1組",
-    "junisenClass": "B級1組",
+    "junisenClass": "A級",
     "heldTitles": [
       "叡王"
     ],
@@ -301,8 +301,8 @@
     "birthPlace": "北海道札幌市",
     "master": "勝浦 修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "A級",
     "heldTitles": [
       "王座"
     ],
@@ -385,8 +385,8 @@
     "birthPlace": "兵庫県神戸市",
     "master": "若松政和八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "名人",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 27,
     "titleHistory": "",
@@ -465,7 +465,7 @@
     "master": "(故)二上達也九段",
     "style": "オールラウンダー",
     "ryuoClass": "1組",
-    "junisenClass": "B級1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 99,
     "titleHistory": "前人未到の永世七冠（十九世名人・永世竜王など七大タイトルすべての永世称号）保持。現日本将棋連盟会長。",
@@ -605,8 +605,8 @@
     "birthPlace": "京都府八幡市",
     "master": "田中魁秀九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 13,
     "titleHistory": "",
@@ -687,8 +687,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "勝浦 修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 12,
     "titleHistory": "",
@@ -766,8 +766,8 @@
     "birthPlace": "東京都葛飾区",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "1組",
-    "junisenClass": "A級",
+    "ryuoClass": "2組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 31,
     "titleHistory": "永世竜王・永世棋王。名人・棋王・王将など通算31期のトップ棋士。魔太郎の愛称。",
@@ -894,8 +894,8 @@
     "birthPlace": "大阪府岸和田市",
     "master": "（故）木下 晃七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 7,
     "titleHistory": "",
@@ -975,8 +975,8 @@
     "birthPlace": "東京都",
     "master": "（故）佐瀬勇次名誉九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 5,
     "titleHistory": "",
@@ -1056,8 +1056,8 @@
     "birthPlace": "千葉県木更津市",
     "master": "（故）佐瀬勇次名誉九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
     "titleHistory": "",
@@ -1137,8 +1137,8 @@
     "birthPlace": "群馬県沼田市",
     "master": "西村一義九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 3,
     "titleHistory": "",
@@ -1218,8 +1218,8 @@
     "birthPlace": "東京都",
     "master": "(故)大内延介九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -1299,8 +1299,8 @@
     "birthPlace": "東京都",
     "master": "（故）大友昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 6,
     "titleHistory": "",
@@ -1380,8 +1380,8 @@
     "birthPlace": "福岡県北九州市",
     "master": "（故）花村元司九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -1461,8 +1461,8 @@
     "birthPlace": "北海道札幌市",
     "master": "(故)五十嵐豊一九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
     "titleHistory": "",
@@ -1542,8 +1542,8 @@
     "birthPlace": "東京都町田市",
     "master": "佐伯昌優九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 2,
     "titleHistory": "",
@@ -1623,8 +1623,8 @@
     "birthPlace": "東京都世田谷区",
     "master": "（故）高柳敏夫名誉九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -1704,8 +1704,8 @@
     "birthPlace": "長崎県",
     "master": "（故）花村元司九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
     "titleHistory": "",
@@ -1785,8 +1785,8 @@
     "birthPlace": "兵庫県加古川市",
     "master": "淡路仁茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 7,
     "titleHistory": "",
@@ -1866,8 +1866,8 @@
     "birthPlace": "兵庫県芦屋市",
     "master": "若松政和八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -1947,8 +1947,8 @@
     "birthPlace": "群馬県",
     "master": "西村一義九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2028,8 +2028,8 @@
     "birthPlace": "青森県",
     "master": "（故）米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2109,8 +2109,8 @@
     "birthPlace": "福岡県福岡市",
     "master": "中田 功八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2190,8 +2190,8 @@
     "birthPlace": "東京都",
     "master": "(故)大内延介九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2271,8 +2271,8 @@
     "birthPlace": "千葉県四街道市",
     "master": "（故）佐瀬勇次名誉九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -2350,7 +2350,7 @@
     "birthPlace": "愛知県一宮市",
     "master": "桐山清澄九段",
     "style": "オールラウンダー",
-    "ryuoClass": "1組",
+    "ryuoClass": "2組",
     "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 6,
@@ -2477,8 +2477,8 @@
     "birthPlace": "青森県弘前市",
     "master": "（故）大山康晴十五世名人",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2558,8 +2558,8 @@
     "birthPlace": "大阪府",
     "master": "田中魁秀九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2764,8 +2764,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "(故)大内延介九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2845,8 +2845,8 @@
     "birthPlace": "広島県広島市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -2926,8 +2926,8 @@
     "birthPlace": "広島県広島市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3007,8 +3007,8 @@
     "birthPlace": "宮城県仙台市",
     "master": "（故）米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3088,8 +3088,8 @@
     "birthPlace": "北海道新ひだか町",
     "master": "安恵照剛八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3169,8 +3169,8 @@
     "birthPlace": "大阪府",
     "master": "（故）中井捨吉八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3250,8 +3250,8 @@
     "birthPlace": "神奈川県海老名市",
     "master": "佐伯昌優九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3331,8 +3331,8 @@
     "birthPlace": "兵庫県西宮市",
     "master": "滝 誠一郎八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3412,8 +3412,8 @@
     "birthPlace": "静岡県浜松市",
     "master": "(故)廣津久雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3493,8 +3493,8 @@
     "birthPlace": "愛知県日進市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3574,8 +3574,8 @@
     "birthPlace": "兵庫県西宮市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3655,8 +3655,8 @@
     "birthPlace": "和歌山県和歌山市",
     "master": "（故）灘蓮照九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3736,8 +3736,8 @@
     "birthPlace": "千葉県八千代市",
     "master": "（故）松田茂役九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3817,8 +3817,8 @@
     "birthPlace": "北海道",
     "master": "勝浦 修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3898,8 +3898,8 @@
     "birthPlace": "神奈川県",
     "master": "森安正幸七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -3979,8 +3979,8 @@
     "birthPlace": "福岡県福岡市中央区",
     "master": "（故）大山康晴十五世名人",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4060,8 +4060,8 @@
     "birthPlace": "愛知県名古屋市",
     "master": "（故）板谷進九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4141,8 +4141,8 @@
     "birthPlace": "神奈川県",
     "master": "森安正幸七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4221,7 +4221,7 @@
     "master": "井上慶太九段",
     "style": "振り飛車",
     "ryuoClass": "1組",
-    "junisenClass": "A級",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "元王位。現代将棋界きっての「振り飛車のスペシャリスト」「振り飛車党のエース」。",
@@ -4347,8 +4347,8 @@
     "birthPlace": "奈良県奈良市",
     "master": "畠山鎮八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -4428,8 +4428,8 @@
     "birthPlace": "宮城県大崎市",
     "master": "中原 誠 十六世名人",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4509,8 +4509,8 @@
     "birthPlace": "東京都江東区",
     "master": "桜井 昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4590,8 +4590,8 @@
     "birthPlace": "東京都",
     "master": "伊藤 果八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4671,8 +4671,8 @@
     "birthPlace": "東京都府中市",
     "master": "（故）米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -4752,8 +4752,8 @@
     "birthPlace": "スイス ジュネーブ",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4833,8 +4833,8 @@
     "birthPlace": "東京都",
     "master": "（故）松下 力九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4914,8 +4914,8 @@
     "birthPlace": "東京都日野市",
     "master": "桜井 昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -4995,8 +4995,8 @@
     "birthPlace": "京都府",
     "master": "田中魁秀九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5076,8 +5076,8 @@
     "birthPlace": "大阪府箕面市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5157,8 +5157,8 @@
     "birthPlace": "東京都昭島市",
     "master": "森下 卓九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5238,8 +5238,8 @@
     "birthPlace": "千葉県八千代市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5319,8 +5319,8 @@
     "birthPlace": "静岡県賀茂郡",
     "master": "青野照市九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5400,8 +5400,8 @@
     "birthPlace": "東京都杉並区",
     "master": "(故）関屋喜代作八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5481,8 +5481,8 @@
     "birthPlace": "大阪府豊中市",
     "master": "（故）賀集正三七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5502,28 +5502,10 @@
     ],
     "yearRecords": [
       {
-        "year": 2021,
-        "wins": 17,
-        "losses": 15,
-        "rate": 0.531
-      },
-      {
-        "year": 2022,
-        "wins": 18,
-        "losses": 13,
-        "rate": 0.581
-      },
-      {
-        "year": 2023,
-        "wins": 15,
-        "losses": 15,
-        "rate": 0.5
-      },
-      {
-        "year": 2024,
-        "wins": 16,
-        "losses": 12,
-        "rate": 0.571
+        "year": 2026,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -5532,7 +5514,25 @@
         "rate": 0
       },
       {
-        "year": 2026,
+        "year": 2024,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2023,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2022,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2021,
         "wins": 0,
         "losses": 0,
         "rate": 0
@@ -5562,8 +5562,8 @@
     "birthPlace": "富山県魚津市",
     "master": "（故）大内延介九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5643,8 +5643,8 @@
     "birthPlace": "東京都",
     "master": "(故)関根 茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5724,8 +5724,8 @@
     "birthPlace": "大阪府",
     "master": "桐山清澄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5805,8 +5805,8 @@
     "birthPlace": "神奈川県相模原市",
     "master": "安恵照剛八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5886,8 +5886,8 @@
     "birthPlace": "山形県酒田市",
     "master": "西村一義九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -5967,8 +5967,8 @@
     "birthPlace": "茨城県取手市",
     "master": "（故）花村元司九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6048,8 +6048,8 @@
     "birthPlace": "福島県喜多方市",
     "master": "加瀬純一七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6129,8 +6129,8 @@
     "birthPlace": "大阪府八尾市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6210,8 +6210,8 @@
     "birthPlace": "東京都町田市",
     "master": "（故）関根 茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6291,8 +6291,8 @@
     "birthPlace": "千葉県",
     "master": "（故）平野広吉七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6372,8 +6372,8 @@
     "birthPlace": "埼玉県吉川市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6453,8 +6453,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "1組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 1,
     "titleHistory": "",
@@ -6534,8 +6534,8 @@
     "birthPlace": "広島県広島市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6615,8 +6615,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "青野照市九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6696,8 +6696,8 @@
     "birthPlace": "千葉県浦安市",
     "master": "内藤國雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6777,8 +6777,8 @@
     "birthPlace": "東京都多摩市",
     "master": "桜井 昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6858,8 +6858,8 @@
     "birthPlace": "東京都杉並区",
     "master": "（故）高柳敏夫名誉九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -6939,8 +6939,8 @@
     "birthPlace": "千葉県松戸市",
     "master": "加瀬純一七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7020,8 +7020,8 @@
     "birthPlace": "兵庫県高砂市",
     "master": "淡路仁茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7101,8 +7101,8 @@
     "birthPlace": "東京都中野区",
     "master": "（故）関根 茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7182,8 +7182,8 @@
     "birthPlace": "神奈川県座間市",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7263,8 +7263,8 @@
     "birthPlace": "宮崎県日南市",
     "master": "（故）米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7344,8 +7344,8 @@
     "birthPlace": "三重県鈴鹿市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7425,8 +7425,8 @@
     "birthPlace": "京都府宇治市",
     "master": "森 信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7506,8 +7506,8 @@
     "birthPlace": "宮崎県宮崎市",
     "master": "谷川浩司十七世名人",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7587,8 +7587,8 @@
     "birthPlace": "東京都新宿区",
     "master": "鈴木大介九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7668,8 +7668,8 @@
     "birthPlace": "新潟県",
     "master": "（故）原田泰夫九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7749,8 +7749,8 @@
     "birthPlace": "埼玉県北葛飾郡松伏町",
     "master": "伊藤 果八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7830,8 +7830,8 @@
     "birthPlace": "青森県弘前市",
     "master": "中村 修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7911,8 +7911,8 @@
     "birthPlace": "埼玉県",
     "master": "（故）剱持松二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -7992,8 +7992,8 @@
     "birthPlace": "長崎県対馬市",
     "master": "深浦康市九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8073,8 +8073,8 @@
     "birthPlace": "和歌山県新宮市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8154,8 +8154,8 @@
     "birthPlace": "千葉県八千代市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8235,8 +8235,8 @@
     "birthPlace": "兵庫県加古川市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8316,8 +8316,8 @@
     "birthPlace": "東京都新宿区",
     "master": "豊川孝弘七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8397,8 +8397,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "中原 誠 十六世名人",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8478,8 +8478,8 @@
     "birthPlace": "静岡県三島市",
     "master": "安恵照剛八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8559,8 +8559,8 @@
     "birthPlace": "富山県富山市",
     "master": "中田章道七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8640,8 +8640,8 @@
     "birthPlace": "香川県高松市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8662,9 +8662,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 22,
-        "losses": 8,
-        "rate": 0.733
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -8721,8 +8721,8 @@
     "birthPlace": "兵庫県神戸市",
     "master": "（故）西川慶二八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8802,8 +8802,8 @@
     "birthPlace": "埼玉県上尾市",
     "master": "飯野健二八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8883,8 +8883,8 @@
     "birthPlace": "東京都北区",
     "master": "桐谷広人七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -8964,8 +8964,8 @@
     "birthPlace": "大阪府東大阪市",
     "master": "（故）北村文男七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9045,8 +9045,8 @@
     "birthPlace": "埼玉県",
     "master": "高橋道雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9126,8 +9126,8 @@
     "birthPlace": "富山県魚津市",
     "master": "中田章道七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9207,8 +9207,8 @@
     "birthPlace": "東京都練馬区",
     "master": "加瀬純一七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9288,8 +9288,8 @@
     "birthPlace": "大阪府高石市",
     "master": "（故）木下 晃七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9369,8 +9369,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "安恵照剛八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9450,8 +9450,8 @@
     "birthPlace": "東京都八王子市",
     "master": "（故）米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9531,8 +9531,8 @@
     "birthPlace": "和歌山県和歌山市",
     "master": "（故）木下 晃七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9612,8 +9612,8 @@
     "birthPlace": "埼玉県熊谷市",
     "master": "高橋道雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9693,8 +9693,8 @@
     "birthPlace": "東京都八王子市",
     "master": "桜井昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9774,8 +9774,8 @@
     "birthPlace": "埼玉県富士見市",
     "master": "木村一基九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9855,8 +9855,8 @@
     "birthPlace": "東京都江東区",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -9936,8 +9936,8 @@
     "birthPlace": "埼玉県ふじみ野市",
     "master": "神吉宏充七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10017,8 +10017,8 @@
     "birthPlace": "兵庫県明石市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10098,8 +10098,8 @@
     "birthPlace": "神奈川県川崎市",
     "master": "宮田利男八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10179,8 +10179,8 @@
     "birthPlace": "長野県長野市",
     "master": "(故)関根茂九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10260,8 +10260,8 @@
     "birthPlace": "福岡県福岡市",
     "master": "中田功八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10341,8 +10341,8 @@
     "birthPlace": "大阪府大阪市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "2組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10422,8 +10422,8 @@
     "birthPlace": "兵庫県神戸市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10503,8 +10503,8 @@
     "birthPlace": "北海道名寄市",
     "master": "所司和晴八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10584,8 +10584,8 @@
     "birthPlace": "東京都練馬区",
     "master": "（故）剱持松二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10665,8 +10665,8 @@
     "birthPlace": "東京都豊島区",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10746,8 +10746,8 @@
     "birthPlace": "神奈川県川崎市",
     "master": "宮田利男八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10827,8 +10827,8 @@
     "birthPlace": "和歌山県西牟婁郡上富田町",
     "master": "森安正幸七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10908,8 +10908,8 @@
     "birthPlace": "東京都大田区",
     "master": "(故)米長邦雄永世棋聖",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -10989,8 +10989,8 @@
     "birthPlace": "京都府京都市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11070,8 +11070,8 @@
     "birthPlace": "東京都大田区",
     "master": "塚田泰明九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11151,8 +11151,8 @@
     "birthPlace": "山形県鶴岡市",
     "master": "加瀬純一七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11173,9 +11173,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 17,
-        "losses": 12,
-        "rate": 0.586
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -11232,8 +11232,8 @@
     "birthPlace": "愛媛県松山市",
     "master": "畠山鎮八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11313,8 +11313,8 @@
     "birthPlace": "栃木県小山市",
     "master": "大平武洋六段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11394,8 +11394,8 @@
     "birthPlace": "兵庫県加古川市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11416,21 +11416,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 17,
-        "losses": 8,
-        "rate": 0.68
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 24,
-        "losses": 8,
-        "rate": 0.75
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 20,
-        "losses": 11,
-        "rate": 0.645
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -11475,8 +11475,8 @@
     "birthPlace": "広島県広島市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11556,8 +11556,8 @@
     "birthPlace": "東京都中野区",
     "master": "中村修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11637,8 +11637,8 @@
     "birthPlace": "大阪府高槻市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11718,8 +11718,8 @@
     "birthPlace": "広島県福山市",
     "master": "桐谷広人七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11799,8 +11799,8 @@
     "birthPlace": "埼玉県上尾市",
     "master": "西村一義九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11880,8 +11880,8 @@
     "birthPlace": "神奈川県横浜市",
     "master": "田丸昇九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -11961,8 +11961,8 @@
     "birthPlace": "三重県三重郡",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12042,8 +12042,8 @@
     "birthPlace": "大阪府大阪市",
     "master": "森安正幸七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12123,8 +12123,8 @@
     "birthPlace": "東京都江東区",
     "master": "小倉久史八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12204,8 +12204,8 @@
     "birthPlace": "兵庫県三田市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12285,8 +12285,8 @@
     "birthPlace": "岐阜県各務原市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12366,8 +12366,8 @@
     "birthPlace": "岡山県倉敷市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "3組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12388,9 +12388,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 20,
-        "losses": 10,
-        "rate": 0.667
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -12447,8 +12447,8 @@
     "birthPlace": "京都府京都市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12528,8 +12528,8 @@
     "birthPlace": "東京都中央区",
     "master": "中座真八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12609,8 +12609,8 @@
     "birthPlace": "山口県周南市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12631,9 +12631,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 13,
-        "losses": 11,
-        "rate": 0.542
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -12690,8 +12690,8 @@
     "birthPlace": "愛知県西尾市",
     "master": "増田裕司七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "5組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12712,15 +12712,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 23,
-        "losses": 9,
-        "rate": 0.719
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 19,
-        "losses": 11,
-        "rate": 0.633
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -12771,8 +12771,8 @@
     "birthPlace": "兵庫県加古川市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12852,8 +12852,8 @@
     "birthPlace": "三重県桑名市",
     "master": "杉本昌隆八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12874,15 +12874,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 16,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 19,
-        "rate": 0.387
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -12933,8 +12933,8 @@
     "birthPlace": "岩手県釜石市",
     "master": "北島忠雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -12955,15 +12955,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 9,
-        "rate": 0.64
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 12,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -13014,8 +13014,8 @@
     "birthPlace": "東京都新宿区",
     "master": "戸辺誠七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13036,15 +13036,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 15,
-        "rate": 0.516
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 18,
-        "losses": 12,
-        "rate": 0.6
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -13095,8 +13095,8 @@
     "birthPlace": "兵庫県西宮市",
     "master": "小林健二九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13117,15 +13117,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 12,
-        "losses": 16,
-        "rate": 0.429
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 13,
-        "losses": 13,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -13176,8 +13176,8 @@
     "birthPlace": "岐阜県岐阜市",
     "master": "大野八一雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13198,15 +13198,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 12,
-        "rate": 0.571
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 17,
-        "losses": 10,
-        "rate": 0.63
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -13257,8 +13257,8 @@
     "birthPlace": "宮城県仙台市",
     "master": "広瀬章人九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13279,21 +13279,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 15,
-        "losses": 14,
-        "rate": 0.517
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 17,
-        "losses": 11,
-        "rate": 0.607
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 18,
-        "losses": 9,
-        "rate": 0.667
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -13338,8 +13338,8 @@
     "birthPlace": "千葉県船橋市",
     "master": "加瀬純一七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13360,21 +13360,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 14,
-        "losses": 15,
-        "rate": 0.483
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 15,
-        "losses": 13,
-        "rate": 0.536
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 17,
-        "losses": 10,
-        "rate": 0.63
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -13419,8 +13419,8 @@
     "birthPlace": "三重県熊野市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13441,21 +13441,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 19,
-        "rate": 0.367
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 13,
-        "losses": 16,
-        "rate": 0.448
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 14,
-        "losses": 14,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -13500,8 +13500,8 @@
     "birthPlace": "東京都荒川区",
     "master": "室岡克彦八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13522,21 +13522,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 19,
-        "losses": 6,
-        "rate": 0.76
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 15,
-        "losses": 9,
-        "rate": 0.625
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 23,
-        "losses": 8,
-        "rate": 0.742
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -13581,8 +13581,8 @@
     "birthPlace": "北海道札幌市",
     "master": "深浦康市九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13603,21 +13603,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 17,
-        "losses": 11,
-        "rate": 0.607
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 18,
-        "losses": 8,
-        "rate": 0.692
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 19,
-        "losses": 6,
-        "rate": 0.76
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -13662,17 +13662,17 @@
     "birthPlace": "兵庫県姫路市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "第40期より",
+    "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
-    "careerWins": 0,
-    "careerLosses": 0,
-    "careerWinRate": 0,
-    "currentYearWins": 0,
-    "currentYearLosses": 0,
-    "currentYearWinRate": 0,
+    "careerWins": 13,
+    "careerLosses": 7,
+    "careerWinRate": 0.65,
+    "currentYearWins": 13,
+    "currentYearLosses": 7,
+    "currentYearWinRate": 0.65,
     "currentYearStreak": 0,
     "rankingInFederation": {},
     "colorAccent": "#3b82f6",
@@ -13714,9 +13714,9 @@
       },
       {
         "year": 2026,
-        "wins": 0,
-        "losses": 0,
-        "rate": 0
+        "wins": 13,
+        "losses": 7,
+        "rate": 0.65
       }
     ],
     "senteWinRate": 0.5,
@@ -13743,8 +13743,8 @@
     "birthPlace": "東京都練馬区",
     "master": "飯塚祐紀八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13765,27 +13765,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 18,
-        "losses": 8,
-        "rate": 0.692
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 14,
-        "losses": 11,
-        "rate": 0.56
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 16,
-        "losses": 8,
-        "rate": 0.667
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 17,
-        "losses": 15,
-        "rate": 0.531
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -13824,8 +13824,8 @@
     "birthPlace": "兵庫県神戸市",
     "master": "井上慶太九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13846,27 +13846,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 9,
-        "rate": 0.64
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 13,
-        "losses": 11,
-        "rate": 0.542
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 19,
-        "losses": 13,
-        "rate": 0.594
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 15,
-        "losses": 15,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -13905,8 +13905,8 @@
     "birthPlace": "東京都江東区",
     "master": "飯塚祐紀八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -13927,27 +13927,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 18,
-        "losses": 14,
-        "rate": 0.563
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 20,
-        "losses": 11,
-        "rate": 0.645
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 16,
-        "losses": 14,
-        "rate": 0.533
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 17,
-        "losses": 11,
-        "rate": 0.607
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -13986,8 +13986,8 @@
     "birthPlace": "イギリス ノッティンガム市",
     "master": "森信雄七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "4組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14008,27 +14008,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 19,
-        "losses": 12,
-        "rate": 0.613
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 14,
-        "losses": 15,
-        "rate": 0.483
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 16,
-        "losses": 12,
-        "rate": 0.571
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 17,
-        "losses": 10,
-        "rate": 0.63
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14067,8 +14067,8 @@
     "birthPlace": "東京都調布市",
     "master": "中村修九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14089,27 +14089,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 23,
-        "losses": 4,
-        "rate": 0.852
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 18,
-        "losses": 7,
-        "rate": 0.72
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 20,
-        "losses": 4,
-        "rate": 0.833
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 28,
-        "losses": 4,
-        "rate": 0.875
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14148,8 +14148,8 @@
     "birthPlace": "神奈川県川崎市",
     "master": "小倉久史八段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "6組",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14170,27 +14170,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 9,
-        "rate": 0.64
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 17,
-        "losses": 7,
-        "rate": 0.708
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 25,
-        "losses": 7,
-        "rate": 0.781
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 20,
-        "losses": 10,
-        "rate": 0.667
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14229,8 +14229,8 @@
     "birthPlace": "東京都杉並区",
     "master": "石川陽生七段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "第40期より",
+    "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14251,27 +14251,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 18,
-        "losses": 14,
-        "rate": 0.563
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 14,
-        "losses": 16,
-        "rate": 0.467
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 16,
-        "losses": 13,
-        "rate": 0.552
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 12,
-        "losses": 16,
-        "rate": 0.429
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14310,8 +14310,8 @@
     "birthPlace": "千葉県松戸市",
     "master": "石田和雄九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "第40期より",
+    "junisenClass": "第86期より",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14331,28 +14331,10 @@
     ],
     "yearRecords": [
       {
-        "year": 2021,
-        "wins": 17,
-        "losses": 15,
-        "rate": 0.531
-      },
-      {
-        "year": 2022,
-        "wins": 18,
-        "losses": 13,
-        "rate": 0.581
-      },
-      {
-        "year": 2023,
-        "wins": 15,
-        "losses": 15,
-        "rate": 0.5
-      },
-      {
-        "year": 2024,
-        "wins": 16,
-        "losses": 12,
-        "rate": 0.571
+        "year": 2026,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14361,7 +14343,25 @@
         "rate": 0
       },
       {
-        "year": 2026,
+        "year": 2024,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2023,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2022,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2021,
         "wins": 0,
         "losses": 0,
         "rate": 0
@@ -14391,8 +14391,8 @@
     "birthPlace": "茨城県つくばみらい市",
     "master": "木村一基九段",
     "style": "居飛車",
-    "ryuoClass": "竜王戦参加",
-    "junisenClass": "順位戦参加",
+    "ryuoClass": "第40期より",
+    "junisenClass": "第86期より",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
@@ -14412,28 +14412,10 @@
     ],
     "yearRecords": [
       {
-        "year": 2021,
-        "wins": 14,
-        "losses": 14,
-        "rate": 0.5
-      },
-      {
-        "year": 2022,
-        "wins": 15,
-        "losses": 12,
-        "rate": 0.556
-      },
-      {
-        "year": 2023,
-        "wins": 11,
-        "losses": 14,
-        "rate": 0.44
-      },
-      {
-        "year": 2024,
-        "wins": 12,
-        "losses": 12,
-        "rate": 0.5
+        "year": 2026,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -14442,7 +14424,25 @@
         "rate": 0
       },
       {
-        "year": 2026,
+        "year": 2024,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2023,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2022,
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
+      },
+      {
+        "year": 2021,
         "wins": 0,
         "losses": 0,
         "rate": 0
@@ -16495,21 +16495,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 20,
-        "losses": 2,
-        "rate": 0.909
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 16,
-        "losses": 5,
-        "rate": 0.762
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 24,
-        "losses": 4,
-        "rate": 0.857
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -18395,15 +18395,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 17,
-        "losses": 9,
-        "rate": 0.654
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 17,
-        "losses": 7,
-        "rate": 0.708
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -18962,9 +18962,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 16,
-        "losses": 10,
-        "rate": 0.615
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -19043,15 +19043,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 15,
-        "losses": 12,
-        "rate": 0.556
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 17,
-        "losses": 9,
-        "rate": 0.654
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -19286,9 +19286,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 15,
-        "losses": 12,
-        "rate": 0.556
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -19448,9 +19448,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 13,
-        "rate": 0.458
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -19529,21 +19529,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 10,
-        "losses": 11,
-        "rate": 0.476
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 8,
-        "rate": 0.6
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 19,
-        "losses": 9,
-        "rate": 0.679
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -19772,15 +19772,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 8,
-        "losses": 12,
-        "rate": 0.4
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 8,
-        "losses": 20,
-        "rate": 0.286
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -19934,9 +19934,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 14,
-        "losses": 14,
-        "rate": 0.5
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -20015,15 +20015,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 14,
-        "losses": 12,
-        "rate": 0.538
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 11,
-        "losses": 14,
-        "rate": 0.44
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -20096,27 +20096,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 10,
-        "rate": 0.524
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 8,
-        "rate": 0.6
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 13,
-        "losses": 15,
-        "rate": 0.464
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 15,
-        "losses": 12,
-        "rate": 0.556
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -20177,21 +20177,21 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 13,
-        "rate": 0.458
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 11,
-        "rate": 0.522
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 9,
-        "losses": 13,
-        "rate": 0.409
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
@@ -20258,9 +20258,9 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 10,
-        "rate": 0.524
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
@@ -20339,15 +20339,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 13,
-        "losses": 14,
-        "rate": 0.481
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 10,
-        "losses": 16,
-        "rate": 0.385
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -20420,15 +20420,15 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 10,
-        "losses": 18,
-        "rate": 0.357
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 11,
-        "losses": 16,
-        "rate": 0.407
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
@@ -20501,27 +20501,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 11,
-        "losses": 10,
-        "rate": 0.524
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 12,
-        "losses": 8,
-        "rate": 0.6
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 13,
-        "losses": 14,
-        "rate": 0.481
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 14,
-        "losses": 12,
-        "rate": 0.538
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -20582,27 +20582,27 @@
     "yearRecords": [
       {
         "year": 2021,
-        "wins": 28,
-        "losses": 1,
-        "rate": 0.966
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2022,
-        "wins": 23,
-        "losses": 2,
-        "rate": 0.92
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2023,
-        "wins": 24,
-        "losses": 1,
-        "rate": 0.96
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2024,
-        "wins": 25,
-        "losses": 1,
-        "rate": 0.962
+        "wins": 0,
+        "losses": 0,
+        "rate": 0
       },
       {
         "year": 2025,
@@ -20880,7 +20880,7 @@
     "master": "森雞二九段",
     "style": "振り飛車",
     "ryuoClass": "女流棋士",
-    "junisenClass": "",
+    "junisenClass": "未参加",
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "第1期マイナビ女子オープン本戦進出など。ファンとの交流や普及活動でも大人気。",

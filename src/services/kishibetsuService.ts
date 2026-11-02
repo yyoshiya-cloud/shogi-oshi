@@ -21,3 +21,35 @@ export async function syncAllPlayersWithKishibetsu(
 
   return synced;
 }
+
+/**
+ * UIがフリーズしない非同期協調チャンク処理（プログレスコールバック付き）同期
+ */
+export async function syncAllPlayersWithProgress(
+  players: Player[],
+  latestResults?: Record<string, ShogiMonthlyResult[]>,
+  onProgress?: (processed: number, total: number, currentPlayer: Player) => void
+): Promise<Player[]> {
+  if (latestResults) {
+    updateMatchStatsData(latestResults);
+  }
+
+  const synced: Player[] = [];
+  const chunkSize = 12;
+
+  for (let i = 0; i < players.length; i += chunkSize) {
+    const chunk = players.slice(i, i + chunkSize);
+    for (const p of chunk) {
+      const initialized = initializePlayerRecords(p);
+      synced.push(initialized);
+      if (onProgress) {
+        onProgress(synced.length, players.length, initialized);
+      }
+    }
+    // Yield to browser event loop to guarantee 60fps responsiveness
+    await new Promise((resolve) => setTimeout(resolve, 15));
+  }
+
+  runKishibetsuDebugVerification(synced);
+  return synced;
+}

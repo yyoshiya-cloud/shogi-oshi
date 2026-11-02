@@ -41,13 +41,15 @@ import {
   Bell,
   Sparkles,
   Trophy,
-  ExternalLink
+  ExternalLink,
+  X
 } from 'lucide-react';
 
-type TabType = 'dashboard' | 'calendar' | 'directory' | 'notifications';
+type TabType = 'dashboard' | 'calendar' | 'directory';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [showNotificationModal, setShowNotificationModal] = useState<boolean>(false);
   const [playersList, setPlayersList] = useState<Player[]>(() => {
     // 起動時に2025・2026両年度の対局結果データをインデックス化
     updateMatchStatsData(getStoredFiscalResults());
@@ -83,12 +85,25 @@ export default function App() {
         return false;
       });
 
+      const needsClassUpdate = stored.some((p) => {
+        const staticP = staticMap.get(p.id);
+        if (!staticP) return false;
+        return (
+          p.junisenClass === '順位戦参加' ||
+          p.ryuoClass === '竜王戦参加' ||
+          (p.id === 'pro-koji_tanigawa' && p.junisenClass === '名人') ||
+          (staticP.junisenClass && p.junisenClass !== staticP.junisenClass) ||
+          (staticP.ryuoClass && p.ryuoClass !== staticP.ryuoClass)
+        );
+      });
+
       const needsCleanup =
         missingStatic.length > 0 ||
         needsLpsaOrNakaiUpdate ||
         needsTitleUpdate ||
         needs2025Restore ||
         needsLeaveStatsUpdate ||
+        needsClassUpdate ||
         stored.some(
           (p) =>
             (p.name && !p.name.includes(' ') && !p.name.includes('\u3000') && p.name.length >= 3) ||
@@ -145,11 +160,9 @@ export default function App() {
           }
           let junisenClass = p.junisenClass;
           let ryuoClass = p.ryuoClass;
-          if (staticP && (!junisenClass || junisenClass === '-' || junisenClass === '参加棋戦')) {
-            junisenClass = staticP.junisenClass;
-          }
-          if (staticP && (!ryuoClass || ryuoClass === '-' || ryuoClass === '参加棋戦')) {
-            ryuoClass = staticP.ryuoClass;
+          if (staticP) {
+            junisenClass = staticP.junisenClass || junisenClass;
+            ryuoClass = staticP.ryuoClass || ryuoClass;
           }
           return {
             ...p,
@@ -369,22 +382,26 @@ export default function App() {
     const followed = getStoredFollowed(googleUser?.email);
     setFollowedList(followed);
 
-    const todayStr = getTodayDateString();
-    const todayInfo = getTodayInfo();
-
-
+    const followedIds = new Set(followed.map((f) => f.playerId));
 
     const rawNotifs = getStoredNotifications(matchesList);
     const synchronizedNotifs = rawNotifs;
 
-    const validNotifs = synchronizedNotifs.filter((n) => isTodayOrResultNotification(n, matchesList));
+    const validNotifs = synchronizedNotifs.filter((n) => {
+      if (n.playerId && !followedIds.has(n.playerId)) {
+        return false;
+      }
+      return isTodayOrResultNotification(n, matchesList);
+    });
     setNotifications(validNotifs);
     saveStoredNotifications(validNotifs);
 
-    // Initial check: if there's an unread today's match or match result notification, show heads up preview
+    // Initial check: if there's an unread today's match or match result notification for a followed player, show heads up preview
     const unread = validNotifs.find((n) => !n.read);
     if (unread) {
       setActiveHeadsUp(unread);
+    } else {
+      setActiveHeadsUp(null);
     }
 
     const stored = getStoredPlayers();
@@ -409,11 +426,20 @@ export default function App() {
   }, []);
 
   const refreshNotifications = () => {
+    const followedIds = new Set(followedList.map((f) => f.playerId));
     const rawNotifs = getStoredNotifications(matchesList);
-    const validNotifs = rawNotifs.filter((n) => isTodayOrResultNotification(n, matchesList));
+    const validNotifs = rawNotifs.filter((n) => {
+      if (n.playerId && !followedIds.has(n.playerId)) {
+        return false;
+      }
+      return isTodayOrResultNotification(n, matchesList);
+    });
     setNotifications(validNotifs);
-    if (validNotifs.length > 0 && !validNotifs[0].read) {
-      setActiveHeadsUp(validNotifs[0]);
+    const unread = validNotifs.find((n) => !n.read);
+    if (unread) {
+      setActiveHeadsUp(unread);
+    } else {
+      setActiveHeadsUp(null);
     }
   };
 
@@ -593,9 +619,9 @@ export default function App() {
 
           {/* Quick notification bell */}
           <button
-            onClick={() => setActiveTab('notifications')}
-            className="relative p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition border border-zinc-800"
-            title="通知速報"
+            onClick={() => setShowNotificationModal(true)}
+            className="relative p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition border border-zinc-800 cursor-pointer"
+            title="通知速報を開く"
           >
             <Bell size={18} />
             {unreadCount > 0 && (
@@ -681,22 +707,11 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'notifications' && (
-          <NotificationCenter
-            notifications={notifications}
-            matches={matchesList}
-            players={playersList}
-            onSelectMatch={(m) => setSelectedMatch(m)}
-            onRefreshNotifications={refreshNotifications}
-            onDeleteNotification={handleDeleteNotification}
-            onClearAllNotifications={handleClearAllNotifications}
-          />
-        )}
       </main>
 
       {/* Android Bottom Navigation Bar (Material 3 style) */}
       <nav className="fixed sm:sticky bottom-0 left-0 right-0 z-30 bg-zinc-950/95 border-t border-zinc-800/80 px-2 py-1.5 backdrop-blur-lg">
-        <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
           {/* Dashboard Tab */}
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -757,28 +772,6 @@ export default function App() {
               <Users size={20} />
             </div>
             <span className="text-[10px] mt-0.5">棋士名鑑</span>
-          </button>
-
-          {/* Notifications Tab */}
-          <button
-            onClick={() => setActiveTab('notifications')}
-            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition relative ${
-              activeTab === 'notifications'
-                ? 'text-amber-400 font-bold'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div
-              className={`p-1 rounded-xl transition relative ${
-                activeTab === 'notifications' ? 'bg-amber-500/20' : ''
-              }`}
-            >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full" />
-              )}
-            </div>
-            <span className="text-[10px] mt-0.5">通知速報</span>
           </button>
 
           {/* App Info & Features Button */}
@@ -842,6 +835,58 @@ export default function App() {
       {/* App Info & Features Modal */}
       {showAppInfoModal && (
         <AppInfoModal onClose={() => setShowAppInfoModal(false)} />
+      )}
+
+      {/* Notification Center Modal (triggered by top-right Bell button) */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/70 flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                  <Bell size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-100 font-serif-jp flex items-center gap-2">
+                    <span>推し棋士 速報通知</span>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-sans font-bold">
+                        未読 {unreadCount}件
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-[11px] text-zinc-400">
+                    推し棋士の対局開始・勝敗結果速報
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white transition cursor-pointer"
+                title="閉じる"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+              <NotificationCenter
+                notifications={notifications}
+                matches={matchesList}
+                players={playersList}
+                onSelectMatch={(m) => {
+                  setShowNotificationModal(false);
+                  setSelectedMatch(m);
+                }}
+                onRefreshNotifications={refreshNotifications}
+                onDeleteNotification={handleDeleteNotification}
+                onClearAllNotifications={handleClearAllNotifications}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </AndroidFrame>
   );

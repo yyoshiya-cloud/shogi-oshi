@@ -320,12 +320,6 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                           ? `${player.birthPlace} / ${player.style || '居飛車'}`
                           : player.style || '居飛車'}
                       </div>
-
-                      {config.cheeringNote && (
-                        <p className="text-[11px] text-amber-200/90 italic mt-1">
-                          「{config.cheeringNote}」
-                        </p>
-                      )}
                     </div>
                   </div>
 

@@ -417,54 +417,53 @@ const HISTORICAL_BENCHMARKS: Record<string, Record<number, { wins: number; losse
 };
 
 /**
- * 過去（2021〜2024年度）の公式対局記録がデータベース内に未収録の一般棋士用
- * 棋士の通算成績・称号・勝率・性別に基づき整合的な年度成績を確定的に算出
+ * 棋士・女流棋士番号に基づき、正式なプロデビュー（四段昇段／女流プロ入り）年度を算出
  */
-function generateHistoricalFallback(player: Partial<Player>, year: number): { wins: number; losses: number } {
-  const nameClean = cleanName(player.name);
-  const id = player.id || '';
-
-  // 休場・未デビュー等の例外チェック
-  if (id === 'pro-toshiki_sumisaki' && year <= 2024) return { wins: 0, losses: 0 };
-  if (id === 'isoya-yui' && year <= 2022) return { wins: 0, losses: 0 };
-  if (nameClean.includes('早水千紗') || nameClean.includes('山田朱未')) return { wins: 0, losses: 0 };
-
-  const isWomen = player.type === 'women';
-  const isTop = (player.rank || '').includes('名人') || (player.rank || '').includes('竜王') || (player.rank || '').includes('九段') || (player.rank || '').includes('八段') || (player.totalTitles || 0) > 0;
-
-  // 確定決定的なハッシュシード（表示ごとにブレないよう完全固定）
-  let hash = 0;
-  for (let i = 0; i < nameClean.length; i++) hash = (hash * 31 + nameClean.charCodeAt(i)) & 0x7fffffff;
-  const seed = (hash + year * 17) % 100;
-
-  const winRate = player.careerWinRate && player.careerWinRate > 0 ? player.careerWinRate : (isTop ? 0.58 : isWomen ? 0.51 : 0.52);
-  const baseGames = isTop ? 32 : (isWomen ? 24 : 28);
-  const games = Math.max(12, baseGames + (seed % 9) - 4);
-
-  const calculatedWins = Math.round(games * winRate + (seed % 5) - 2);
-  const wins = Math.max(1, calculatedWins);
-  const losses = Math.max(1, games - wins);
-
-  return { wins, losses };
+export function getPlayerDebutFiscalYear(player: Partial<Player>): number {
+  const num = player.playerNumber || 0;
+  if (player.type === 'women') {
+    if (num >= 92) return 2025;
+    if (num >= 89) return 2024;
+    if (num >= 83) return 2023;
+    if (num >= 78) return 2022;
+    if (num >= 75) return 2021;
+    return 2000;
+  } else {
+    // 棋士番号に基づく四段昇段年度（小窪碧四段はNo.351で2026年度プロ入り）
+    if (num >= 351) return 2026;
+    if (num >= 346) return 2025;
+    if (num >= 340) return 2024;
+    if (num >= 334) return 2023;
+    if (num >= 330) return 2022;
+    if (num >= 324) return 2021;
+    return 2000;
+  }
 }
 
 /**
  * 2021年度〜2026年度 年度別成績詳細一覧表 再構築エンジン
  * 2021〜2024年度は連盟公式・kishibetsu公式確定実績数値を正しく適用し、
  * 2025〜2026年度は一局単位の公式対局データベースから正確に再計算します。
+ * ※ 対局実績のない年度や公式戦未参加の棋士に対して架空の勝敗を動的補完することは一切行いません。
  */
 export function generateCompleteYearRecords(player: Partial<Player>): YearRecord[] {
   indexMatchesOnce();
-  const years = [2021, 2022, 2023, 2024, 2025, 2026];
+  const years = [2026, 2025, 2024, 2023, 2022, 2021];
   const nameClean = cleanName(player.name);
+  const debutYear = getPlayerDebutFiscalYear(player);
 
-  // 休場中女流棋士（早水千紗、山田朱未）は全年度0局0勝0敗
-  if (nameClean.includes('早水千紗') || nameClean.includes('山田朱未')) {
+  // 通算成績が0勝0敗の棋士（未対局・新四段等）または休場中棋士は全年度0局0勝0敗
+  if (
+    (player.careerWins === 0 && player.careerLosses === 0) ||
+    nameClean.includes('早水千紗') ||
+    nameClean.includes('山田朱未')
+  ) {
     return years.map((year) => ({
       year,
       wins: 0,
       losses: 0,
       rate: 0,
+      isPreDebut: true,
     }));
   }
 
@@ -474,18 +473,33 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
   const benchmark = HISTORICAL_BENCHMARKS[nameClean] || (pId ? HISTORICAL_BENCHMARKS[pId] : null);
 
   return years.map((year) => {
+    // プロ入り前の過年度は公式戦対局なし（プロ入り前）
+    if (year < debutYear) {
+      return {
+        year,
+        wins: 0,
+        losses: 0,
+        rate: 0,
+        isPreDebut: true,
+      };
+    }
+
     let wins = 0;
     let losses = 0;
 
     if (year <= 2024) {
-      // 2021〜2024年度: 公式確定実績データが存在する場合は最優先で反映
+      // 2021〜2024年度: 公式確定実績データが存在する場合は反映
       if (benchmark && benchmark[year]) {
         wins = benchmark[year].wins;
         losses = benchmark[year].losses;
       } else {
-        // playerオブジェクト内に有効な過去実績が存在する場合
+        // playerオブジェクト内に有効な過去実績が存在し、かつ通算勝利数を超えない場合
         const explicit = (player.yearRecords || []).find((r) => r.year === year);
-        if (explicit && explicit.wins + explicit.losses > 0) {
+        if (
+          explicit &&
+          explicit.wins + explicit.losses > 0 &&
+          explicit.wins <= (player.careerWins || 9999)
+        ) {
           wins = explicit.wins;
           losses = explicit.losses;
         } else {
@@ -495,10 +509,9 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
             wins = dbWins;
             losses = dbLosses;
           } else {
-            // データベース未収録の過年度（2021-2024）を安定補正計算
-            const fallback = generateHistoricalFallback(player, year);
-            wins = fallback.wins;
-            losses = fallback.losses;
+            // 動的補完・架空データの算出は行わず、対局なし（0局0勝0敗）とする
+            wins = 0;
+            losses = 0;
           }
         }
       }
@@ -526,6 +539,7 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
       wins,
       losses,
       rate,
+      isPreDebut: total === 0,
     };
   });
 }

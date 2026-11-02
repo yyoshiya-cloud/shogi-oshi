@@ -3,6 +3,7 @@ import { Player, FollowedPlayerConfig, OshiBadge, PlayerType, PlayerAffiliation 
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
 import { formatPlayerName, isPlayerOnLeave } from '../utils/playerUtils';
+import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import {
   Search,
   Heart,
@@ -87,6 +88,43 @@ export function matchesRankFilter(playerOrRank: Player | string, filter: string)
     return normRank.includes(normFilter) && !isWomen;
   }
   return normRank.includes(normFilter);
+}
+
+export function matchJunisenFilter(p: Player, filter: string): boolean {
+  if (filter === 'all') return true;
+  if (p.type === 'women') {
+    const jc = p.junisenClass || '';
+    if (filter === '白玲') return jc.includes('白玲') || (p.heldTitles && p.heldTitles.includes('白玲'));
+    if (filter === '女流A級') return jc.startsWith('A級');
+    if (filter === '女流B級') return jc.startsWith('B級');
+    if (filter === '女流C級') return jc.startsWith('C級');
+    if (filter === '女流D級') return jc.startsWith('D級');
+    if (filter === '女流フリークラス') return jc.includes('フリークラス');
+    return false;
+  }
+
+  const formatted = formatProJunisenClass(p);
+  if (filter === '名人') return formatted.includes('名人');
+  if (filter === 'A級') return formatted === 'A級' || formatted.startsWith('A級');
+  if (filter === 'B級1組') return formatted.includes('B級1組');
+  if (filter === 'B級2組') return formatted.includes('B級2組');
+  if (filter === 'C級1組') return formatted.includes('C級1組');
+  if (filter === 'C級2組') return formatted.includes('C級2組');
+  if (filter === 'フリークラス') return formatted === 'フリークラス';
+  if (filter === '未参加') return formatted === '未参加';
+  return false;
+}
+
+export function matchRyuoFilter(p: Player, filter: string): boolean {
+  if (filter === 'all') return true;
+  if (p.type === 'women') return false;
+  const formatted = formatProRyuoClass(p);
+  if (filter === '竜王') return formatted.includes('竜王') && !formatted.includes('組');
+  if (['1組', '2組', '3組', '4組', '5組', '6組'].includes(filter)) {
+    return formatted === filter || formatted.includes(filter);
+  }
+  if (filter === '未参加') return formatted === '未参加';
+  return false;
 }
 
 export const PRO_RANKS = ['九段', '八段', '七段', '六段', '五段', '四段'];
@@ -191,6 +229,25 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             )}
           </div>
 
+          {/* 竜王戦・順位戦クラスバッジ（棋士番号の直下行に独立配置） */}
+          {player.type !== 'women' && (
+            <div className="flex items-center gap-1.5 flex-wrap my-1">
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-600/40">
+                竜王戦 {formatProRyuoClass(player)}
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800/90 text-zinc-300 border border-zinc-700">
+                順位戦 {formatProJunisenClass(player)}
+              </span>
+            </div>
+          )}
+          {player.type === 'women' && player.junisenClass && player.junisenClass !== '-' && (
+            <div className="flex items-center gap-1.5 flex-wrap my-1">
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800/90 text-zinc-300 border border-zinc-700">
+                女流順位戦 {player.junisenClass}
+              </span>
+            </div>
+          )}
+
           {/* 1段目: 氏名 段位 */}
           <div className="flex items-baseline gap-2.5">
             <h3 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
@@ -231,12 +288,6 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               )}
             </div>
           )}
-
-          {isFollowed && followConfig && followConfig.cheeringNote && (
-            <p className="text-[11px] text-amber-200/90 italic mt-1">
-              「{followConfig.cheeringNote}」
-            </p>
-          )}
         </div>
       </div>
 
@@ -246,7 +297,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
           <div>
             <span className="text-[9px] text-zinc-500 block">通算成績</span>
             <span className="font-bold text-zinc-200 font-serif-jp">
-              {hasCareerStats ? `${player.careerWins}勝${player.careerLosses}敗` : '公式戦現役'}
+              {player.careerWins > 0 || player.careerLosses > 0 ? `${player.careerWins}勝${player.careerLosses}敗` : '0勝0敗'}
             </span>
           </div>
           <div className="w-px h-6 bg-zinc-800" />
@@ -255,10 +306,10 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             <span className="font-bold text-emerald-400 font-serif-jp">
               {onLeave ? (
                 <span className="text-amber-400 text-[11px] font-bold">休場中</span>
-              ) : hasYearStats ? (
+              ) : player.currentYearWins > 0 || player.currentYearLosses > 0 ? (
                 `${(player.currentYearWinRate * 100).toFixed(0)}%`
               ) : (
-                <span className="text-zinc-600 font-normal">-</span>
+                '0%'
               )}
             </span>
           </div>
@@ -322,6 +373,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   const [affiliationFilter, setAffiliationFilter] = useState<PlayerAffiliation | 'all' | 'oshi'>('all');
   const [titleFilter, setTitleFilter] = useState<'all' | 'hasTitle' | 'noTitle'>('all');
   const [rankFilter, setRankFilter] = useState<string>('all');
+  const [junisenFilter, setJunisenFilter] = useState<string>('all');
+  const [ryuoFilter, setRyuoFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'number' | 'wins' | 'winrate' | 'titles'>('number');
 
   const followedMap = useMemo(() => {
@@ -340,6 +393,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
       }
       if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
       if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
+      if (!matchJunisenFilter(p, junisenFilter)) return false;
+      if (!matchRyuoFilter(p, ryuoFilter)) return false;
       return matchesRankFilter(p, rank);
     }).length;
   };
@@ -356,7 +411,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     if (rankFilter !== 'all' && getRankCount(rankFilter) === 0) {
       setRankFilter('all');
     }
-  }, [filterType, affiliationFilter, titleFilter, rankFilter, players]);
+  }, [filterType, affiliationFilter, titleFilter, rankFilter, junisenFilter, ryuoFilter, players]);
 
   // Filter and sort players with guaranteed total titles and reactive recalculation
   const filteredPlayers = useMemo(() => {
@@ -375,6 +430,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
 
           if (!matchesRankFilter(p, rankFilter)) return false;
+          if (!matchJunisenFilter(p, junisenFilter)) return false;
+          if (!matchRyuoFilter(p, ryuoFilter)) return false;
         }
 
         if (searchQuery.trim()) {
@@ -407,7 +464,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           (a.playerNumber || 999) - (b.playerNumber || 999)
         );
       });
-  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, searchQuery, sortBy]);
+  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, junisenFilter, ryuoFilter, searchQuery, sortBy]);
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -512,8 +569,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             onClick={() => setFilterType('women')}
             className={`px-3.5 py-1.5 rounded-xl font-bold transition shrink-0 ${
               filterType === 'women'
-                ? 'bg-rose-500 text-white shadow-sm'
-                : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/30'
+                : 'bg-zinc-950 text-rose-400 hover:text-rose-300 border border-rose-900/50'
             }`}
           >
             女流棋士 ({players.filter((p) => p.type === 'women').length})
@@ -698,14 +755,98 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                     isWomenDisabled
                       ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
                       : rankFilter === rank
-                      ? 'bg-rose-500 text-white font-bold shadow-sm'
-                      : 'bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'
+                      ? 'bg-rose-600 text-white font-bold shadow-sm'
+                      : 'bg-zinc-950 text-rose-400 hover:text-rose-300 border border-zinc-800 font-semibold'
                   }`}
                 >
                   {rank} <span className="text-[9px] opacity-70">({count})</span>
                 </button>
               );
             })}
+          </div>
+
+          {/* Class Filters (順位戦クラス & 竜王戦クラス Dropdowns) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2.5 border-t border-zinc-800/80">
+            {/* 順位戦クラス Dropdown */}
+            <div className="flex items-center gap-2 flex-1">
+              <label htmlFor="junisen-filter" className="text-zinc-400 font-semibold text-xs whitespace-nowrap shrink-0 flex items-center gap-1">
+                <Trophy size={13} className="text-amber-400" />
+                <span>順位戦:</span>
+              </label>
+              <select
+                id="junisen-filter"
+                value={junisenFilter}
+                onChange={(e) => setJunisenFilter(e.target.value)}
+                className={`bg-zinc-950 border text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500/60 transition w-full cursor-pointer font-medium ${
+                  junisenFilter !== 'all'
+                    ? 'border-amber-500/80 text-amber-300 font-bold bg-amber-950/20'
+                    : 'border-zinc-800 text-zinc-200'
+                }`}
+              >
+                <option value="all">順位戦クラス: すべて</option>
+                <optgroup label="棋士 順位戦">
+                  <option value="名人">名人 (1名)</option>
+                  <option value="A級">A級 (10名)</option>
+                  <option value="B級1組">B級1組 (13名)</option>
+                  <option value="B級2組">B級2組 (27名)</option>
+                  <option value="C級1組">C級1組 (31名)</option>
+                  <option value="C級2組">C級2組 (54名)</option>
+                  <option value="フリークラス">フリークラス (31名)</option>
+                </optgroup>
+                <optgroup label="女流棋士 白玲戦・女流順位戦">
+                  <option value="白玲">白玲 (1名)</option>
+                  <option value="女流A級">女流A級 (10名)</option>
+                  <option value="女流B級">女流B級 (10名)</option>
+                  <option value="女流C級">女流C級 (19名)</option>
+                  <option value="女流D級">女流D級 (36名)</option>
+                  <option value="女流フリークラス">女流フリークラス (5名)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            {/* 竜王戦クラス Dropdown */}
+            <div className="flex items-center gap-2 flex-1">
+              <label htmlFor="ryuo-filter" className="text-zinc-400 font-semibold text-xs whitespace-nowrap shrink-0 flex items-center gap-1">
+                <Trophy size={13} className="text-amber-400" />
+                <span>竜王戦:</span>
+              </label>
+              <select
+                id="ryuo-filter"
+                value={ryuoFilter}
+                onChange={(e) => setRyuoFilter(e.target.value)}
+                className={`bg-zinc-950 border text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500/60 transition w-full cursor-pointer font-medium ${
+                  ryuoFilter !== 'all'
+                    ? 'border-amber-500/80 text-amber-300 font-bold bg-amber-950/20'
+                    : 'border-zinc-800 text-zinc-200'
+                }`}
+              >
+                <option value="all">竜王戦クラス: すべて</option>
+                <option value="竜王">竜王 (1名)</option>
+                <option value="1組">1組 (16名)</option>
+                <option value="2組">2組 (16名)</option>
+                <option value="3組">3組 (16名)</option>
+                <option value="4組">4組 (32名)</option>
+                <option value="5組">5組 (31名)</option>
+                <option value="6組">6組 (52名)</option>
+                <option value="未参加">未参加 (10名)</option>
+              </select>
+            </div>
+
+            {/* Reset button if class filter active */}
+            {(junisenFilter !== 'all' || ryuoFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setJunisenFilter('all');
+                  setRyuoFilter('all');
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-bold text-xs border border-amber-500/30 transition shrink-0 cursor-pointer flex items-center justify-center gap-1"
+                title="クラス指定を解除"
+              >
+                <X size={13} />
+                <span>クラス解除</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

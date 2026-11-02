@@ -104,6 +104,8 @@ const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes in-memory cache
 const detailCache = new Map<string, { data: PlayerProfileDetail; timestamp: number }>();
 const DETAIL_CACHE_TTL_MS = 1000 * 60 * 60 * 2; // 2 hours
 
+import iconv from 'iconv-lite';
+
 async function fetchWithTimeout(url: string, timeoutMs = 18000): Promise<string> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -120,11 +122,46 @@ async function fetchWithTimeout(url: string, timeoutMs = 18000): Promise<string>
     if (!res.ok) {
       return '';
     }
-    return await res.text();
+    const buffer = await res.arrayBuffer();
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('shift_jis') || contentType.includes('sjis') || url.includes('kishibetsu.com')) {
+      return iconv.decode(Buffer.from(buffer), 'shift_jis');
+    }
+    return iconv.decode(Buffer.from(buffer), 'utf-8');
   } catch {
     return '';
   } finally {
     clearTimeout(id);
+  }
+}
+
+
+export async function fetchKifuDatabaseRecords(playerName: string): Promise<any[]> {
+  const encodedName = encodeURIComponent(playerName);
+  const url = `https://shogidb2.com/search?q=${encodedName}`;
+  
+  // 外部APIへ短時間に連続アクセスしないよう少し待機
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  try {
+    const html = await fetchWithTimeout(url, 15000);
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const results: any[] = [];
+    
+    // shogidb2の検索結果テーブル構造に基づくパース例
+    $('.search-result-item').each((_, el) => {
+      results.push({
+        title: $(el).find('.game-title').text().trim(),
+        date: $(el).find('.game-date').text().trim(),
+        url: $(el).find('a').attr('href'),
+      });
+    });
+    
+    return results;
+  } catch (e) {
+    console.error(`Failed to fetch kifu for ${playerName}:`, e);
+    return [];
   }
 }
 
@@ -1142,24 +1179,56 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
       const $ = cheerio.load(html);
 
       const info: Record<string, string> = {};
-      $('table').each((_, table) => {
-        $(table)
-          .find('tr')
-          .each((_, tr) => {
-            const th = $(tr).find('th').text().trim();
-            const td = $(tr).find('td').text().trim().replace(/\s+/g, ' ');
-            if (th && td) {
-              info[th] = td;
+      $('tr').each((_, tr) => {
+        const cells = $(tr).find('th, td');
+        if (cells.length >= 2) {
+          const key = $(cells[0]).text().trim().replace(/\s+/g, ' ');
+          const val = $(cells.slice(1)).text().trim().replace(/\s+/g, ' ');
+          if (key && val) {
+            info[key] = val;
+          }
+        }
+      });
+
+      $('dl').each((_, dl) => {
+        $(dl).find('dt').each((_, dt) => {
+          const dd = $(dt).next('dd');
+          if (dd.length > 0) {
+            const key = $(dt).text().trim().replace(/\s+/g, ' ');
+            const val = $(dd).text().trim().replace(/\s+/g, ' ');
+            if (key && val) {
+              info[key] = val;
             }
-          });
+          }
+        });
       });
 
       const danRank = info['段位'] ? sanitizeRank(info['段位']) : undefined;
       const birthDate = info['生年月日'] ? formatBirthDateWithAge(info['生年月日']) : '';
       const birthPlace = info['出身地'] || '';
       const master = info['師匠'] || '';
-      const ryuoClass = (info['竜王戦'] || '').split('\n')[0].trim();
-      const junisenClass = (info['順位戦'] || info['女流順位戦'] || info['白玲戦'] || info['女流順位戦（白玲戦）'] || '').split('\n')[0].trim();
+
+      let rawRyuo = '';
+      let rawJunisen = '';
+      for (const [k, v] of Object.entries(info)) {
+        if (k.includes('竜王戦') || k === '竜王') {
+          rawRyuo = v;
+        }
+        if (k.includes('順位戦') || k.includes('白玲戦') || k === '順位') {
+          rawJunisen = v;
+        }
+      }
+
+      const extractClass = (value: string): string => {
+        if (!value) return '';
+        const clean = value.split('\n')[0].trim().replace(/\s+/g, ' ');
+        // Split at '(' or '（' to strip notes like "(第37期竜王)" while keeping "4組", "フリークラス", "第40期より", "第86期より"
+        const primary = clean.split(/[（(]/)[0].trim();
+        return primary;
+      };
+
+      let ryuoClass = extractClass(rawRyuo) || undefined;
+      let junisenClass = extractClass(rawJunisen) || undefined;
 
       let currentWins = 0;
       let currentLosses = 0;

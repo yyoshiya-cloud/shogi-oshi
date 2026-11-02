@@ -221,13 +221,44 @@ export function applyPlayerOverrides(p: Player): Player {
       junisenClass: 'フリークラス',
     };
   }
-  if (nameClean.includes('島井咲緒里')) {
-    return {
-      ...p,
-      junisenClass: '',
-      highlights: [...(p.highlights || []), '2026年7月6日引退'],
-      shortBio: `元日本女子プロ将棋協会（LPSA）所属の女流棋士（${p.rank}）。2026年7月6日付で引退。`,
-    };
+  const PRO_CLASS_OVERRIDES: Record<string, { junisenClass: string; ryuoClass: string }> = {
+    '山下数毅': { junisenClass: 'フリークラス', ryuoClass: '4組' },
+    '岩村凛太朗': { junisenClass: 'フリークラス', ryuoClass: '6組' },
+    '生垣寛人': { junisenClass: 'フリークラス', ryuoClass: '6組' },
+    '片山史龍': { junisenClass: 'フリークラス', ryuoClass: '6組' },
+    '小窪碧': { junisenClass: 'フリークラス', ryuoClass: '6組' },
+    '川村悠人': { junisenClass: 'フリークラス', ryuoClass: '6組' },
+    '古井丈大': { junisenClass: 'フリークラス', ryuoClass: '第40期より' },
+    '渡邊晴磨': { junisenClass: '第86期より', ryuoClass: '第40期より' },
+    '國井勝太': { junisenClass: '第86期より', ryuoClass: '第40期より' },
+    '齊藤優希': { junisenClass: 'C級2組', ryuoClass: '6組' },
+    '炭﨑俊毅': { junisenClass: 'C級2組', ryuoClass: '第40期より' },
+    '炭崎俊毅': { junisenClass: 'C級2組', ryuoClass: '第40期より' },
+  };
+
+  for (const [key, val] of Object.entries(PRO_CLASS_OVERRIDES)) {
+    if (nameClean.includes(key)) {
+      const isFurui = key === '古井丈大';
+      const isSumisaki = key === '炭﨑俊毅' || key === '炭崎俊毅';
+      return {
+        ...p,
+        junisenClass: p.junisenClass || val.junisenClass,
+        ryuoClass: p.ryuoClass || val.ryuoClass,
+        ...(isFurui ? { currentYearWins: 5, currentYearLosses: 5, currentYearWinRate: 0.5, careerWins: 5, careerLosses: 5, careerWinRate: 0.5 } : {}),
+        ...(isSumisaki ? { currentYearWins: 13, currentYearLosses: 7, currentYearWinRate: 0.65, careerWins: 13, careerLosses: 7, careerWinRate: 0.65 } : {}),
+      };
+    }
   }
+
   return p;
 }
+
+/**
+ * 勝率を正確に 0.000 形式（例: 0.650, 0.000, 1.000）でフォーマットする
+ */
+export function formatWinRate(rate?: number | null): string {
+  if (rate === undefined || rate === null || isNaN(rate)) return '0.000';
+  const num = Math.max(0, Math.min(1, Number(rate)));
+  return num.toFixed(3);
+}
+

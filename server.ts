@@ -89,6 +89,13 @@ async function startServer() {
     }
   });
 
+  app.get('/api/shogidb/search', (req, res) => {
+    const q = (req.query.q as string) || '';
+    const cleanQ = q.replace(/[\s\u3000※＊\*]/g, ' ').trim();
+    const targetUrl = `https://shogidb2.com/search?q=${encodeURIComponent(cleanQ)}`;
+    res.json({ success: true, query: cleanQ, targetUrl });
+  });
+
   // Secure Image Proxy for official Shogi Federation & LPSA player profile photos
   app.get('/api/proxy/image', async (req, res) => {
     try {
