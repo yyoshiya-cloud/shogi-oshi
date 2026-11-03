@@ -35,13 +35,15 @@ import { MatchDetailModal } from './components/MatchDetailModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
+import { AndroidWidgetModal } from './components/AndroidWidgetModal';
 import {
   Heart,
   Calendar,
   Users,
   Bell,
   Sparkles,
-  X
+  X,
+  Smartphone
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -253,6 +255,7 @@ export default function App() {
   });
   const [showGoogleLoginModal, setShowGoogleLoginModal] = useState(false);
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
+  const [showAndroidWidgetModal, setShowAndroidWidgetModal] = useState(false);
 
   const handleLoginGoogle = (user: { name: string; email: string; avatar: string }) => {
     setGoogleUser(user);
@@ -594,41 +597,20 @@ export default function App() {
               </h1>
             </div>
             <p className="text-[11px] text-zinc-400">
-              棋士・女流棋士 応援ナビ (連盟・LPSA・無所属)
+              棋士・女流棋士 応援ナビ
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-
-          {/* Google Login Button / User Profile */}
+          {/* Android Home Screen Widget button */}
           <button
-            onClick={() => setShowGoogleLoginModal(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm ${
-              googleUser
-                ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/40'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800'
-            }`}
-            title="Googleアカウントでログインして推し棋士データを保存"
+            onClick={() => setShowAndroidWidgetModal(true)}
+            className="p-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+            title="Android ホーム画面ウィジェット設定"
           >
-            {googleUser ? (
-              <>
-                <img
-                  src={googleUser.avatar}
-                  alt={googleUser.name}
-                  className="w-4 h-4 rounded-full object-cover"
-                />
-                <span className="max-w-[80px] sm:max-w-[100px] truncate">{googleUser.name.split(' ')[0]}</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
-              </>
-            ) : (
-              <>
-                <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center">
-                  G
-                </div>
-                <span>Googleログイン</span>
-              </>
-            )}
+            <Smartphone size={18} />
+            <span className="text-xs font-bold hidden sm:inline">ウィジェット</span>
           </button>
 
           {/* Quick notification bell */}
@@ -682,7 +664,9 @@ export default function App() {
               setCalendarSubTab('results');
               setActiveTab('calendar');
             }}
+            onOpenAndroidWidgetModal={() => setShowAndroidWidgetModal(true)}
             onRemoveFollow={handleRemoveFollow}
+            onToggleFollow={handleToggleFollow}
           />
         )}
 
@@ -826,6 +810,7 @@ export default function App() {
           allPlayers={playersList}
           onClose={() => setSelectedPlayer(null)}
           onRemoveFollow={handleRemoveFollow}
+          onToggleFollow={handleToggleFollow}
           onAddComment={handleAddComment}
           onSelectMatch={(m) => {
             setSelectedPlayer(null);
@@ -850,6 +835,24 @@ export default function App() {
       {/* App Info & Features Modal */}
       {showAppInfoModal && (
         <AppInfoModal onClose={() => setShowAppInfoModal(false)} />
+      )}
+
+      {/* Android Home Screen Widget Preview & Setup Modal */}
+      {showAndroidWidgetModal && (
+        <AndroidWidgetModal
+          followedList={followedList}
+          players={playersList}
+          matches={matchesList}
+          onClose={() => setShowAndroidWidgetModal(false)}
+          onSelectMatch={(m) => {
+            setShowAndroidWidgetModal(false);
+            setSelectedMatch(m);
+          }}
+          onSelectPlayer={(p) => {
+            setShowAndroidWidgetModal(false);
+            setSelectedPlayer(p);
+          }}
+        />
       )}
 
       {/* Notification Center Modal (triggered by top-right Bell button) */}

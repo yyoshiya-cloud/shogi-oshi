@@ -517,12 +517,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                公式記録
-              </span>
-              <h2 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-center gap-1.5">
-                <Trophy size={20} className="text-amber-400" />
-                公式対局結果一覧（年度別: 4月〜翌年3月）
+              <h2 className="text-lg sm:text-xl font-bold text-zinc-100 flex items-start sm:items-center gap-1.5">
+                <Trophy size={20} className="text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+                <span>
+                  公式対局結果一覧<br />（年度別: 4月〜翌年3月）
+                </span>
               </h2>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
@@ -705,7 +704,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
             }`}
           >
             <Grid size={13} />
-            <span>カレンダーで日付選択</span>
+            <span>カレンダー選択</span>
           </button>
           <button
             onClick={() => {
@@ -1124,37 +1123,37 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           }`}
                         >
                           <div className="flex flex-col items-center flex-shrink-0">
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
-                              ☗先手
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
+                                ☗先手
+                              </span>
+                              {isSenteOshi && (
+                                <span className="text-rose-400 shrink-0" title="推し棋士">
+                                  <Heart size={12} className="fill-rose-400" />
+                                </span>
+                              )}
+                            </div>
                             <div className="mt-1">
                               {isSenteWinner ? (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1 rounded">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
                                   {result.resultType === 'fusen' ? '□不戦勝' : '○勝ち'}
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center text-[10px] text-zinc-400 bg-zinc-900 px-1 rounded">
-                                  {result.resultType === 'fusen' ? '■不戦敗' : '●'}
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-zinc-300 bg-zinc-800 border border-zinc-700/80 px-1.5 py-0.5 rounded">
+                                  {result.resultType === 'fusen' ? '■不戦敗' : '●負け'}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1">
-                              <span
-                                className={`text-sm truncate ${
-                                  isSenteWinner ? 'text-zinc-100 font-bold' : 'text-zinc-300'
-                                }`}
-                              >
-                                {result.sente}
-                              </span>
-                              {isSenteOshi && (
-                                <span className="flex-shrink-0 text-rose-400" title="推し棋士">
-                                  <Heart size={13} className="fill-rose-400" />
-                                </span>
-                              )}
-                            </div>
+                          <div className="min-w-0 flex-1">
+                            <span
+                              className={`text-xs sm:text-sm block truncate ${
+                                isSenteWinner ? 'text-zinc-100 font-bold' : 'text-zinc-300'
+                              }`}
+                            >
+                              {result.sente}
+                            </span>
                             <span className="text-[10px] text-zinc-400 block truncate">
                               {result.senteRaw.includes('※') ? 'LPSA / 女流' : '日本将棋連盟'}
                             </span>
@@ -1185,38 +1184,38 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             isGoteWinner ? 'font-bold' : 'opacity-85'
                           }`}
                         >
-                          <div className="min-w-0">
-                            <div className="flex items-center justify-end gap-1">
-                              {isGoteOshi && (
-                                <span className="flex-shrink-0 text-rose-400" title="推し棋士">
-                                  <Heart size={13} className="fill-rose-400" />
-                                </span>
-                              )}
-                              <span
-                                className={`text-sm truncate ${
-                                  isGoteWinner ? 'text-zinc-100 font-bold' : 'text-zinc-300'
-                                }`}
-                              >
-                                {result.gote}
-                              </span>
-                            </div>
+                          <div className="min-w-0 flex-1 text-right">
+                            <span
+                              className={`text-xs sm:text-sm block truncate ${
+                                isGoteWinner ? 'text-zinc-100 font-bold' : 'text-zinc-300'
+                              }`}
+                            >
+                              {result.gote}
+                            </span>
                             <span className="text-[10px] text-zinc-400 block truncate">
                               {result.goteRaw.includes('※') ? 'LPSA / 女流' : '日本将棋連盟'}
                             </span>
                           </div>
 
                           <div className="flex flex-col items-center flex-shrink-0">
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                              ☖後手
-                            </span>
+                            <div className="flex items-center gap-1">
+                              {isGoteOshi && (
+                                <span className="text-rose-400 shrink-0" title="推し棋士">
+                                  <Heart size={12} className="fill-rose-400" />
+                                </span>
+                              )}
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                ☖後手
+                              </span>
+                            </div>
                             <div className="mt-1">
                               {isGoteWinner ? (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1 rounded">
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
                                   {result.resultType === 'fusen' ? '□不戦勝' : '○勝ち'}
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center text-[10px] text-zinc-400 bg-zinc-900 px-1 rounded">
-                                  {result.resultType === 'fusen' ? '■不戦敗' : '●'}
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-zinc-300 bg-zinc-800 border border-zinc-700/80 px-1.5 py-0.5 rounded">
+                                  {result.resultType === 'fusen' ? '■不戦敗' : '●負け'}
                                 </span>
                               )}
                             </div>

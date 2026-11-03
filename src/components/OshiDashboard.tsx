@@ -2,14 +2,15 @@ import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
 import { formatPlayerName } from '../utils/playerUtils';
+import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
   Heart,
   Calendar,
   Trophy,
   ChevronRight,
-  Plus
+  Plus,
+  Smartphone
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 interface OshiDashboardProps {
   followedList: FollowedPlayerConfig[];
@@ -22,7 +23,9 @@ interface OshiDashboardProps {
   onOpenDirectory: () => void;
   onOpenCalendar: () => void;
   onOpenResults?: () => void;
+  onOpenAndroidWidgetModal?: () => void;
   onRemoveFollow: (playerId: string) => void;
+  onToggleFollow?: (config: FollowedPlayerConfig) => void;
 }
 
 const BADGE_COLORS: Record<OshiBadge, { bg: string; text: string; border: string }> = {
@@ -43,7 +46,9 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   onOpenDirectory,
   onOpenCalendar,
   onOpenResults,
+  onOpenAndroidWidgetModal,
   onRemoveFollow,
+  onToggleFollow,
 }) => {
   const followedPlayerMap = new Map(players.map((p) => [p.id, p]));
 
@@ -138,25 +143,74 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-bold text-zinc-100">
-                Googleアカウント連携: <span className="text-amber-300 font-mono">{googleUser?.email || 'y.yoshiya@gmail.com'}</span>
+                Googleアカウント連携
               </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
-                リンク保存中
-              </span>
+              {googleUser ? (
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
+                  リンク保存中
+                </span>
+              ) : (
+                <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded font-semibold border border-zinc-700">
+                  未連携
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
-              登録した推し棋士・女流棋士 ({followedList.length}名) はアカウントにリンクされ、安全に保存されています。
+              {googleUser
+                ? `登録した推し棋士・女流棋士 (${followedList.length}名) はアカウントにリンクされ、安全に保存されています。`
+                : 'Googleアカウントでログインすると、推し棋士データをクラウドに安全に保存・引き継ぎできます。'}
             </p>
           </div>
         </div>
         {onOpenGoogleLogin && (
           <button
             onClick={onOpenGoogleLogin}
-            className="self-end sm:self-auto px-2.5 py-1 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-blue-300 text-xs font-semibold border border-zinc-700 transition"
+            className={`self-end sm:self-auto px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 ${
+              googleUser
+                ? 'bg-zinc-800 hover:bg-zinc-700 text-blue-300 border border-zinc-700'
+                : 'bg-white hover:bg-zinc-200 text-zinc-900 shadow-md font-bold'
+            }`}
           >
-            リンク詳細
+            {!googleUser && (
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.94H1.18v3.15C3.17 21.36 7.23 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.18C.43 8.1 0 9.99 0 12s.43 3.9 1.18 5.41l4.1-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.64 1.18 6.59l4.1 3.15c.95-2.83 3.6-4.99 6.72-4.99z"/>
+              </svg>
+            )}
+            <span>{googleUser ? 'リンク詳細' : 'Googleログイン'}</span>
           </button>
         )}
+      </div>
+
+      {/* Android Widget Quick Banner */}
+      <div
+        onClick={onOpenAndroidWidgetModal}
+        className="cursor-pointer bg-gradient-to-r from-emerald-950/40 via-zinc-900 to-zinc-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 hover:border-emerald-400 transition flex items-center justify-between group shadow-md"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shrink-0">
+            <Smartphone size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Android新機能
+              </span>
+              <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-emerald-300 transition">
+                Android ホーム画面<br />ウィジェット機能
+              </h4>
+            </div>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              推し棋士の直近の対局予定・勝敗速報をスマホのホーム画面でいつでも確認・カスタマイズ
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold group-hover:translate-x-1 transition shrink-0 ml-2">
+          <span>設定・プレビュー</span>
+          <ChevronRight size={16} />
+        </div>
       </div>
 
       {/* 2026年 公式対局結果 Quick Banner */}
@@ -174,7 +228,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                 日本将棋連盟公式
               </span>
               <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-amber-300 transition">
-                公式対局結果一覧（年度別: 4月〜翌年3月）
+                公式対局結果一覧<br />（年度別: 4月〜翌年3月）
               </h4>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
@@ -213,7 +267,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
               まだ推し棋士が登録されていません
             </h4>
             <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-              棋士・女流棋士（連盟・LPSA・無所属）を推し登録して、対局日通知やカレンダー同期を始めましょう！
+              棋士・女流棋士を推し登録して、対局日通知やカレンダー同期を始めましょう！
             </p>
             <button
               onClick={onOpenDirectory}
@@ -282,12 +336,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span
-                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}
-                        >
-                          <Heart size={10} className="fill-current" />
-                          {config.badge}
-                        </span>
+                        <OshiBadgeTag badge={config.badge} size="xs" />
                         <span className="text-[10px] text-zinc-400 font-medium">
                           {player.type === 'women' ? '女流棋士' : '棋士'} No.{player.playerNumber}
                         </span>
@@ -313,6 +362,14 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                           ? `${player.birthPlace} / ${player.style || '居飛車'}`
                           : player.style || '居飛車'}
                       </div>
+
+                      {/* 3段目: 応援メモ（設定されている場合） */}
+                      {config.cheeringNote && (
+                        <div className="mt-1.5 text-[11px] text-amber-300/95 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1.5 max-w-full">
+                          <span className="shrink-0 text-xs">💬</span>
+                          <span className="truncate">{config.cheeringNote}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -333,7 +390,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                   </div>
 
                   {/* Right Stats & Actions */}
-                  <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-zinc-800/70">
+                  <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-zinc-800/70">
                     <div className="flex items-center gap-3 bg-zinc-950/60 px-3 py-2 rounded-xl border border-zinc-800/60 text-xs">
                       <div>
                         <span className="text-[9px] text-zinc-500 block">通算成績</span>
@@ -351,11 +408,12 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
 
                     <div className="flex items-center gap-2">
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRemoveFollow(player.id);
                         }}
-                        className="px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-rose-950/60 text-zinc-400 hover:text-rose-400 text-xs font-bold transition border border-zinc-700"
+                        className="px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-rose-950/60 text-zinc-400 hover:text-rose-400 text-xs font-bold transition border border-zinc-700 cursor-pointer"
                         title="推し解除"
                       >
                         推し解除
@@ -406,7 +464,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                 推し棋士・女流棋士を探す
               </h4>
               <p className="text-xs text-zinc-400">
-                プロ棋士・LPSA・無所属の全棋士名鑑から検索・追加
+                日本将棋連盟・LPSA・無所属の全棋士名鑑から検索・追加
               </p>
             </div>
           </div>

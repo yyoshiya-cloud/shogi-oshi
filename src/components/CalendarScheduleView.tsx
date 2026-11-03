@@ -231,7 +231,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
           }`}
         >
           <CalendarIcon size={14} />
-          <span>対局予定（公式スケジュール）</span>
+          <span>対局予定<br />（公式スケジュール）</span>
         </button>
         <button
           onClick={() => setSubTab('results')}
@@ -242,7 +242,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
           }`}
         >
           <Trophy size={14} />
-          <span>対局結果（年度別 4月〜翌年3月）</span>
+          <span>対局結果<br />（4月〜翌年3月）</span>
         </button>
       </div>
 

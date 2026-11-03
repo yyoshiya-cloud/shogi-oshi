@@ -13,7 +13,7 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
-        manifest: {
+        manifest: ({
           id: '/',
           name: '将棋推し活アプリ',
           short_name: '将棋推し活アプリ',
@@ -37,7 +37,39 @@ export default defineConfig(() => {
               purpose: 'maskable',
             },
           ],
-        },
+          shortcuts: [
+            {
+              name: '推し棋士直近対局',
+              short_name: '直近対局',
+              description: '推し棋士の直近の対局・結果をすばやく確認',
+              url: '/?tab=dashboard',
+              icons: [{ src: '/icon.svg', sizes: '192x192' }],
+            },
+          ],
+          widgets: [
+            {
+              name: '推し棋士 直近対局ウィジェット',
+              short_name: '対局ウィジェット',
+              description: '推し棋士の最新の対局・勝敗結果をホーム画面で確認',
+              tag: 'oshi-match-widget',
+              template: 'oshi-widget-template',
+              ms_ac_template: 'widgets/oshi-match.json',
+              screenshots: [
+                {
+                  src: '/icon.svg',
+                  sizes: '512x512',
+                  label: '推し棋士直近対局ウィジェット',
+                },
+              ],
+              icons: [
+                {
+                  src: '/icon.svg',
+                  sizes: '192x192',
+                },
+              ],
+            },
+          ],
+        } as any),
         workbox: {
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         },

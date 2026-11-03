@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
+import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
 import { formatPlayerName, isPlayerOnLeave, convertRomajiToHiragana } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
+import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
   Search,
   Heart,
@@ -129,13 +131,13 @@ interface PlayerCardItemProps {
   isFollowed: boolean;
   followConfig?: FollowedPlayerConfig;
   onSelectPlayer: (player: Player) => void;
-  onToggleFollow: (config: FollowedPlayerConfig) => void;
+  onOpenConfig: (player: Player, config?: FollowedPlayerConfig | null) => void;
 }
 
 /**
  * Optimized and memoized Player Card component ensuring immediate, efficient rendering of career title badges.
  */
-const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer, onToggleFollow }: PlayerCardItemProps) => {
+const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer, onOpenConfig }: PlayerCardItemProps) => {
   const badgeStyle = isFollowed && followConfig ? BADGE_COLORS[followConfig.badge] : null;
   const aff: PlayerAffiliation = player.affiliation || '日本将棋連盟';
   const affStyle = AFFILIATION_COLORS[aff];
@@ -213,13 +215,8 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               </span>
             )}
 
-            {isFollowed && badgeStyle && followConfig && (
-              <span
-                className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border}`}
-              >
-                <Heart size={10} className="fill-current" />
-                {followConfig.badge}
-              </span>
+            {isFollowed && followConfig && (
+              <OshiBadgeTag badge={followConfig.badge} size="xs" />
             )}
           </div>
 
@@ -291,6 +288,14 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               )}
             </div>
           )}
+
+          {/* Cheering Note Display */}
+          {isFollowed && followConfig?.cheeringNote && (
+            <div className="mt-1 text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-lg inline-flex items-center gap-1 max-w-full truncate">
+              <span>💬</span>
+              <span className="truncate">{followConfig.cheeringNote}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -319,35 +324,18 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
         </div>
 
         <div className="flex items-center gap-2">
-          {isFollowed ? (
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
-              <UserCheck size={13} />
-              <span>推し中</span>
-            </span>
+          {isFollowed && followConfig ? (
+            <OshiBadgeTag badge={followConfig.badge} size="sm" />
           ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleFollow({
-                  playerId: player.id,
-                  badge: '注目',
-                  color: '#f59e0b',
-                  cheeringNote: '',
-                  notificationsEnabled: true,
-                  notifyTiming: {
-                    dayBefore: false,
-                    morningOf: true,
-                    matchStart: true,
-                    resultImmediately: true
-                  },
-                  cheerCount: 0,
-                  followedAt: new Date().toISOString(),
-                  fanComments: []
-                });
+                onOpenConfig(player, null);
               }}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-bold shadow hover:brightness-110 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold shadow hover:shadow-rose-600/30 transition cursor-pointer"
+              title="本命・神推し・激推しバッジや推しカラーを選んで登録"
             >
-              <Heart size={13} />
+              <Heart size={13} className="fill-white" />
               <span>推し登録</span>
             </button>
           )}
@@ -379,6 +367,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   const [junisenFilter, setJunisenFilter] = useState<string>('all');
   const [ryuoFilter, setRyuoFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'number' | 'wins' | 'winrate' | 'titles'>('number');
+  const [configuringPlayer, setConfiguringPlayer] = useState<{ player: Player; config?: FollowedPlayerConfig | null } | null>(null);
 
   const followedMap = useMemo(() => {
     return new Map(followedList.map((f) => [f.playerId, f]));
@@ -868,7 +857,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 isFollowed={isFollowed}
                 followConfig={followConfig}
                 onSelectPlayer={onSelectPlayer}
-                onToggleFollow={onToggleFollow}
+                onOpenConfig={(p, cfg) => setConfiguringPlayer({ player: p, config: cfg })}
               />
             );
           })
@@ -893,6 +882,28 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           </div>
         )}
       </div>
+
+      {/* Oshi Badge & Config Modal */}
+      {configuringPlayer && (
+        <OshiConfigModal
+          player={configuringPlayer.player}
+          currentConfig={configuringPlayer.config}
+          onSave={(newConfig) => {
+            onToggleFollow(newConfig);
+            confetti({
+              particleCount: 50,
+              spread: 60,
+              origin: { y: 0.7 },
+            });
+            setConfiguringPlayer(null);
+          }}
+          onRemove={(playerId) => {
+            onRemoveFollow(playerId);
+            setConfiguringPlayer(null);
+          }}
+          onClose={() => setConfiguringPlayer(null)}
+        />
+      )}
     </div>
   );
 };

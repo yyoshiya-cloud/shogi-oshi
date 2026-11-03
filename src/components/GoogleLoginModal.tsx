@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
 import { Player, FollowedPlayerConfig } from '../types/shogi';
+import { OshiBadgeTag } from '../utils/badgeUtils';
 
 export interface GoogleUser {
   name: string;
@@ -100,7 +101,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 <h4 className="font-bold text-zinc-100 text-sm truncate">
                   {currentUser.name}
                 </h4>
-                <p className="text-xs text-zinc-400 truncate font-mono">{currentUser.email}</p>
+                <p className="text-xs text-zinc-400">連携完了</p>
               </div>
             </div>
 
@@ -110,7 +111,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 <span>推し棋士データ クラウド自動保存完了</span>
               </div>
               <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                ログイン中のGoogleアカウント ({currentUser.email}) に登録済みの推し棋士・女流棋士データが安全にリンク保存されています。
+                ログイン中のGoogleアカウントに登録済みの推し棋士・女流棋士データが安全にリンク保存されています。
               </p>
             </div>
 
@@ -159,9 +160,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                             </span>
                           </div>
                         </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                          {f.badge}
-                        </span>
+                        <OshiBadgeTag badge={f.badge} size="xs" />
                       </div>
                     );
                   })}
@@ -221,8 +220,8 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                           ログイン可能
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400 font-mono truncate">
-                        y.yoshiya@gmail.com
+                      <p className="text-xs text-zinc-400">
+                        Google アカウント
                       </p>
                     </div>
                   </div>

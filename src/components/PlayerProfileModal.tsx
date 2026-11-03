@@ -6,6 +6,8 @@ import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRat
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
+import { OshiConfigModal } from './OshiConfigModal';
+import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
   X,
   Heart,
@@ -13,6 +15,7 @@ import {
   ExternalLink,
   Loader2,
   Filter,
+  Settings2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -23,6 +26,7 @@ interface PlayerProfileModalProps {
   allPlayers: Player[];
   onClose: () => void;
   onRemoveFollow: (playerId: string) => void;
+  onToggleFollow?: (config: FollowedPlayerConfig) => void;
   onAddComment: (playerId: string, text: string) => void;
   onSelectMatch: (match: Match) => void;
   onUpdatePlayer?: (player: Player) => void;
@@ -65,6 +69,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   allPlayers,
   onClose,
   onRemoveFollow,
+  onToggleFollow,
   onAddComment,
   onSelectMatch,
   onUpdatePlayer,
@@ -79,6 +84,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
   const [resultsOutcomeFilter, setResultsOutcomeFilter] = useState<'all' | 'win' | 'loss'>('all');
   const [isChartZoomOpen, setIsChartZoomOpen] = useState<boolean>(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false);
   const [resultsRevision, setResultsRevision] = useState(0);
 
   useEffect(() => {
@@ -384,10 +390,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     </span>
                   )}
                   {followedConfig && (
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1 shadow">
-                      <Heart size={11} className="fill-white" />
-                      {followedConfig.badge}
-                    </span>
+                    <OshiBadgeTag badge={followedConfig.badge} size="sm" />
                   )}
                   {loadingDetails && (
                     <span className="text-[10px] text-amber-300 flex items-center gap-1 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
@@ -416,18 +419,50 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
             </div>
 
-            {followedConfig && (
-              <button
-                onClick={() => {
-                  onRemoveFollow(activePlayer.id);
-                  onClose();
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black/40 hover:bg-rose-950/60 text-zinc-300 hover:text-rose-300 font-bold text-xs border border-white/20 transition"
-              >
-                <span>推し解除</span>
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {followedConfig ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfigModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/40 hover:bg-black/60 text-amber-300 font-bold text-xs border border-amber-500/40 transition cursor-pointer"
+                    title="推し設定（バッジ・推しカラー・応援メモ）を変更"
+                  >
+                    <Settings2 size={13} />
+                    <span>推し設定変更</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onRemoveFollow(activePlayer.id);
+                      onClose();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/40 hover:bg-rose-950/60 text-zinc-300 hover:text-rose-300 font-bold text-xs border border-white/20 transition cursor-pointer"
+                  >
+                    <span>推し解除</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsConfigModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs shadow-lg transition cursor-pointer"
+                >
+                  <Heart size={14} className="fill-stone-950" />
+                  <span>推し登録する</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Cheering note if set */}
+          {followedConfig?.cheeringNote && (
+            <div className="mt-3 px-3.5 py-2 rounded-xl bg-black/40 border border-amber-500/30 flex items-center gap-2 text-xs text-amber-200">
+              <span className="text-sm">💬</span>
+              <span className="font-bold text-amber-300 shrink-0">応援メモ:</span>
+              <span className="truncate">{followedConfig.cheeringNote}</span>
+            </div>
+          )}
 
           {/* Currently Held Titles */}
           {activePlayer.heldTitles.length > 0 && (
@@ -1082,6 +1117,26 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           player={activePlayer}
           isOpen={isChartZoomOpen}
           onClose={() => setIsChartZoomOpen(false)}
+        />
+      )}
+
+      {/* Oshi Configuration Modal */}
+      {isConfigModalOpen && (
+        <OshiConfigModal
+          player={activePlayer}
+          currentConfig={followedConfig}
+          onSave={(newConfig) => {
+            if (onToggleFollow) {
+              onToggleFollow(newConfig);
+            }
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+            setIsConfigModalOpen(false);
+          }}
+          onRemove={(playerId) => {
+            onRemoveFollow(playerId);
+            setIsConfigModalOpen(false);
+          }}
+          onClose={() => setIsConfigModalOpen(false)}
         />
       )}
     </div>
