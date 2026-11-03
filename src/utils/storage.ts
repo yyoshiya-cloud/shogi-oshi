@@ -1,7 +1,6 @@
 import { FollowedPlayerConfig, PushNotificationItem, Match, Player, ShogiMonthlyResult } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import results2026Json from '../data/results2026.json';
-import { applyPlayerOverrides } from './playerUtils';
 import { initializePlayerRecords } from './yearRecordsGenerator';
 import { filterBulletinNotifications } from './notificationFilter';
 import { getTodayDateString, getTodayInfo } from './dateUtils';
@@ -21,7 +20,7 @@ const STORAGE_KEYS = {
  * Automatically purges legacy storage keys from previous versions to keep
  * localStorage usage well under the browser's 5MB quota.
  */
-export function pruneOldStorage(): void {
+function pruneOldStorage(): void {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return;
     const keysToRemove: string[] = [];
@@ -90,7 +89,7 @@ const DEFAULT_FOLLOWED: FollowedPlayerConfig[] = [
   }
 ];
 
-export function getDefaultNotifications(): PushNotificationItem[] {
+function getDefaultNotifications(): PushNotificationItem[] {
   const todayStr = getTodayDateString();
   const todayInfo = getTodayInfo();
 

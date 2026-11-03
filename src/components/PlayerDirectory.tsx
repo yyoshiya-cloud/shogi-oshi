@@ -1,25 +1,19 @@
 import React, { useState, useEffect, useMemo, memo } from 'react';
-import { Player, FollowedPlayerConfig, OshiBadge, PlayerType, PlayerAffiliation } from '../types/shogi';
+import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, convertRomajiToHiragana } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import {
   Search,
   Heart,
   Trophy,
   SlidersHorizontal,
-  Plus,
   Check,
   UserCheck,
   Sparkles,
-  ExternalLink,
   ChevronRight,
-  DownloadCloud,
   RefreshCw,
-  Globe,
-  Building,
-  CheckCircle2,
   AlertCircle,
   X
 } from 'lucide-react';
@@ -52,7 +46,7 @@ const AFFILIATION_COLORS: Record<PlayerAffiliation, { bg: string; text: string; 
   無所属: { bg: 'bg-amber-950/60', text: 'text-amber-300', border: 'border-amber-700/60' },
 };
 
-export function normalizeRankForFilter(rank: string): string {
+function normalizeRankForFilter(rank: string): string {
   if (!rank) return '';
   return rank
     .replace(/１/g, '1')
@@ -70,7 +64,7 @@ export function normalizeRankForFilter(rank: string): string {
     .replace(/女流２級/g, '女流2級');
 }
 
-export function matchesRankFilter(playerOrRank: Player | string, filter: string): boolean {
+function matchesRankFilter(playerOrRank: Player | string, filter: string): boolean {
   if (filter === 'all') return true;
   const rankStr =
     typeof playerOrRank === 'string'
@@ -90,7 +84,7 @@ export function matchesRankFilter(playerOrRank: Player | string, filter: string)
   return normRank.includes(normFilter);
 }
 
-export function matchJunisenFilter(p: Player, filter: string): boolean {
+function matchJunisenFilter(p: Player, filter: string): boolean {
   if (filter === 'all') return true;
   if (p.type === 'women') {
     const jc = p.junisenClass || '';
@@ -115,7 +109,7 @@ export function matchJunisenFilter(p: Player, filter: string): boolean {
   return false;
 }
 
-export function matchRyuoFilter(p: Player, filter: string): boolean {
+function matchRyuoFilter(p: Player, filter: string): boolean {
   if (filter === 'all') return true;
   if (p.type === 'women') return false;
   const formatted = formatProRyuoClass(p);
@@ -127,8 +121,8 @@ export function matchRyuoFilter(p: Player, filter: string): boolean {
   return false;
 }
 
-export const PRO_RANKS = ['九段', '八段', '七段', '六段', '五段', '四段'];
-export const WOMEN_RANKS = ['女流七段', '女流六段', '女流五段', '女流四段', '女流三段', '女流二段', '女流初段', '女流1級', '女流2級'];
+const PRO_RANKS = ['九段', '八段', '七段', '六段', '五段', '四段'];
+const WOMEN_RANKS = ['女流七段', '女流六段', '女流五段', '女流四段', '女流三段', '女流二段', '女流初段', '女流1級', '女流2級'];
 
 interface PlayerCardItemProps {
   player: Player;
@@ -248,12 +242,21 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             </div>
           )}
 
-          {/* 1段目: 氏名 段位 */}
-          <div className="flex items-baseline gap-2.5">
+          {/* 1段目: 氏名 (ふりがな) 段位 */}
+          <div className="flex items-baseline gap-2 flex-wrap">
             <h3 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
               {formatPlayerName(player.name)}
             </h3>
-            <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp">
+            {player.kana ? (
+              <span className="text-[11px] font-normal text-zinc-400">
+                ({player.kana})
+              </span>
+            ) : player.romaji ? (
+              <span className="text-[11px] font-normal text-zinc-400">
+                ({convertRomajiToHiragana(player.romaji)})
+              </span>
+            ) : null}
+            <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp ml-1">
               {player.danRank && !player.rank.includes(player.danRank)
                 ? `${player.rank} (${player.danRank})`
                 : player.rank}

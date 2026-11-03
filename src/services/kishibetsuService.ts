@@ -1,25 +1,19 @@
 import { Player, ShogiMonthlyResult } from '../types/shogi';
 import { initializePlayerRecords, updateMatchStatsData } from '../utils/yearRecordsGenerator';
-import { runKishibetsuDebugVerification } from './kishibetsuDebugService';
 
 /**
  * Kishibetsu.com & 対局データ完全同期エンジン
  * 全プロ棋士・女流棋士の2021年度〜2026年度の年度別成績詳細一覧表データを
  * 対局データから正確に再計算・初期化して同期します。
  */
-export async function syncAllPlayersWithKishibetsu(
+async function syncAllPlayersWithKishibetsu(
   players: Player[],
   latestResults?: Record<string, ShogiMonthlyResult[]>
 ): Promise<Player[]> {
   if (latestResults) {
     updateMatchStatsData(latestResults);
   }
-  const synced = players.map((p) => initializePlayerRecords(p));
-
-  // Run debug verification
-  runKishibetsuDebugVerification(synced);
-
-  return synced;
+  return players.map((p) => initializePlayerRecords(p));
 }
 
 /**
@@ -50,6 +44,5 @@ export async function syncAllPlayersWithProgress(
     await new Promise((resolve) => setTimeout(resolve, 15));
   }
 
-  runKishibetsuDebugVerification(synced);
   return synced;
 }

@@ -11,16 +11,13 @@ import {
   isNotificationTodayMatch,
   isNotificationMatchResult
 } from '../utils/notificationFilter';
-import { getTodayInfo, getTodayDateString } from '../utils/dateUtils';
+import { getTodayInfo } from '../utils/dateUtils';
 import {
   Bell,
   CheckCircle2,
-  AlertCircle,
-  ExternalLink,
   Trash2,
   Settings,
   Sparkles,
-  Smartphone,
   ChevronRight,
   Clock,
   Radio,

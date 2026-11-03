@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Match, Player, FollowedPlayerConfig, ShogiMonthlyResult } from '../types/shogi';
 import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
-import { getTodayDateString, getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
+import { getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
 import { formatPlayerName } from '../utils/playerUtils';
 import {
   Calendar as CalendarIcon,
@@ -13,13 +13,9 @@ import {
   CalendarPlus,
   Download,
   Filter,
-  CheckCircle2,
-  Tv,
   List,
   Grid,
   RefreshCw,
-  DownloadCloud,
-  AlertCircle,
   ExternalLink,
   Trophy
 } from 'lucide-react';

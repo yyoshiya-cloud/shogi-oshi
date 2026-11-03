@@ -22,7 +22,7 @@ import {
 } from './utils/storage';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
-import { getTodayDateString, getTodayInfo } from './utils/dateUtils';
+import { getTodayDateString } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
 import { formatPlayerName } from './utils/playerUtils';
 import { initializePlayerRecords, updateMatchStatsData } from './utils/yearRecordsGenerator';
@@ -41,8 +41,6 @@ import {
   Users,
   Bell,
   Sparkles,
-  Trophy,
-  ExternalLink,
   X
 } from 'lucide-react';
 

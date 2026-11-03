@@ -4,7 +4,7 @@ import { Player } from '../types/shogi';
  * 日本将棋連盟およびLPSA公式記録に基づく
  * 歴代・現役棋士および女流棋士の通算主要タイトル獲得期数完全マスター
  */
-export const KNOWN_CAREER_TITLES: Record<string, number> = {
+const KNOWN_CAREER_TITLES: Record<string, number> = {
   // --- 棋士（男性プロ） ---
   '羽生善治': 99,
   '渡辺明': 31,
@@ -59,7 +59,7 @@ export const KNOWN_CAREER_TITLES: Record<string, number> = {
 /**
  * 棋士番号・女流棋士番号による通算タイトル獲得期数マスター
  */
-export const KNOWN_CAREER_TITLES_BY_NUMBER: Record<number, number> = {
+const KNOWN_CAREER_TITLES_BY_NUMBER: Record<number, number> = {
   // 棋士
   1307: 28, // 藤井聡太
   175: 99,  // 羽生善治

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate, convertRomajiToHiragana } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
-import { enrichPlayerMatches, getShogiDbSearchUrl, EnrichedPlayerMatch } from '../services/shogiDbMatchEnrichment';
+import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
 import {
   X,
   Heart,
@@ -404,7 +404,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     </span>
                   ) : activePlayer.romaji ? (
                     <span className="text-xs font-normal text-zinc-300 ml-2">
-                      ({activePlayer.romaji})
+                      ({convertRomajiToHiragana(activePlayer.romaji)})
                     </span>
                   ) : null}
                 </h2>

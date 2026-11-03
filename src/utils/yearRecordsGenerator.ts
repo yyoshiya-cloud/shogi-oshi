@@ -419,7 +419,7 @@ const HISTORICAL_BENCHMARKS: Record<string, Record<number, { wins: number; losse
 /**
  * 棋士・女流棋士番号に基づき、正式なプロデビュー（四段昇段／女流プロ入り）年度を算出
  */
-export function getPlayerDebutFiscalYear(player: Partial<Player>): number {
+function getPlayerDebutFiscalYear(player: Partial<Player>): number {
   const num = player.playerNumber || 0;
   if (player.type === 'women') {
     if (num >= 92) return 2025;

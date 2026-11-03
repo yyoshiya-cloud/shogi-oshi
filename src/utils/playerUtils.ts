@@ -115,7 +115,7 @@ export function formatPlayerName(name: string): string {
 /**
  * Calculates current age based on birthdate.
  */
-export function calculateAge(year: number, month: number, day: number): number {
+function calculateAge(year: number, month: number, day: number): number {
   const today = new Date();
   let age = today.getFullYear() - year;
   const mDiff = (today.getMonth() + 1) - month;
@@ -261,4 +261,118 @@ export function formatWinRate(rate?: number | null): string {
   const num = Math.max(0, Math.min(1, Number(rate)));
   return num.toFixed(3);
 }
+
+const ROMAJI_HIRAGANA_RULES: [string, string][] = [
+  ['shou', 'しょう'], ['shoo', 'しょう'], ['chou', 'ちょう'], ['choo', 'ちょう'],
+  ['ryou', 'りょう'], ['ryoo', 'りょう'], ['kyou', 'きょう'], ['kyoo', 'きょう'],
+  ['gyou', 'ぎょう'], ['gyoo', 'ぎょう'], ['hyou', 'ひょう'], ['hyoo', 'ひょう'],
+  ['byou', 'びょう'], ['byoo', 'びょう'], ['pyou', 'ぴょう'], ['pyoo', 'ぴょう'],
+  ['myou', 'みょう'], ['myoo', 'みょう'], ['jyou', 'じょう'], ['jyoo', 'じょう'],
+  ['tsu', 'つ'], ['swo', 'すぉ'],
+
+  ['kya', 'きゃ'], ['kyu', 'きゅ'], ['kyo', 'きょ'],
+  ['sha', 'しゃ'], ['shu', 'しゅ'], ['sho', 'しょ'], ['shi', 'し'],
+  ['cha', 'ちゃ'], ['chu', 'ちゅ'], ['cho', 'ちょ'], ['chi', 'ち'],
+  ['nya', 'にゃ'], ['nyu', 'にゅ'], ['nyo', 'にょ'],
+  ['hya', 'ひゃ'], ['hyu', 'ひゅ'], ['hyo', 'ひょ'],
+  ['mya', 'みゃ'], ['myu', 'みゅ'], ['myo', 'みょ'],
+  ['rya', 'りゃ'], ['ryu', 'りゅ'], ['ryo', 'りょ'],
+  ['gya', 'ぎゃ'], ['gyu', 'ぎゅ'], ['gyo', 'ぎょ'],
+  ['ja', 'じゃ'], ['ju', 'じゅ'], ['jo', 'じょ'], ['ji', 'じ'],
+  ['bya', 'びゃ'], ['byu', 'びゅ'], ['byo', 'びょ'],
+  ['pya', 'ぴゃ'], ['pyu', 'ぴゅ'], ['pyo', 'ぴょ'],
+
+  ['ka', 'か'], ['ki', 'き'], ['ku', 'く'], ['ke', 'け'], ['ko', 'こ'],
+  ['sa', 'さ'], ['si', 'し'], ['su', 'す'], ['se', 'せ'], ['so', 'そ'],
+  ['ta', 'た'], ['ti', 'ち'], ['tu', 'つ'], ['te', 'て'], ['to', 'と'],
+  ['na', 'な'], ['ni', 'に'], ['nu', 'ぬ'], ['ne', 'ね'], ['no', 'の'],
+  ['ha', 'は'], ['hi', 'ひ'], ['fu', 'ふ'], ['hu', 'ふ'], ['he', 'へ'], ['ho', 'ほ'],
+  ['ma', 'ま'], ['mi', 'み'], ['mu', 'む'], ['me', 'め'], ['mo', 'も'],
+  ['ya', 'や'], ['yu', 'ゆ'], ['yo', 'よ'],
+  ['ra', 'ら'], ['ri', 'り'], ['ru', 'る'], ['re', 'れ'], ['ro', 'ろ'],
+  ['wa', 'わ'], ['wo', 'を'],
+  ['ga', 'が'], ['gi', 'ぎ'], ['gu', 'ぐ'], ['ge', 'げ'], ['go', 'ご'],
+  ['za', 'ざ'], ['zi', 'じ'], ['zu', 'ず'], ['ze', 'ぜ'], ['zo', 'ぞ'],
+  ['da', 'だ'], ['di', 'ぢ'], ['du', 'づ'], ['de', 'で'], ['do', 'ど'],
+  ['ba', 'ば'], ['bi', 'び'], ['bu', 'ぶ'], ['be', 'べ'], ['bo', 'ぼ'],
+  ['pa', 'ぱ'], ['pi', 'ぴ'], ['pu', 'ぷ'], ['pe', 'ぺ'], ['po', 'ぽ'],
+
+  ['a', 'あ'], ['i', 'い'], ['u', 'う'], ['e', 'え'], ['o', 'お']
+];
+
+/**
+ * Converts English Romaji name (e.g. "akihito hirose" or "Satoh Yasumitsu") into Japanese Hiragana
+ */
+export function convertRomajiToHiragana(romajiStr?: string | null): string {
+  if (!romajiStr || !romajiStr.trim()) return '';
+
+  const tokens = romajiStr.trim().split(/\s+/);
+  const convertedTokens = tokens.map((token) => {
+    let s = token.toLowerCase();
+
+    // Standard long vowel conversions in Hepburn
+    s = s.replace(/oh/g, 'ou')
+         .replace(/oo/g, 'ou')
+         .replace(/ou/g, 'おう')
+         .replace(/uu/g, 'うう')
+         .replace(/ee/g, 'えい');
+
+    let res = '';
+    let i = 0;
+    while (i < s.length) {
+      if ('あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽっきゃきゅきょしゃしゅしょちゃちゅちょにゃにゅにょひゃひゅひょみゃみゅみょりゃりゅりょぎゃぎゅぎょじゃじゅじょびゃびゅびょぴゃぴゅぴょ'.includes(s[i])) {
+        res += s[i];
+        i++;
+        continue;
+      }
+
+      // Double consonants => っ
+      if (i < s.length - 1 && s[i] === s[i + 1] && 'kstgdbzp'.includes(s[i])) {
+        res += 'っ';
+        i++;
+        continue;
+      }
+
+      if (s.startsWith('tch', i)) {
+        res += 'っ';
+        i++;
+        continue;
+      }
+
+      if (s[i] === 'n') {
+        if (i === s.length - 1) {
+          res += 'ん';
+          i++;
+          continue;
+        }
+        const nextChar = s[i + 1];
+        if (!'aiueoy'.includes(nextChar)) {
+          res += 'ん';
+          i++;
+          if (s[i] === "'") i++;
+          continue;
+        }
+      }
+
+      let match = false;
+      for (const [r, h] of ROMAJI_HIRAGANA_RULES) {
+        if (s.startsWith(r, i)) {
+          res += h;
+          i += r.length;
+          match = true;
+          break;
+        }
+      }
+
+      if (!match) {
+        res += s[i];
+        i++;
+      }
+    }
+    return res;
+  });
+
+  return convertedTokens.join(' ');
+}
+
 

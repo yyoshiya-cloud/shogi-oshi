@@ -12,16 +12,11 @@ import {
   ExternalLink,
   Heart,
   Calendar,
-  Sparkles,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Grid,
   List,
   CheckCircle2,
-  XCircle,
-  HelpCircle,
-  Clock,
   ArrowUpDown,
   BookOpen
 } from 'lucide-react';
@@ -34,7 +29,7 @@ interface MonthlyResultsViewProps {
   onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
 }
 
-export const FISCAL_YEARS = [
+const FISCAL_YEARS = [
   { year: 2026, label: '2026年度 (2026年4月〜2027年3月)', short: '2026年度' },
   { year: 2025, label: '2025年度 (2025年4月〜2026年3月)', short: '2025年度' },
 ];

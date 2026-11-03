@@ -4,7 +4,7 @@ import { getTodayDateString } from './dateUtils';
 /**
  * Returns today's date in YYYY-MM-DD format using current JST/device date.
  */
-export function getTodayDateStrings(): string[] {
+function getTodayDateStrings(): string[] {
   const jstToday = getTodayDateString();
   const localToday = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD in local time
   return Array.from(new Set([jstToday, localToday]));

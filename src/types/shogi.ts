@@ -100,13 +100,6 @@ export interface FollowedPlayerConfig {
 
 export type MatchStatus = 'upcoming' | 'live' | 'finished';
 
-export interface MoveStep {
-  ply: number;
-  notation: string; // e.g. "▲７六歩", "△３四歩"
-  comment?: string;
-  board?: string[][]; // Optional 9x9 board snapshot
-}
-
 export interface Match {
   id: string;
   tournament: string; // e.g. "第38期 竜王戦 七番勝負 第3局"

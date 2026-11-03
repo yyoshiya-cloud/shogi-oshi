@@ -41,11 +41,11 @@ export interface PlayerProfileDetail {
   shortBio?: string;
 }
 
-export const ACTIVE_MEN_TITLES = ['竜王', '名人', '王位', '叡王', '王座', '棋王', '王将', '棋聖'] as const;
-export const ACTIVE_WOMEN_TITLES = ['白玲', '清麗', '女王', '女流王座', '女流名人', '女流王位', '女流王将', '倉敷藤花'] as const;
+const ACTIVE_MEN_TITLES = ['竜王', '名人', '王位', '叡王', '王座', '棋王', '王将', '棋聖'] as const;
+const ACTIVE_WOMEN_TITLES = ['白玲', '清麗', '女王', '女流王座', '女流名人', '女流王位', '女流王将', '倉敷藤花'] as const;
 
 // LPSA official player photo URLs extracted directly from https://joshi-shogi.com/profile/ img src=
-export const OFFICIAL_LPSA_PHOTO_MAP: Record<string, string> = {
+const OFFICIAL_LPSA_PHOTO_MAP: Record<string, string> = {
   '渡部愛': 'https://joshi-shogi.com/wp-content/themes/lpsa/img/watabe.jpg',
   '中倉宏美': 'https://joshi-shogi.com/wp-content/themes/lpsa/img/nakakura_hiro.jpg',
   '島井咲緒里': 'https://joshi-shogi.com/wp-content/themes/lpsa/img/shimai.jpg',
@@ -57,7 +57,7 @@ export const OFFICIAL_LPSA_PHOTO_MAP: Record<string, string> = {
   '田中沙紀': 'https://joshi-shogi.com/wp-content/themes/lpsa/img/tanaka.jpg',
 };
 
-export const VERIFIED_TITLE_HOLDER_DAN_RANKS: Record<string, string> = {
+const VERIFIED_TITLE_HOLDER_DAN_RANKS: Record<string, string> = {
   sota_fujii: '九段',
   takumi_ito: '九段',
   koji_tanigawa: '十七世名人',
@@ -75,7 +75,7 @@ export const VERIFIED_TITLE_HOLDER_DAN_RANKS: Record<string, string> = {
   '清水 市代': '女流七段',
 };
 
-export async function fetchDanRankFromProfile(profileHrefOrUrl: string): Promise<string> {
+async function fetchDanRankFromProfile(profileHrefOrUrl: string): Promise<string> {
   try {
     const fullUrl = profileHrefOrUrl.startsWith('http')
       ? profileHrefOrUrl

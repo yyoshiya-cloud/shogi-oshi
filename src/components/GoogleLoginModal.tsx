@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, LogOut, CheckCircle2, User, X, Mail, Heart } from 'lucide-react';
+import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
 import { Player, FollowedPlayerConfig } from '../types/shogi';
 
 export interface GoogleUser {

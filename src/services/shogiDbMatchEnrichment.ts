@@ -1,6 +1,4 @@
 import { Player, ShogiMonthlyResult } from '../types/shogi';
-import { getStoredFiscalResults } from '../utils/storage';
-import results2026Json from '../data/results2026.json';
 
 export interface EnrichedPlayerMatch extends ShogiMonthlyResult {
   isPlayerWinner: boolean;
@@ -78,38 +76,4 @@ export function enrichPlayerMatches(
   const sorted = realMatches.sort((a, b) => b.date.localeCompare(a.date));
   playerMatchCache.set(cacheKey, { timestamp: now, matches: sorted });
   return sorted;
-}
-
-/**
- * 非同期で棋士の実対局記録を取得するクライアント・サーバー共通関数（UIブロッキング防止）
- */
-export async function fetchEnrichedPlayerMatchesAsync(
-  player: Player,
-  fiscalYear: number,
-  yieldDelayMs = 0
-): Promise<EnrichedPlayerMatch[]> {
-  if (yieldDelayMs > 0) {
-    await new Promise((resolve) => setTimeout(resolve, yieldDelayMs));
-  }
-
-  // Get raw stored fiscal results
-  let rawStored = getStoredFiscalResults();
-  if (!rawStored || Object.keys(rawStored).length === 0) {
-    rawStored = results2026Json as Record<string, ShogiMonthlyResult[]>;
-  }
-
-  // Flatten matches belonging to this fiscal year
-  const validMonths: string[] = [];
-  for (let m = 4; m <= 12; m++) validMonths.push(`${fiscalYear}${String(m).padStart(2, '0')}`);
-  for (let m = 1; m <= 3; m++) validMonths.push(`${fiscalYear + 1}${String(m).padStart(2, '0')}`);
-  const validMonthsSet = new Set(validMonths);
-
-  const flatResults: ShogiMonthlyResult[] = [];
-  for (const m of Object.keys(rawStored)) {
-    if (validMonthsSet.has(m)) {
-      flatResults.push(...(rawStored[m] || []));
-    }
-  }
-
-  return enrichPlayerMatches(player, fiscalYear, flatResults);
 }

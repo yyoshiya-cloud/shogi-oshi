@@ -511,21 +511,11 @@ export function getFiscalYearMonths(fiscalYear = 2026): string[] {
   return months;
 }
 
-export async function getAllFiscalYearResults(fiscalYear = 2026): Promise<Record<string, ShogiMonthlyResult[]>> {
-  const months = getFiscalYearMonths(fiscalYear);
-  const res: Record<string, ShogiMonthlyResult[]> = {};
-  for (const m of months) {
-    const data = await scrapeMonthlyResults(m, false);
-    res[m] = data.results;
-  }
-  return res;
-}
-
 /**
  * Get results for multiple fiscal years (2025 and 2026),
  * keeping complete historical archive for 2025 and live scraping for 2026.
  */
-export async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<string, ShogiMonthlyResult[]>> {
+async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<string, ShogiMonthlyResult[]>> {
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
   const res: Record<string, ShogiMonthlyResult[]> = { ...bundled };
 

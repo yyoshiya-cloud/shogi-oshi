@@ -1,20 +1,13 @@
 import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
-import { getGoogleCalendarUrl } from '../utils/calendarExport';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
 import { formatPlayerName } from '../utils/playerUtils';
 import {
   Heart,
   Calendar,
-  Clock,
-  Sparkles,
   Trophy,
   ChevronRight,
-  TrendingUp,
-  Radio,
-  Plus,
-  Tv,
-  CalendarPlus
+  Plus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 

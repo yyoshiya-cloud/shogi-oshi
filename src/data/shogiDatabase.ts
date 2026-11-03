@@ -1,5 +1,4 @@
 import { Player, Match } from "../types/shogi";
-import { getTodayDateString } from "../utils/dateUtils";
 import allPlayersJson from "./allPlayers.json";
 
 export const PLAYERS_DATA: Player[] = allPlayersJson as Player[];
