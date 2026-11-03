@@ -79,22 +79,48 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   });
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 
+  const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
+  const [hideEmptyMonths, setHideEmptyMonths] = useState<boolean>(true); // デフォルトで対局のない月を除外
+
+  // 対局データが1局以上ある月のみを抽出（hideEmptyMonthsがtrueの場合）
+  const availableFiscalYearMonths = useMemo(() => {
+    if (!hideEmptyMonths) return activeFiscalYearMonths;
+    const withMatches = activeFiscalYearMonths.filter((m) => (monthlyData[m.key]?.length || 0) > 0);
+    return withMatches.length > 0 ? withMatches : activeFiscalYearMonths;
+  }, [activeFiscalYearMonths, hideEmptyMonths, monthlyData]);
+
+  const displayFiscalYearMonths = useMemo(() => {
+    return monthSortDir === 'desc' ? [...availableFiscalYearMonths].reverse() : availableFiscalYearMonths;
+  }, [availableFiscalYearMonths, monthSortDir]);
+
   const handleSelectMonth = (newMonth: string) => {
     setSelectedMonth(newMonth);
     setSelectedDate(null);
   };
 
-  const currentMonthIndex = activeFiscalYearMonths.findIndex((m) => m.key === selectedMonth);
+  const currentMonthIndex = availableFiscalYearMonths.findIndex((m) => m.key === selectedMonth);
   const handlePrevMonth = () => {
     if (currentMonthIndex > 0) {
-      handleSelectMonth(activeFiscalYearMonths[currentMonthIndex - 1].key);
+      handleSelectMonth(availableFiscalYearMonths[currentMonthIndex - 1].key);
     }
   };
   const handleNextMonth = () => {
-    if (currentMonthIndex < activeFiscalYearMonths.length - 1) {
-      handleSelectMonth(activeFiscalYearMonths[currentMonthIndex + 1].key);
+    if (currentMonthIndex < availableFiscalYearMonths.length - 1 && currentMonthIndex >= 0) {
+      handleSelectMonth(availableFiscalYearMonths[currentMonthIndex + 1].key);
     }
   };
+
+  // 選択中の月に対局がなく非表示になった場合、存在する直近月に自動フォールバック
+  useEffect(() => {
+    if (selectedMonth === 'all') return;
+    const exists = availableFiscalYearMonths.some((m) => m.key === selectedMonth);
+    if (!exists && availableFiscalYearMonths.length > 0) {
+      const latestMonth = [...availableFiscalYearMonths].sort((a, b) => b.key.localeCompare(a.key))[0];
+      if (latestMonth) {
+        setSelectedMonth(latestMonth.key);
+      }
+    }
+  }, [availableFiscalYearMonths, selectedMonth]);
 
   const followedPlayerIds = useMemo(() => new Set(followedList.map((f) => f.playerId)), [followedList]);
   const followedPlayerNames = useMemo(() => {
@@ -119,11 +145,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     });
     return map;
   }, [players]);
-
-  const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
-  const displayFiscalYearMonths = useMemo(() => {
-    return monthSortDir === 'desc' ? [...activeFiscalYearMonths].reverse() : activeFiscalYearMonths;
-  }, [activeFiscalYearMonths, monthSortDir]);
 
   const totalFiscalYearMatches = useMemo(() => {
     return activeFiscalYearMonths.reduce((sum, m) => sum + (monthlyData[m.key]?.length || 0), 0);
@@ -571,15 +592,28 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-zinc-400">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium text-zinc-400">
             <span>対象月を選択（{selectedFiscalYear}年度: 4月〜翌年3月）:</span>
-            <button
-              onClick={() => setMonthSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
-              className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-amber-300 hover:text-amber-200 border border-zinc-700 transition"
-              title="月の並び順を切り替え"
-            >
-              <span>月順: {monthSortDir === 'desc' ? '新しい月順 (翌3月→4月) ▼' : '年度順 (4月→翌3月) ▲'}</span>
-            </button>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={() => setHideEmptyMonths((prev) => !prev)}
+                className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border transition ${
+                  hideEmptyMonths
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
+                    : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-zinc-200'
+                }`}
+                title="対局データのない月（0局）を除外するか切り替えます"
+              >
+                <span>{hideEmptyMonths ? '対局あり月のみ (0局除外中) ✓' : '全月表示 (0局も含む)'}</span>
+              </button>
+              <button
+                onClick={() => setMonthSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
+                className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-amber-300 hover:text-amber-200 border border-zinc-700 transition"
+                title="月の並び順を切り替え"
+              >
+                <span>月順: {monthSortDir === 'desc' ? '新しい月順 ▼' : '古い月順 ▲'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-700">
@@ -720,7 +754,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               </h3>
               <button
                 onClick={handleNextMonth}
-                disabled={currentMonthIndex >= activeFiscalYearMonths.length - 1 || currentMonthIndex === -1}
+                disabled={currentMonthIndex >= availableFiscalYearMonths.length - 1 || currentMonthIndex === -1}
                 className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-30 transition"
                 title="次の月へ"
               >
@@ -730,7 +764,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
             <div className="flex items-center gap-2 text-xs">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                <span className="inline-block text-rose-500 text-xs leading-none">♥</span>
                 推し対局
               </span>
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
