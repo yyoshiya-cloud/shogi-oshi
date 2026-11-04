@@ -87,8 +87,6 @@ export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
       const newPlayer: Player = {
         id,
         name,
-        kana: '',
-        romaji: cleanedRaw,
         type: isWomen ? 'women' : 'pro',
         affiliation: isLpsaMarker ? 'LPSA' : '日本将棋連盟',
         rank: isWomen ? '女流棋士' : '棋士',

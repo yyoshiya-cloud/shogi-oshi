@@ -2,8 +2,6 @@
   {
     "id": "fujii-sota",
     "name": "藤井 聡太",
-    "kana": "ふじい そうた",
-    "romaji": "Fujii Sota",
     "type": "pro",
     "rank": "竜王・名人",
     "danRank": "九段",
@@ -22,8 +20,8 @@
       "王将",
       "棋聖"
     ],
-    "totalTitles": 28,
-    "titleHistory": "史上最年少プロデビュー、最年少全八冠制覇達成。永世棋聖・永世王位の資格獲得済。",
+    "totalTitles": 37,
+    "titleHistory": "竜王 5期（第34期-2021年度・35・36・37・38期） －永世竜王（就位は原則引退後）、 名人 4期（第81期-2023年度・82期・83期・84期）、 叡王 3期（第6期-2021年度・7・8期）、 王位 7期（第61期-2020年度・62～67期） －永世王位（就位は原則引退後）、 王座 2期（第71期-2023年度・第72期）、 棋聖 7期（第91期-2020年度・92～97期） －永世棋聖（就位は原則引退後）、 棋王 4期（第48期-2022年度・49期～51期）、 王将 5期（第71期-2021年度・72～75期）",
     "careerWins": 464,
     "careerLosses": 100,
     "careerWinRate": 0.8227,
@@ -40,6 +38,9 @@
     "avatarBg": "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
     "shortBio": "現代将棋界の第一人者。圧倒的な終盤の読みと、AI時代における精密な序盤探求で数々の金字塔を打ち立てる。",
     "highlights": [
+      "永世三冠有資格（永世竜王・永世王位・永世棋聖）",
+      "通算タイトル獲得 37期",
+      "主なタイトル: 竜王5期・名人4期・叡王3期・王位7期・王座2期・棋聖7期・棋王4期・王将5期",
       "2023年史上初の八冠完全制覇を達成",
       "デビュー戦からの29連勝公式戦新記録",
       "タイトル戦番勝負勝率驚異の9割超え"
@@ -156,13 +157,16 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%97%A4%E4%BA%95%E8%81%A1%E5%A4%AA"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/307.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/307.jpg",
+    "eiseiTitles": [
+      "永世竜王",
+      "永世王位",
+      "永世棋聖"
+    ]
   },
   {
     "id": "ito-takumi",
     "name": "伊藤 匠",
-    "kana": "いとう たくみ",
-    "romaji": "Ito Takumi",
     "type": "pro",
     "rank": "叡王",
     "danRank": "九段",
@@ -177,7 +181,7 @@
       "叡王"
     ],
     "totalTitles": 4,
-    "titleHistory": "第9期叡王戦にて藤井聡太叡王を破り初タイトル叡王奪取。同世代の最大のライバル。",
+    "titleHistory": "叡王 3期（第9期-2023年度・第10期・第11期）、 王座 1期（第73期-2025年度）",
     "careerWins": 223,
     "careerLosses": 96,
     "careerWinRate": 0.6991,
@@ -194,6 +198,8 @@
     "avatarBg": "linear-gradient(135deg, #082f49 0%, #0369a1 100%)",
     "shortBio": "「たっくん」の愛称で親しまれる新時代の若き叡王。研ぎ澄まされた研究力と手厚い受け将棋が光る。",
     "highlights": [
+      "通算タイトル獲得 4期",
+      "主なタイトル: 叡王3期・王座1期",
       "藤井聡太のタイトル独占を崩し叡王奪取",
       "新人王戦優勝および新人賞受賞",
       "竜王戦決勝トーナメント破竹の進撃"
@@ -284,13 +290,12 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%BC%8A%E8%97%A4%E5%8C%A0"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/324.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/324.jpg",
+    "eiseiTitles": []
   },
   {
     "id": "pro-akihito_hirose",
     "name": "広瀬 章人",
-    "kana": "ひろせ あきひと",
-    "romaji": "akihito hirose",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "王座",
@@ -306,8 +311,8 @@
     "heldTitles": [
       "王座"
     ],
-    "totalTitles": 2,
-    "titleHistory": "",
+    "totalTitles": 3,
+    "titleHistory": "竜王 1期（第31期-2018年度）、 王位 1期（第51期-2010年度）、 王座 1期（第74期-2026年度）",
     "careerWins": 571,
     "careerLosses": 356,
     "careerWinRate": 0.616,
@@ -320,7 +325,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（王座）。公式棋士番号: 255。",
     "highlights": [
-      "日本将棋連盟所属 王座"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 竜王1期・王位1期・王座1期"
     ],
     "yearRecords": [
       {
@@ -368,13 +374,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/akihito_hirose",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%BA%83%E7%80%AC%20%E7%AB%A0%E4%BA%BA",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%BA%83%E7%80%AC%E7%AB%A0%E4%BA%BA"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-koji_tanigawa",
     "name": "谷川 浩司",
-    "kana": "たにがわ こうじ",
-    "romaji": "koji tanigawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "十七世名人",
@@ -389,7 +394,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 27,
-    "titleHistory": "",
+    "titleHistory": "竜王 4期（第3期-1990年度～4期・9期～10期）、 名人 5期（第41期-1983年～42期・46期～47期・55期） －十七世名人、 王位 6期（第28期-1987年度・30期～32期・43期～44期）、 王座 1期（第38期-1990年度）、 棋聖 4期（第59期-1991年度後～61期・70期）、 棋王 3期（第11期-1985年度・13期・29期）、 王将 4期（第41期-1991年度～44期）",
     "careerWins": 1417,
     "careerLosses": 972,
     "careerWinRate": 0.5931,
@@ -402,7 +407,9 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（十七世名人）。公式棋士番号: 131。",
     "highlights": [
-      "日本将棋連盟所属 十七世名人"
+      "十七世名人（襲位）",
+      "通算タイトル獲得 27期",
+      "主なタイトル: 竜王4期・名人5期・王位6期・王座1期・棋聖4期・棋王3期・王将4期"
     ],
     "yearRecords": [
       {
@@ -450,13 +457,14 @@
       "officialProfile": "https://www.shogi.or.jp/player/koji_tanigawa",
       "kifuDatabase": "https://shogidb2.com/search?q=%E8%B0%B7%E5%B7%9D%20%E6%B5%A9%E5%8F%B8",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%B0%B7%E5%B7%9D%E6%B5%A9%E5%8F%B8"
-    }
+    },
+    "eiseiTitles": [
+      "十七世名人"
+    ]
   },
   {
     "id": "habu-yoshiharu",
     "name": "羽生 善治",
-    "kana": "はぶ よしはる",
-    "romaji": "Habu Yoshiharu",
     "type": "pro",
     "rank": "九段",
     "playerNumber": 175,
@@ -468,7 +476,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 99,
-    "titleHistory": "前人未到の永世七冠（十九世名人・永世竜王など七大タイトルすべての永世称号）保持。現日本将棋連盟会長。",
+    "titleHistory": "竜王 7期（第2期-1989年度・5期・7～8期・14～15期・30期） －永世竜王（就位は原則引退後）、 名人 9期（第52期-1994年～54期・61期・66～68期・72～73期） －十九世名人（襲位は原則引退後）、 王位 18期（第34期-1993年度～42期・45期～47期・52～57期） －永世王位（就位は原則引退後）、 王座 24期（第40期-1992年度～58期・60～64期） －名誉王座（就位は原則引退後）、 棋聖 16期（第62期-1993年度前期～66期・71期・79～88期） －永世棋聖（就位は原則引退後）、 棋王 13期（第16期-1990年度～27期・30期） －永世棋王（就位は原則引退後）、 王将 12期（第45期-1995年度～50期・52期・54期～58期） －永世王将（就位は原則引退後）",
     "careerWins": 1630,
     "careerLosses": 746,
     "careerWinRate": 0.686,
@@ -485,6 +493,17 @@
     "avatarBg": "linear-gradient(135deg, #451a03 0%, #78350f 100%)",
     "shortBio": "将棋界の生ける伝説。公式戦通算1500勝超え、タイトル通算99期。常に新しい手を模索し続けるレジェンド。",
     "highlights": [
+      "永世七冠（史上初・全7タイトル永世称号獲得）",
+      "十九世名人資格者",
+      "永世竜王",
+      "永世王位",
+      "名誉王座",
+      "永世棋聖",
+      "永世棋王",
+      "永世王将",
+      "名誉NHK杯選手権者",
+      "通算タイトル獲得 99期",
+      "主なタイトル: 竜王7期・名人9期・王位18期・王座24期・棋聖16期・棋王13期・王将12期",
       "1996年史上初の全七冠独占を達成",
       "2017年史上初の永世七冠達成により国民栄誉賞受賞",
       "公式戦通算最多勝利記録（1550勝超）更新中"
@@ -588,13 +607,21 @@
     },
     "affiliation": "日本将棋連盟",
     "danRank": "九段",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/175.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/175.jpg",
+    "eiseiTitles": [
+      "永世竜王",
+      "永世王位",
+      "名誉王座",
+      "永世棋聖",
+      "永世棋王",
+      "永世王将",
+      "名誉NHK杯選手権者",
+      "十九世名人資格者"
+    ]
   },
   {
     "id": "pro-yasumitsu_satoh",
     "name": "佐藤 康光",
-    "kana": "さとう やすみつ",
-    "romaji": "yasumitsu satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段(永世称号有資格者)",
@@ -609,7 +636,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 13,
-    "titleHistory": "",
+    "titleHistory": "竜王 1期（第6期-1993年度）、 名人 2期（第56期-1998年～57期）、 棋聖 6期（第73期-2002年度～第78期） －永世棋聖（就位は原則引退後）、 棋王 2期（第32期-2006年度～33期）、 王将 2期（第51期-2001年度・61期）",
     "careerWins": 1143,
     "careerLosses": 760,
     "careerWinRate": 0.6006,
@@ -622,7 +649,9 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段(永世称号有資格者)）。公式棋士番号: 182。",
     "highlights": [
-      "日本将棋連盟所属 九段(永世称号有資格者)"
+      "永世棋聖有資格者",
+      "通算タイトル獲得 13期",
+      "主なタイトル: 竜王1期・名人2期・棋聖6期・棋王2期・王将2期"
     ],
     "yearRecords": [
       {
@@ -670,13 +699,14 @@
       "officialProfile": "https://www.shogi.or.jp/player/yasumitsu_satoh",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%BD%90%E8%97%A4%20%E5%BA%B7%E5%85%89",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%BD%90%E8%97%A4%E5%BA%B7%E5%85%89"
-    }
+    },
+    "eiseiTitles": [
+      "永世棋聖"
+    ]
   },
   {
     "id": "pro-toshiyuki_moriuchi",
     "name": "森内 俊之",
-    "kana": "もりうち としゆき",
-    "romaji": "toshiyuki moriuchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段(永世称号有資格者)",
@@ -691,7 +721,7 @@
     "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 12,
-    "titleHistory": "",
+    "titleHistory": "竜王 2期（第16期-2003年度・26期）、 名人 8期（第60期-2002年・62～65期・69～71期） －十八世名人（襲位は原則引退後）、 棋王 1期（第31期-2005年度）、 王将 1期（第53期-2003年度）",
     "careerWins": 1024,
     "careerLosses": 654,
     "careerWinRate": 0.6103,
@@ -704,7 +734,9 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段(永世称号有資格者)）。公式棋士番号: 183。",
     "highlights": [
-      "日本将棋連盟所属 九段(永世称号有資格者)"
+      "十八世名人資格者",
+      "通算タイトル獲得 12期",
+      "主なタイトル: 竜王2期・名人8期・棋王1期・王将1期"
     ],
     "yearRecords": [
       {
@@ -752,13 +784,14 @@
       "officialProfile": "https://www.shogi.or.jp/player/toshiyuki_moriuchi",
       "kifuDatabase": "https://shogidb2.com/search?q=%E6%A3%AE%E5%86%85%20%E4%BF%8A%E4%B9%8B",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%A3%AE%E5%86%85%E4%BF%8A%E4%B9%8B"
-    }
+    },
+    "eiseiTitles": [
+      "十八世名人資格者"
+    ]
   },
   {
     "id": "watanabe-akira",
     "name": "渡辺 明",
-    "kana": "わたなべ あきら",
-    "romaji": "Watanabe Akira",
     "type": "pro",
     "rank": "九段",
     "playerNumber": 235,
@@ -770,7 +803,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 31,
-    "titleHistory": "永世竜王・永世棋王。名人・棋王・王将など通算31期のトップ棋士。魔太郎の愛称。",
+    "titleHistory": "竜王 11期（第17期-2004年度～25期・28～29期）-永世竜王（就位は原則引退後）、 名人 3期（第78期-2020年度・79・80期）、 王座 1期（第59期-2011年度）、 棋聖 1期（第90期-2019年度）、 棋王 10期（第38期-2012年度～47）-永世棋王（就位は原則引退後）、 王将 5期（第62期-2012年度・63・68～70期）",
     "careerWins": 788,
     "careerLosses": 451,
     "careerWinRate": 0.636,
@@ -787,6 +820,9 @@
     "avatarBg": "linear-gradient(135deg, #450a0a 0%, #991b1b 100%)",
     "shortBio": "現代屈指の勝負師。綿密な大局観と的確な状況判断で竜王9連覇など輝かしい実績を誇る。ぬいぐるみ愛好家としても親しまれる。",
     "highlights": [
+      "永世二冠（永世竜王・永世棋王）",
+      "通算タイトル獲得 31期",
+      "主なタイトル: 竜王11期・名人3期・王座1期・棋聖1期・棋王10期・王将5期",
       "永世竜王・永世棋王の二重永世称号保持",
       "竜王9連覇を含む通算31期タイトル",
       "A級在籍連続14期以上の最高峰実績"
@@ -878,13 +914,15 @@
     },
     "affiliation": "日本将棋連盟",
     "danRank": "九段",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/235.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/235.jpg",
+    "eiseiTitles": [
+      "永世竜王",
+      "永世棋王"
+    ]
   },
   {
     "id": "pro-yoshikazu_minami",
     "name": "南 芳一",
-    "kana": "みなみ よしかず",
-    "romaji": "yoshikazu minami",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -898,7 +936,7 @@
     "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 7,
-    "titleHistory": "",
+    "titleHistory": "棋聖 2期（第51期-1987年度後期・58期）、 棋王 2期（第14期-1988年度～15期）、 王将 3期（第37期-1987年度～38期・40期）",
     "careerWins": 857,
     "careerLosses": 794,
     "careerWinRate": 0.5191,
@@ -911,7 +949,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 147。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 7期",
+      "主なタイトル: 棋聖2期・棋王2期・王将3期"
     ],
     "yearRecords": [
       {
@@ -959,13 +998,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/yoshikazu_minami",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%8D%97%20%E8%8A%B3%E4%B8%80",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%8D%97%E8%8A%B3%E4%B8%80"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-michio_takahashi",
     "name": "高橋 道雄",
-    "kana": "たかはし みちお",
-    "romaji": "michio takahashi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -979,7 +1017,7 @@
     "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 5,
-    "titleHistory": "",
+    "titleHistory": "十段 1期（第26期-1987年度）、 王位 3期（第24期-1983年度・26～27期）、 棋王 1期（第12期-1986年）",
     "careerWins": 919,
     "careerLosses": 830,
     "careerWinRate": 0.5254,
@@ -992,7 +1030,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 142。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 5期",
+      "主なタイトル: 十段1期・王位3期・棋王1期"
     ],
     "yearRecords": [
       {
@@ -1040,13 +1079,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/michio_takahashi",
       "kifuDatabase": "https://shogidb2.com/search?q=%E9%AB%98%E6%A9%8B%20%E9%81%93%E9%9B%84",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E9%AB%98%E6%A9%8B%E9%81%93%E9%9B%84"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-tadahisa_maruyama",
     "name": "丸山 忠久",
-    "kana": "まるやま ただひさ",
-    "romaji": "tadahisa maruyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1060,7 +1098,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
-    "titleHistory": "",
+    "titleHistory": "名人 2期（第58期-2000年～59期）、 棋王 1期（第28期-2002年度）",
     "careerWins": 1054,
     "careerLosses": 651,
     "careerWinRate": 0.6182,
@@ -1073,7 +1111,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 194。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 名人2期・棋王1期"
     ],
     "yearRecords": [
       {
@@ -1121,13 +1160,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/tadahisa_maruyama",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%B8%E5%B1%B1%20%E5%BF%A0%E4%B9%85",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%B8%E5%B1%B1%E5%BF%A0%E4%B9%85"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-takeshi_fujii",
     "name": "藤井 猛",
-    "kana": "ふじい たけし",
-    "romaji": "takeshi fujii",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1141,7 +1179,7 @@
     "junisenClass": "C級1組",
     "heldTitles": [],
     "totalTitles": 3,
-    "titleHistory": "",
+    "titleHistory": "竜王 3期（第11期-1998年度～13期）",
     "careerWins": 762,
     "careerLosses": 606,
     "careerWinRate": 0.557,
@@ -1154,7 +1192,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 198。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 竜王3期"
     ],
     "yearRecords": [
       {
@@ -1202,13 +1241,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/takeshi_fujii",
       "kifuDatabase": "https://shogidb2.com/search?q=%E8%97%A4%E4%BA%95%20%E7%8C%9B",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%97%A4%E4%BA%95%E7%8C%9B"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-yasuaki_tsukada",
     "name": "塚田 泰明",
-    "kana": "つかだ やすあき",
-    "romaji": "yasuaki tsukada",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1222,7 +1260,7 @@
     "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "王座 1期（第35期-1987年度）",
     "careerWins": 808,
     "careerLosses": 744,
     "careerWinRate": 0.5206,
@@ -1235,7 +1273,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 148。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 王座1期"
     ],
     "yearRecords": [
       {
@@ -1283,13 +1322,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/yasuaki_tsukada",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%A1%9A%E7%94%B0%20%E6%B3%B0%E6%98%8E",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%A1%9A%E7%94%B0%E6%B3%B0%E6%98%8E"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-masataka_goda",
     "name": "郷田 真隆",
-    "kana": "ごうだ まさたか",
-    "romaji": "masataka goda",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1303,7 +1341,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 6,
-    "titleHistory": "",
+    "titleHistory": "王位 1期（第33期-1992年度）、 棋聖 2期（第69期-1998年度・72期）、 棋王 1期（第37期-2011年度）、 王将 2期（第64期-2014年度・65期）",
     "careerWins": 1033,
     "careerLosses": 670,
     "careerWinRate": 0.6066,
@@ -1316,7 +1354,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 195。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 6期",
+      "主なタイトル: 王位1期・棋聖2期・棋王1期・王将2期"
     ],
     "yearRecords": [
       {
@@ -1364,13 +1403,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/masataka_goda",
       "kifuDatabase": "https://shogidb2.com/search?q=%E9%83%B7%E7%94%B0%20%E7%9C%9F%E9%9A%86",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E9%83%B7%E7%94%B0%E7%9C%9F%E9%9A%86"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-taku_morishita",
     "name": "森下 卓",
-    "kana": "もりした たく",
-    "romaji": "taku morishita",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1450,8 +1488,6 @@
   {
     "id": "pro-nobuyuki_yashiki",
     "name": "屋敷 伸之",
-    "kana": "やしき のぶゆき",
-    "romaji": "nobuyuki yashiki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1465,7 +1501,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
-    "titleHistory": "",
+    "titleHistory": "棋聖 3期（第56期-1990年度前期～57期・68期）",
     "careerWins": 880,
     "careerLosses": 629,
     "careerWinRate": 0.5832,
@@ -1478,7 +1514,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 189。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 棋聖3期"
     ],
     "yearRecords": [
       {
@@ -1526,13 +1563,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/nobuyuki_yashiki",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%B1%8B%E6%95%B7%20%E4%BC%B8%E4%B9%8B",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%B1%8B%E6%95%B7%E4%BC%B8%E4%B9%8B"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-osamu_nakamura",
     "name": "中村 修",
-    "kana": "なかむら おさむ",
-    "romaji": "osamu nakamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1546,7 +1582,7 @@
     "junisenClass": "C級2組",
     "heldTitles": [],
     "totalTitles": 2,
-    "titleHistory": "",
+    "titleHistory": "王将 2期（第35期-1985年度～36期）",
     "careerWins": 843,
     "careerLosses": 809,
     "careerWinRate": 0.5103,
@@ -1559,7 +1595,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 143。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 2期",
+      "主なタイトル: 王将2期"
     ],
     "yearRecords": [
       {
@@ -1607,13 +1644,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/osamu_nakamura",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%AD%E6%9D%91%20%E4%BF%AE",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%AD%E6%9D%91%E4%BF%AE"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-akira_shima",
     "name": "島 朗",
-    "kana": "しま あきら",
-    "romaji": "akira shima",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1627,7 +1663,7 @@
     "junisenClass": "フリークラス",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "竜王 1期（第1期-1988年度）",
     "careerWins": 877,
     "careerLosses": 819,
     "careerWinRate": 0.5171,
@@ -1640,7 +1676,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 146。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 竜王1期"
     ],
     "yearRecords": [
       {
@@ -1688,13 +1725,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/akira_shima",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%B3%B6%20%E6%9C%97",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%B3%B6%E6%9C%97"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-koichi_fukaura",
     "name": "深浦 康市",
-    "kana": "ふかうら こういち",
-    "romaji": "koichi fukaura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1708,7 +1744,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 3,
-    "titleHistory": "",
+    "titleHistory": "王位 3期（第48期-2007年度～50期）",
     "careerWins": 964,
     "careerLosses": 617,
     "careerWinRate": 0.6097,
@@ -1721,7 +1757,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 201。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 王位3期"
     ],
     "yearRecords": [
       {
@@ -1769,13 +1806,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/koichi_fukaura",
       "kifuDatabase": "https://shogidb2.com/search?q=%E6%B7%B1%E6%B5%A6%20%E5%BA%B7%E5%B8%82",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%B7%B1%E6%B5%A6%E5%BA%B7%E5%B8%82"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-toshiaki_kubo",
     "name": "久保 利明",
-    "kana": "くぼ としあき",
-    "romaji": "toshiaki kubo",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1789,7 +1825,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 7,
-    "titleHistory": "",
+    "titleHistory": "棋王 3期（第34期-2008年度～36期）、 王将 4期（第59期-2009年度～60期・66～67期）",
     "careerWins": 898,
     "careerLosses": 604,
     "careerWinRate": 0.5979,
@@ -1802,7 +1838,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 207。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 7期",
+      "主なタイトル: 棋王3期・王将4期"
     ],
     "yearRecords": [
       {
@@ -1850,13 +1887,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/toshiaki_kubo",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B9%85%E4%BF%9D%20%E5%88%A9%E6%98%8E",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B9%85%E4%BF%9D%E5%88%A9%E6%98%8E"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-keita_inoue",
     "name": "井上 慶太",
-    "kana": "いのうえ けいた",
-    "romaji": "keita inoue",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1936,8 +1972,6 @@
   {
     "id": "pro-hiroyuki_miura",
     "name": "三浦 弘行",
-    "kana": "みうら ひろゆき",
-    "romaji": "hiroyuki miura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -1950,8 +1984,8 @@
     "ryuoClass": "1組",
     "junisenClass": "B級2組",
     "heldTitles": [],
-    "totalTitles": 0,
-    "titleHistory": "",
+    "totalTitles": 1,
+    "titleHistory": "棋聖 1期（第67期-1996年度）",
     "careerWins": 727,
     "careerLosses": 570,
     "careerWinRate": 0.5605,
@@ -1964,7 +1998,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 204。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 棋聖1期"
     ],
     "yearRecords": [
       {
@@ -2012,13 +2047,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/hiroyuki_miura",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%89%E6%B5%A6%20%E5%BC%98%E8%A1%8C",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%89%E6%B5%A6%E5%BC%98%E8%A1%8C"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-manabu_senzaki",
     "name": "先崎 学",
-    "kana": "せんざき まなぶ",
-    "romaji": "manabu senzaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2098,8 +2132,6 @@
   {
     "id": "pro-amahiko_satoh",
     "name": "佐藤 天彦",
-    "kana": "さとう あまひこ",
-    "romaji": "amahiko satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2112,8 +2144,8 @@
     "ryuoClass": "2組",
     "junisenClass": "A級",
     "heldTitles": [],
-    "totalTitles": 0,
-    "titleHistory": "",
+    "totalTitles": 3,
+    "titleHistory": "名人 3期（第74期-2016年・75～76期）",
     "careerWins": 493,
     "careerLosses": 298,
     "careerWinRate": 0.6233,
@@ -2126,7 +2158,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 263。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 3期",
+      "主なタイトル: 名人3期"
     ],
     "yearRecords": [
       {
@@ -2174,13 +2207,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/amahiko_satoh",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%BD%90%E8%97%A4%20%E5%A4%A9%E5%BD%A6",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%BD%90%E8%97%A4%E5%A4%A9%E5%BD%A6"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-daisuke_suzuki",
     "name": "鈴木 大介",
-    "kana": "だいすけ すずき",
-    "romaji": "daisuke suzuki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2260,8 +2292,6 @@
   {
     "id": "pro-kazuki_kimura",
     "name": "木村 一基",
-    "kana": "かずき きむら",
-    "romaji": "kazuki kimura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2275,7 +2305,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "王位 1期（第60期-2019年度）",
     "careerWins": 788,
     "careerLosses": 511,
     "careerWinRate": 0.6066,
@@ -2288,7 +2318,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 222。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 王位1期"
     ],
     "yearRecords": [
       {
@@ -2336,13 +2367,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/kazuki_kimura",
       "kifuDatabase": "https://shogidb2.com/search?q=%E6%9C%A8%E6%9D%91%20%E4%B8%80%E5%9F%BA",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%9C%A8%E6%9D%91%E4%B8%80%E5%9F%BA"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "toyoshima-masayuki",
     "name": "豊島 将之",
-    "kana": "とよしま まさゆき",
-    "romaji": "Toyoshima Masayuki",
     "type": "pro",
     "rank": "九段",
     "playerNumber": 264,
@@ -2354,7 +2384,7 @@
     "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 6,
-    "titleHistory": "元竜王・名人（史上4人目の竜王・名人同時保持者）。王位・叡王・棋聖獲得。きゅんの愛称。",
+    "titleHistory": "竜王 2期（第32期-2019年度・33期）、 名人 1期（第77期-2019年度）、 叡王 1期（第5期-2020年度）、 王位 1期（第59期-2018年度）、 棋聖 1期（第89期-2018年度）",
     "careerWins": 647,
     "careerLosses": 344,
     "careerWinRate": 0.6529,
@@ -2371,6 +2401,8 @@
     "avatarBg": "linear-gradient(135deg, #3b0764 0%, #6b21a8 100%)",
     "shortBio": "「序盤、中盤、終盤、隙がないと思うよ」の名言で愛されるトップ棋士。居飛車・振り飛車ともに精通し華麗な将棋を展開。",
     "highlights": [
+      "通算タイトル獲得 6期",
+      "主なタイトル: 竜王2期・名人1期・叡王1期・王位1期・棋聖1期",
       "2019年史上4人目の「竜王・名人」同時戴冠",
       "三冠保持（竜王・名人・王位）の実績",
       "王将リーグ・順位戦など最前線で常に活躍"
@@ -2461,13 +2493,12 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%B1%8A%E5%B3%B6%E5%B0%86%E4%B9%8B"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/264.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/264.jpg",
+    "eiseiTitles": []
   },
   {
     "id": "pro-hisashi_namekata",
     "name": "行方 尚史",
-    "kana": "ひさし なめかた",
-    "romaji": "hisashi namekata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2547,8 +2578,6 @@
   {
     "id": "pro-takashi_abe",
     "name": "阿部 隆",
-    "kana": "たかし あべ",
-    "romaji": "takashi abe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2628,8 +2657,6 @@
   {
     "id": "nagase-takuya",
     "name": "永瀬 拓矢",
-    "kana": "ながせ たくや",
-    "romaji": "Nagase Takuya",
     "type": "pro",
     "rank": "九段",
     "playerNumber": 276,
@@ -2641,7 +2668,7 @@
     "junisenClass": "A級",
     "heldTitles": [],
     "totalTitles": 5,
-    "titleHistory": "元王座（4連覇）、元叡王。不屈の軍曹。将棋への求道的な研究量で知られる。",
+    "titleHistory": "叡王 1期（第4期-2018年度）、 王座 4期（第67期-2019年度・68～70期）",
     "careerWins": 587,
     "careerLosses": 268,
     "careerWinRate": 0.6865,
@@ -2658,6 +2685,8 @@
     "avatarBg": "linear-gradient(135deg, #064e3b 0%, #047857 100%)",
     "shortBio": "「軍曹」の異名をとる鉄壁の受け将棋。1日10時間以上の研究を欠かさない圧倒的な精進ぶりで全棋士の目標。",
     "highlights": [
+      "通算タイトル獲得 5期",
+      "主なタイトル: 叡王1期・王座4期",
       "王座4連覇・叡王獲得など通算5期",
       "千日手・持将棋を恐れない超持久戦の大家",
       "藤井聡太との激闘VS（練習将棋）パートナーとしても著名"
@@ -2748,13 +2777,12 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%B0%B8%E7%80%AC%E6%8B%93%E7%9F%A2"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/276.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/276.jpg",
+    "eiseiTitles": []
   },
   {
     "id": "pro-eisaku_tomioka",
     "name": "富岡 英作",
-    "kana": "えいさく とみおか",
-    "romaji": "eisaku tomioka",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2834,8 +2862,6 @@
   {
     "id": "pro-takayuki_yamasaki",
     "name": "山崎 隆之",
-    "kana": "たかゆき やまさき",
-    "romaji": "takayuki yamasaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2915,8 +2941,6 @@
   {
     "id": "pro-tetsuro_itodani",
     "name": "糸谷 哲郎",
-    "kana": "てつろ いとだに",
-    "romaji": "tetsuro itodani",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "九段",
@@ -2929,8 +2953,8 @@
     "ryuoClass": "3組",
     "junisenClass": "A級",
     "heldTitles": [],
-    "totalTitles": 0,
-    "titleHistory": "",
+    "totalTitles": 1,
+    "titleHistory": "竜王 1期（第27期-2014年度）",
     "careerWins": 526,
     "careerLosses": 330,
     "careerWinRate": 0.6145,
@@ -2943,7 +2967,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（九段）。公式棋士番号: 260。",
     "highlights": [
-      "日本将棋連盟所属 九段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 竜王1期"
     ],
     "yearRecords": [
       {
@@ -2991,13 +3016,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/tetsuro_itodani",
       "kifuDatabase": "https://shogidb2.com/search?q=%E7%B3%B8%E8%B0%B7%20%E5%93%B2%E9%83%8E",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E7%B3%B8%E8%B0%B7%E5%93%B2%E9%83%8E"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-daisuke_nakagawa",
     "name": "中川 大輔",
-    "kana": "だいすけ なかがわ",
-    "romaji": "daisuke nakagawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3077,8 +3101,6 @@
   {
     "id": "pro-ichiro_hiura",
     "name": "日浦 市郎",
-    "kana": "いちろ ひうら",
-    "romaji": "ichiro hiura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3158,8 +3180,6 @@
   {
     "id": "pro-masahiko_urano",
     "name": "浦野 真彦",
-    "kana": "まさひこ うらの",
-    "romaji": "masahiko urano",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3239,8 +3259,6 @@
   {
     "id": "pro-kensuke_kitahama",
     "name": "北浜 健介",
-    "kana": "けんすけ きたはま",
-    "romaji": "kensuke kitahama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3320,8 +3338,6 @@
   {
     "id": "pro-chikara_akutsu",
     "name": "阿久津 主税",
-    "kana": "ちから あくつ",
-    "romaji": "chikara akutsu",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3401,8 +3417,6 @@
   {
     "id": "pro-hiroshi_kamiya",
     "name": "神谷 広志",
-    "kana": "ひろし かみや",
-    "romaji": "hiroshi kamiya",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3482,8 +3496,6 @@
   {
     "id": "pro-ayumu_matsuo",
     "name": "松尾 歩",
-    "kana": "あゆむ まつお",
-    "romaji": "ayumu matsuo",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3563,8 +3575,6 @@
   {
     "id": "pro-akira_inaba",
     "name": "稲葉 陽",
-    "kana": "あきら いなば",
-    "romaji": "akira inaba",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3644,8 +3654,6 @@
   {
     "id": "pro-kenji_kanzaki",
     "name": "神崎 健二",
-    "kana": "けんじ かんざき",
-    "romaji": "kenji kanzaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3725,8 +3733,6 @@
   {
     "id": "pro-keiichi_sanada",
     "name": "真田 圭一",
-    "kana": "けいいち さなだ",
-    "romaji": "keiichi sanada",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3806,8 +3812,6 @@
   {
     "id": "pro-hirotaka_nozuki",
     "name": "野月 浩貴",
-    "kana": "ひろたか のずき",
-    "romaji": "hirotaka nozuki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3887,8 +3891,6 @@
   {
     "id": "pro-naruyuki_hatakeyama",
     "name": "畠山 成幸",
-    "kana": "なるゆき はたけやま",
-    "romaji": "naruyuki hatakeyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -3968,8 +3970,6 @@
   {
     "id": "pro-isao_nakata",
     "name": "中田 功",
-    "kana": "いさお なかた",
-    "romaji": "isao nakata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4049,8 +4049,6 @@
   {
     "id": "pro-masataka_sugimoto",
     "name": "杉本 昌隆",
-    "kana": "まさたか すぎもと",
-    "romaji": "masataka sugimoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4130,8 +4128,6 @@
   {
     "id": "pro-mamoru_hatakeyama",
     "name": "畠山 鎮",
-    "kana": "まもる はたけやま",
-    "romaji": "mamoru hatakeyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4211,8 +4207,6 @@
   {
     "id": "sugai-tatsuya",
     "name": "菅井 竜也",
-    "kana": "すがい たつや",
-    "romaji": "Sugai Tatsuya",
     "type": "pro",
     "rank": "八段",
     "playerNumber": 278,
@@ -4224,7 +4218,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "元王位。現代将棋界きっての「振り飛車のスペシャリスト」「振り飛車党のエース」。",
+    "titleHistory": "王位 1期（第58期-2017年度）",
     "careerWins": 462,
     "careerLosses": 261,
     "careerWinRate": 0.639,
@@ -4241,6 +4235,8 @@
     "avatarBg": "linear-gradient(135deg, #451a03 0%, #b45309 100%)",
     "shortBio": "現代振り飛車の旗手。中飛車、三間飛車、四間飛車を自在に操り、居飛車全盛の現代プロ将棋界でA級に君臨。",
     "highlights": [
+      "通算タイトル獲得 1期",
+      "主なタイトル: 王位1期",
       "平成生まれ初のタイトルホルダー（第58期王位）",
       "A級在籍＆竜王戦1組の振り飛車党トップ",
       "数多くの新工夫「菅井流」定跡を創案"
@@ -4331,13 +4327,12 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%8F%85%E4%BA%95%E7%AB%9C%E4%B9%9F"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/pro/278.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/pro/278.jpg",
+    "eiseiTitles": []
   },
   {
     "id": "pro-shintaro_saito",
     "name": "斎藤 慎太郎",
-    "kana": "しんたろ さいと",
-    "romaji": "shintaro saito",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4351,7 +4346,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "王座 1期（第66期-2018年度）",
     "careerWins": 384,
     "careerLosses": 232,
     "careerWinRate": 0.6234,
@@ -4364,7 +4359,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（八段）。公式棋士番号: 286。",
     "highlights": [
-      "日本将棋連盟所属 八段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 王座1期"
     ],
     "yearRecords": [
       {
@@ -4412,13 +4408,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/shintaro_saito",
       "kifuDatabase": "https://shogidb2.com/search?q=%E6%96%8E%E8%97%A4%20%E6%85%8E%E5%A4%AA%E9%83%8E",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%96%8E%E8%97%A4%E6%85%8E%E5%A4%AA%E9%83%8E"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-shuji_satoh",
     "name": "佐藤 秀司",
-    "kana": "しゅじ さとう",
-    "romaji": "shuji satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4498,8 +4493,6 @@
   {
     "id": "pro-eiji_iijima",
     "name": "飯島 栄治",
-    "kana": "えいじ いいじま",
-    "romaji": "eiji iijima",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4579,8 +4572,6 @@
   {
     "id": "pro-kazushiza_horiguchi",
     "name": "堀口 一史座",
-    "kana": "かずしざ ほりぐち",
-    "romaji": "kazushiza horiguchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4660,8 +4651,6 @@
   {
     "id": "pro-taichi_nakamura",
     "name": "中村 太地",
-    "kana": "たいち なかむら",
-    "romaji": "taichi nakamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4675,7 +4664,7 @@
     "junisenClass": "B級1組",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "王座 1期（第65期-2017年度）",
     "careerWins": 435,
     "careerLosses": 309,
     "careerWinRate": 0.5847,
@@ -4688,7 +4677,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（八段）。公式棋士番号: 261。",
     "highlights": [
-      "日本将棋連盟所属 八段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 王座1期"
     ],
     "yearRecords": [
       {
@@ -4736,13 +4726,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/taichi_nakamura",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%AD%E6%9D%91%20%E5%A4%AA%E5%9C%B0",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%AD%E6%9D%91%E5%A4%AA%E5%9C%B0"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-yuuki_sasaki",
     "name": "佐々木 勇気",
-    "kana": "yううき ささき",
-    "romaji": "yuuki sasaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4822,8 +4811,6 @@
   {
     "id": "pro-hiroki_iizuka",
     "name": "飯塚 祐紀",
-    "kana": "ひろき いいずか",
-    "romaji": "hiroki iizuka",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4903,8 +4890,6 @@
   {
     "id": "pro-yasuaki_murayama",
     "name": "村山 慈明",
-    "kana": "やすあき むらやま",
-    "romaji": "yasuaki murayama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -4984,8 +4969,6 @@
   {
     "id": "pro-hiroshi_kobayashi-223",
     "name": "小林 裕士",
-    "kana": "ひろし こばやし-223",
-    "romaji": "hiroshi kobayashi-223",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -5065,8 +5048,6 @@
   {
     "id": "pro-shota_chida",
     "name": "千田 翔太",
-    "kana": "しょた ちだ",
-    "romaji": "shota chida",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -5146,8 +5127,6 @@
   {
     "id": "pro-yasuhiro_masuda",
     "name": "増田 康宏",
-    "kana": "やすひろ ますだ",
-    "romaji": "yasuhiro masuda",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -5227,8 +5206,6 @@
   {
     "id": "pro-seiya_kondou",
     "name": "近藤 誠也",
-    "kana": "せいや こんdおう",
-    "romaji": "seiya kondou",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -5308,8 +5285,6 @@
   {
     "id": "pro-wataru_yashiro",
     "name": "八代 弥",
-    "kana": "わたる やしろ",
-    "romaji": "wataru yashiro",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "八段",
@@ -5389,8 +5364,6 @@
   {
     "id": "pro-takahiro_toyokawa",
     "name": "豊川 孝弘",
-    "kana": "たかひろ とよかわ",
-    "romaji": "takahiro toyokawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5470,8 +5443,6 @@
   {
     "id": "pro-shingo_hirafuji",
     "name": "平藤 眞吾",
-    "kana": "しんご ひらふじ",
-    "romaji": "shingo hirafuji",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5551,8 +5522,6 @@
   {
     "id": "pro-kosuke_tamura",
     "name": "田村 康介",
-    "kana": "こすけ たむら",
-    "romaji": "kosuke tamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5632,8 +5601,6 @@
   {
     "id": "pro-tadao_kitajima",
     "name": "北島 忠雄",
-    "kana": "ただお きたじま",
-    "romaji": "tadao kitajima",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5713,8 +5680,6 @@
   {
     "id": "pro-norihiro_yagura",
     "name": "矢倉 規広",
-    "kana": "のりひろ やぐら",
-    "romaji": "norihiro yagura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5794,8 +5759,6 @@
   {
     "id": "pro-shinya_satoh",
     "name": "佐藤 紳哉",
-    "kana": "しにゃ さとう",
-    "romaji": "shinya satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5875,8 +5838,6 @@
   {
     "id": "pro-kenjirou_abe",
     "name": "阿部 健治郎",
-    "kana": "けんじrおう あべ",
-    "romaji": "kenjirou abe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -5956,8 +5917,6 @@
   {
     "id": "pro-yoshiyuki_kubota",
     "name": "窪田 義行",
-    "kana": "よしゆき くぼた",
-    "romaji": "yoshiyuki kubota",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6037,8 +5996,6 @@
   {
     "id": "pro-makoto_tobe",
     "name": "戸辺 誠",
-    "kana": "まこと とべ",
-    "romaji": "makoto tobe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6118,8 +6075,6 @@
   {
     "id": "pro-tadashi_ooishi",
     "name": "大石 直嗣",
-    "kana": "ただし おういし",
-    "romaji": "tadashi ooishi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6199,8 +6154,6 @@
   {
     "id": "pro-sakio_chiba",
     "name": "千葉 幸生",
-    "kana": "さきお ちば",
-    "romaji": "sakio chiba",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6280,8 +6233,6 @@
   {
     "id": "pro-hiroshi_okazaki",
     "name": "岡崎 洋",
-    "kana": "ひろし おかざき",
-    "romaji": "hiroshi okazaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6361,8 +6312,6 @@
   {
     "id": "pro-atsushi_miyata",
     "name": "宮田 敦史",
-    "kana": "あつし みやた",
-    "romaji": "atsushi miyata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6442,8 +6391,6 @@
   {
     "id": "pro-taichi_takami",
     "name": "高見 泰地",
-    "kana": "たいち たかみ",
-    "romaji": "taichi takami",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6457,7 +6404,7 @@
     "junisenClass": "B級2組",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "叡王 1期（第3期-2017年度）",
     "careerWins": 342,
     "careerLosses": 231,
     "careerWinRate": 0.5969,
@@ -6470,7 +6417,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（七段）。公式棋士番号: 284。",
     "highlights": [
-      "日本将棋連盟所属 七段"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 叡王1期"
     ],
     "yearRecords": [
       {
@@ -6518,13 +6466,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/taichi_takami",
       "kifuDatabase": "https://shogidb2.com/search?q=%E9%AB%98%E8%A6%8B%20%E6%B3%B0%E5%9C%B0",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E9%AB%98%E8%A6%8B%E6%B3%B0%E5%9C%B0"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-daisuke_katagami",
     "name": "片上 大輔",
-    "kana": "だいすけ かたがみ",
-    "romaji": "daisuke katagami",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6604,8 +6551,6 @@
   {
     "id": "pro-akira_nishio",
     "name": "西尾 明",
-    "kana": "あきら にしお",
-    "romaji": "akira nishio",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6685,8 +6630,6 @@
   {
     "id": "pro-tatsuya_sanmaido",
     "name": "三枚堂 達也",
-    "kana": "たつや さんまいど",
-    "romaji": "tatsuya sanmaido",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6766,8 +6709,6 @@
   {
     "id": "pro-hiroaki_yokoyama",
     "name": "横山 泰明",
-    "kana": "ひろあき よこやま",
-    "romaji": "hiroaki yokoyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6847,8 +6788,6 @@
   {
     "id": "pro-shuji_muranaka",
     "name": "村中 秀史",
-    "kana": "しゅじ むらなか",
-    "romaji": "shuji muranaka",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -6928,8 +6867,6 @@
   {
     "id": "pro-kazutoshi_satoh",
     "name": "佐藤 和俊",
-    "kana": "かずとし さとう",
-    "romaji": "kazutoshi satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7009,8 +6946,6 @@
   {
     "id": "pro-tomohiro_murata",
     "name": "村田 智弘",
-    "kana": "とmおういろ むらた",
-    "romaji": "tomohiro murata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7090,8 +7025,6 @@
   {
     "id": "pro-makoto_sasaki",
     "name": "佐々木 慎",
-    "kana": "まこと ささき",
-    "romaji": "makoto sasaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7171,8 +7104,6 @@
   {
     "id": "pro-kiyokazu_katsumata",
     "name": "勝又 清和",
-    "kana": "きよかず かつまた",
-    "romaji": "kiyokazu katsumata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7252,8 +7183,6 @@
   {
     "id": "pro-issei_takazaki",
     "name": "高崎 一生",
-    "kana": "いっせい たかざき",
-    "romaji": "issei takazaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7333,8 +7262,6 @@
   {
     "id": "pro-shingo_sawada",
     "name": "澤田 真吾",
-    "kana": "しんご さわだ",
-    "romaji": "shingo sawada",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7414,8 +7341,6 @@
   {
     "id": "pro-takanori_anyouji",
     "name": "安用寺 孝功",
-    "kana": "たかのり あnyおうじ",
-    "romaji": "takanori anyouji",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7495,8 +7420,6 @@
   {
     "id": "pro-ryuuma_tonari",
     "name": "都成 竜馬",
-    "kana": "ryううま となり",
-    "romaji": "ryuuma tonari",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7522,9 +7445,7 @@
     "colorAccent": "#3b82f6",
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
     "shortBio": "日本将棋連盟所属の現役棋士（七段）。公式棋士番号: 304。",
-    "highlights": [
-      "日本将棋連盟所属 七段"
-    ],
+    "highlights": [],
     "yearRecords": [
       {
         "year": 2021,
@@ -7571,13 +7492,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/ryuuma_tonari",
       "kifuDatabase": "https://shogidb2.com/search?q=%E9%83%BD%E6%88%90%20%E7%AB%9C%E9%A6%AC",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E9%83%BD%E6%88%90%E7%AB%9C%E9%A6%AC"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "pro-hirotaka_kajiura",
     "name": "梶浦 宏孝",
-    "kana": "ひろたか かじうら",
-    "romaji": "hirotaka kajiura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7657,8 +7577,6 @@
   {
     "id": "pro-masakazu_kondoh",
     "name": "近藤 正和",
-    "kana": "まさかず こんdおう",
-    "romaji": "masakazu kondoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7738,8 +7656,6 @@
   {
     "id": "pro-takuma_oikawa",
     "name": "及川 拓馬",
-    "kana": "たくま おいかわ",
-    "romaji": "takuma oikawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7819,8 +7735,6 @@
   {
     "id": "pro-kouru_abe",
     "name": "阿部 光瑠",
-    "kana": "kおうる あべ",
-    "romaji": "kouru abe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7900,8 +7814,6 @@
   {
     "id": "pro-yoshiyuki_matsumoto",
     "name": "松本 佳介",
-    "kana": "よしゆき まつもと",
-    "romaji": "yoshiyuki matsumoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -7981,8 +7893,6 @@
   {
     "id": "pro-daichi_sasaki",
     "name": "佐々木 大地",
-    "kana": "だいち ささき",
-    "romaji": "daichi sasaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8062,8 +7972,6 @@
   {
     "id": "pro-takahiro_oohashi",
     "name": "大橋 貴洸",
-    "kana": "たかひろ おううあし",
-    "romaji": "takahiro oohashi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8143,8 +8051,6 @@
   {
     "id": "pro-kentaro_ishii",
     "name": "石井 健太郎",
-    "kana": "けんたろ いしい",
-    "romaji": "kentaro ishii",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8224,8 +8130,6 @@
   {
     "id": "pro-kouhei_funae",
     "name": "船江 恒平",
-    "kana": "kおうへい ふなえ",
-    "romaji": "kouhei funae",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8305,8 +8209,6 @@
   {
     "id": "pro-kazushi_watanabe",
     "name": "渡辺 和史",
-    "kana": "かずし わたなべ",
-    "romaji": "kazushi watanabe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8386,8 +8288,6 @@
   {
     "id": "pro-hideyuki_takano",
     "name": "高野 秀行",
-    "kana": "ひでゆき たかの",
-    "romaji": "hideyuki takano",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8467,8 +8367,6 @@
   {
     "id": "pro-mirai_aoshima",
     "name": "青嶋 未来",
-    "kana": "みらい あおしま",
-    "romaji": "mirai aoshima",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8548,8 +8446,6 @@
   {
     "id": "pro-shinichiro_hattori",
     "name": "服部 慎一郎",
-    "kana": "しにちろ はっとり",
-    "romaji": "shinichiro hattori",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8629,8 +8525,6 @@
   {
     "id": "pro-nagisa_fujimoto",
     "name": "藤本 渚",
-    "kana": "なぎさ ふじもと",
-    "romaji": "nagisa fujimoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8710,8 +8604,6 @@
   {
     "id": "pro-kazuhiro_nishikawa",
     "name": "西川 和宏",
-    "kana": "かずひろ にしかわ",
-    "romaji": "kazuhiro nishikawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8791,8 +8683,6 @@
   {
     "id": "pro-kota_kanai",
     "name": "金井 恒太",
-    "kana": "こた かない",
-    "romaji": "kota kanai",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "七段",
@@ -8872,8 +8762,6 @@
   {
     "id": "pro-takehiro_ohira",
     "name": "大平 武洋",
-    "kana": "たけひろ おういら",
-    "romaji": "takehiro ohira",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -8953,8 +8841,6 @@
   {
     "id": "pro-shinya_yamamoto",
     "name": "山本 真也",
-    "kana": "しにゃ やまもと",
-    "romaji": "shinya yamamoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9034,8 +8920,6 @@
   {
     "id": "pro-ryosuke_nakamura",
     "name": "中村 亮介",
-    "kana": "りょすけ なかむら",
-    "romaji": "ryosuke nakamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9115,8 +8999,6 @@
   {
     "id": "pro-akihiro_murata",
     "name": "村田 顕弘",
-    "kana": "あきひろ むらた",
-    "romaji": "akihiro murata",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9196,8 +9078,6 @@
   {
     "id": "pro-yusuke_toyama",
     "name": "遠山 雄亮",
-    "kana": "ゆすけ とやま",
-    "romaji": "yusuke toyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9277,8 +9157,6 @@
   {
     "id": "pro-satoru_sakaguchi",
     "name": "阪口 悟",
-    "kana": "さとる さかぐち",
-    "romaji": "satoru sakaguchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9358,8 +9236,6 @@
   {
     "id": "pro-shoji_segawa",
     "name": "瀬川 晶司",
-    "kana": "しょじ せがわ",
-    "romaji": "shoji segawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9439,8 +9315,6 @@
   {
     "id": "pro-yuya_nagaoka",
     "name": "長岡 裕也",
-    "kana": "ゆや ながおか",
-    "romaji": "yuya nagaoka",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9520,8 +9394,6 @@
   {
     "id": "pro-mitsunori_makino",
     "name": "牧野 光則",
-    "kana": "みつのり まきの",
-    "romaji": "mitsunori makino",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9601,8 +9473,6 @@
   {
     "id": "pro-reo_kurosawa",
     "name": "黒沢 怜生",
-    "kana": "れお くろさわ",
-    "romaji": "reo kurosawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9682,8 +9552,6 @@
   {
     "id": "pro-shingo_itoh",
     "name": "伊藤 真吾",
-    "kana": "しんご いtおう",
-    "romaji": "shingo itoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9763,8 +9631,6 @@
   {
     "id": "pro-satoshi_takano",
     "name": "高野 智史",
-    "kana": "さとし たかの",
-    "romaji": "satoshi takano",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9844,8 +9710,6 @@
   {
     "id": "pro-hiromu_watanabe",
     "name": "渡辺 大夢",
-    "kana": "ひろむ わたなべ",
-    "romaji": "hiromu watanabe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -9925,8 +9789,6 @@
   {
     "id": "pro-masakazu_watanabe",
     "name": "渡辺 正和",
-    "kana": "まさかず わたなべ",
-    "romaji": "masakazu watanabe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10006,8 +9868,6 @@
   {
     "id": "pro-wakamu_deguchi",
     "name": "出口 若武",
-    "kana": "わかむ でぐち",
-    "romaji": "wakamu deguchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10087,8 +9947,6 @@
   {
     "id": "pro-kei_honda",
     "name": "本田 奎",
-    "kana": "けい ほんだ",
-    "romaji": "kei honda",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10168,8 +10026,6 @@
   {
     "id": "pro-yuichi_tanaka",
     "name": "田中 悠一",
-    "kana": "ゆいち たなか",
-    "romaji": "yuichi tanaka",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10249,8 +10105,6 @@
   {
     "id": "pro-yusei_koga",
     "name": "古賀 悠聖",
-    "kana": "ゆせい こが",
-    "romaji": "yusei koga",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10330,8 +10184,6 @@
   {
     "id": "pro-takashi_ikenaga",
     "name": "池永 天志",
-    "kana": "たかし いけなが",
-    "romaji": "takashi ikenaga",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10411,8 +10263,6 @@
   {
     "id": "pro-ryo_shimamoto",
     "name": "島本 亮",
-    "kana": "りょ しまもと",
-    "romaji": "ryo shimamoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10492,8 +10342,6 @@
   {
     "id": "pro-naohiro_ishida",
     "name": "石田 直裕",
-    "kana": "なおういろ いしだ",
-    "romaji": "naohiro ishida",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10573,8 +10421,6 @@
   {
     "id": "pro-shinichi_satoh",
     "name": "佐藤 慎一",
-    "kana": "さとう しんいち",
-    "romaji": "shinichi satoh",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10654,8 +10500,6 @@
   {
     "id": "pro-keita_kadokura",
     "name": "門倉 啓太",
-    "kana": "けいた かどくら",
-    "romaji": "keita kadokura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10735,8 +10579,6 @@
   {
     "id": "pro-asuto_saito",
     "name": "斎藤 明日斗",
-    "kana": "あすと さいと",
-    "romaji": "asuto saito",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10816,8 +10658,6 @@
   {
     "id": "pro-hiroshi_miyamoto",
     "name": "宮本 広志",
-    "kana": "ひろし みやもと",
-    "romaji": "hiroshi miyamoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10897,8 +10737,6 @@
   {
     "id": "pro-kazuo_sugimoto",
     "name": "杉本 和陽",
-    "kana": "かずお すぎもと",
-    "romaji": "kazuo sugimoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -10978,8 +10816,6 @@
   {
     "id": "pro-takuya_nishida",
     "name": "西田 拓也",
-    "kana": "たくや にしだ",
-    "romaji": "takuya nishida",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11059,8 +10895,6 @@
   {
     "id": "pro-tetsuya_fujimori",
     "name": "藤森 哲也",
-    "kana": "てつや ふじもり",
-    "romaji": "tetsuya fujimori",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11140,8 +10974,6 @@
   {
     "id": "pro-reo_okabe",
     "name": "岡部 怜央",
-    "kana": "れお おかべ",
-    "romaji": "reo okabe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11221,8 +11053,6 @@
   {
     "id": "pro-takayuki_kuroda",
     "name": "黒田 尭之",
-    "kana": "たかゆき くろだ",
-    "romaji": "takayuki kuroda",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11302,8 +11132,6 @@
   {
     "id": "pro-kohei_hasebe",
     "name": "長谷部 浩平",
-    "kana": "kおうえい はせべ",
-    "romaji": "kohei hasebe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11383,8 +11211,6 @@
   {
     "id": "pro-hirotoshi_ueno",
     "name": "上野 裕寿",
-    "kana": "ひろとし うえの",
-    "romaji": "hirotoshi ueno",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "六段",
@@ -11464,8 +11290,6 @@
   {
     "id": "pro-yugo_takeuchi",
     "name": "竹内 雄悟",
-    "kana": "ゆご たけうち",
-    "romaji": "yugo takeuchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11545,8 +11369,6 @@
   {
     "id": "pro-wataru_kamimura",
     "name": "上村 亘",
-    "kana": "わたる かみむら",
-    "romaji": "wataru kamimura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11626,8 +11448,6 @@
   {
     "id": "pro-yuta_komori",
     "name": "古森 悠太",
-    "kana": "ゆた こもり",
-    "romaji": "yuta komori",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11707,8 +11527,6 @@
   {
     "id": "pro-kenji_imaizumi",
     "name": "今泉 健司",
-    "kana": "けんじ いまいずみ",
-    "romaji": "kenji imaizumi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11788,8 +11606,6 @@
   {
     "id": "pro-yoshitaka_hoshino",
     "name": "星野 良生",
-    "kana": "よしたか ほしの",
-    "romaji": "yoshitaka hoshino",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11869,8 +11685,6 @@
   {
     "id": "pro-junpei_ide",
     "name": "井出 隼平",
-    "kana": "じゅんぺい いで",
-    "romaji": "junpei ide",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -11950,8 +11764,6 @@
   {
     "id": "pro-yuta_ishikawa",
     "name": "石川 優太",
-    "kana": "ゆた いしかわ",
-    "romaji": "yuta ishikawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12031,8 +11843,6 @@
   {
     "id": "pro-shogo_orita",
     "name": "折田 翔吾",
-    "kana": "しょご おりた",
-    "romaji": "shogo orita",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12112,8 +11922,6 @@
   {
     "id": "pro-hiroshi_yamamoto",
     "name": "山本 博志",
-    "kana": "ひろし やまもと",
-    "romaji": "hiroshi yamamoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12193,8 +12001,6 @@
   {
     "id": "pro-seiya_tomita",
     "name": "冨田 誠也",
-    "kana": "せいや とみた",
-    "romaji": "seiya tomita",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12274,8 +12080,6 @@
   {
     "id": "pro-akihiro_takada",
     "name": "高田 明浩",
-    "kana": "あきひろ たかだ",
-    "romaji": "akihiro takada",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12355,8 +12159,6 @@
   {
     "id": "pro-mikio_kariyama",
     "name": "狩山 幹生",
-    "kana": "みきお かりやま",
-    "romaji": "mikio kariyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12436,8 +12238,6 @@
   {
     "id": "pro-akihiro_ida",
     "name": "井田 明宏",
-    "kana": "あきひろ いだ",
-    "romaji": "akihiro ida",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12517,8 +12317,6 @@
   {
     "id": "pro-hiroki_taniai",
     "name": "谷合 廣紀",
-    "kana": "ひろき たにあい",
-    "romaji": "hiroki taniai",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12598,8 +12396,6 @@
   {
     "id": "pro-kenshi_tokuda",
     "name": "徳田 拳士",
-    "kana": "けんし とくだ",
-    "romaji": "kenshi tokuda",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12679,8 +12475,6 @@
   {
     "id": "pro-kanta_masegi",
     "name": "柵木 幹太",
-    "kana": "かんた ませぎ",
-    "romaji": "kanta masegi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "五段",
@@ -12760,8 +12554,6 @@
   {
     "id": "pro-tomoki_yokoyama",
     "name": "横山 友紀",
-    "kana": "ともき よこやま",
-    "romaji": "tomoki yokoyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -12841,8 +12633,6 @@
   {
     "id": "pro-yuya_saito",
     "name": "齊藤 裕也",
-    "kana": "ゆや さいと",
-    "romaji": "yuya saito",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -12922,8 +12712,6 @@
   {
     "id": "pro-reo_koyama",
     "name": "小山 怜央",
-    "kana": "れお こやま",
-    "romaji": "reo koyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13003,8 +12791,6 @@
   {
     "id": "pro-naoki_koyama",
     "name": "小山 直希",
-    "kana": "なおき こやま",
-    "romaji": "naoki koyama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13084,8 +12870,6 @@
   {
     "id": "pro-saito_morimoto",
     "name": "森本 才跳",
-    "kana": "さいと もりもと",
-    "romaji": "saito morimoto",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13165,8 +12949,6 @@
   {
     "id": "pro-kenta_miyajima",
     "name": "宮嶋 健太",
-    "kana": "けんた みやじま",
-    "romaji": "kenta miyajima",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13246,8 +13028,6 @@
   {
     "id": "pro-taiki_yamakawa",
     "name": "山川 泰熙",
-    "kana": "たいき やまかわ",
-    "romaji": "taiki yamakawa",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13327,8 +13107,6 @@
   {
     "id": "pro-yujirou_takahashi",
     "name": "高橋 佑二郎",
-    "kana": "ゆじrおう たかはし",
-    "romaji": "yujirou takahashi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13408,8 +13186,6 @@
   {
     "id": "pro-ehoto_osogaguchi",
     "name": "獺ヶ口 笑保人",
-    "kana": "えほと おそがぐち",
-    "romaji": "ehoto osogaguchi",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13489,8 +13265,6 @@
   {
     "id": "pro-ryuma_yoshiike",
     "name": "吉池 隆真",
-    "kana": "りゅま よしいけ",
-    "romaji": "ryuma yoshiike",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13570,8 +13344,6 @@
   {
     "id": "pro-yuuki_saito",
     "name": "齊藤 優希",
-    "kana": "yううき さいと",
-    "romaji": "yuuki saito",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13651,8 +13423,6 @@
   {
     "id": "pro-toshiki_sumisaki",
     "name": "炭﨑 俊毅",
-    "kana": "としき すみさき",
-    "romaji": "toshiki sumisaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13732,8 +13502,6 @@
   {
     "id": "pro-rintarou_iwamura",
     "name": "岩村 凛太朗",
-    "kana": "りんたrおう いわむら",
-    "romaji": "rintarou iwamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13813,8 +13581,6 @@
   {
     "id": "pro-hiroto_ikegaki",
     "name": "生垣 寛人",
-    "kana": "ひろと いけがき",
-    "romaji": "hiroto ikegaki",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13894,8 +13660,6 @@
   {
     "id": "pro-shiryu_katayama",
     "name": "片山 史龍",
-    "kana": "しりゅ かたやま",
-    "romaji": "shiryu katayama",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -13975,8 +13739,6 @@
   {
     "id": "pro-kazuki_yamashita",
     "name": "山下 数毅",
-    "kana": "かずき やました",
-    "romaji": "kazuki yamashita",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14056,8 +13818,6 @@
   {
     "id": "pro-ao_kokubo",
     "name": "小窪 碧",
-    "kana": "あお こくぼ",
-    "romaji": "ao kokubo",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14137,8 +13897,6 @@
   {
     "id": "pro-yuto_kawamura",
     "name": "川村 悠人",
-    "kana": "ゆと かわむら",
-    "romaji": "yuto kawamura",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14218,8 +13976,6 @@
   {
     "id": "pro-jodai_furui",
     "name": "古井 丈大",
-    "kana": "じょだい ふるい",
-    "romaji": "jodai furui",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14299,8 +14055,6 @@
   {
     "id": "pro-haruma_watanabe",
     "name": "渡邊 晴磨",
-    "kana": "はるま わたなべ",
-    "romaji": "haruma watanabe",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14380,8 +14134,6 @@
   {
     "id": "pro-shota_kunii",
     "name": "國井 勝太",
-    "kana": "しょた くにい",
-    "romaji": "shota kunii",
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
@@ -14461,8 +14213,6 @@
   {
     "id": "nishiyama-tomoka",
     "name": "西山 朋佳",
-    "kana": "にしやま ともか",
-    "romaji": "Nishiyama Tomoka",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "白玲・女流四冠",
@@ -14480,8 +14230,8 @@
       "女流名人",
       "女流王将"
     ],
-    "totalTitles": 18,
-    "titleHistory": "奨励会三段リーグで次点を獲得、女流転向後も白玲・女王などタイトル多数。棋士編入試験で話題沸騰。",
+    "totalTitles": 24,
+    "titleHistory": "白玲 5期（第1期-2021年度・3期～6期）、 清麗 1期（第8期-2026年度）、 女王 7期（第11期-2018年度～17期）－永世女王、 女流王座 2期（第9期-2019年度～10期）、 女流名人 2期（第49期-2022年度・52期）、 女流王将 7期（第41期-2019年度～42・44～48期） －クイーン王将",
     "careerWins": 212,
     "careerLosses": 75,
     "careerWinRate": 0.7387,
@@ -14498,6 +14248,9 @@
     "avatarBg": "linear-gradient(135deg, #4c0519 0%, #881337 100%)",
     "shortBio": "圧倒的な豪腕「豪快な腕力将棋」で魅了するトップ女流棋士。男性プロ棋戦でも高勝率を叩き出し、白玲・女王・女流王将を保持。",
     "highlights": [
+      "永世女王・クイーン王将獲得",
+      "通算タイトル獲得 24期",
+      "主なタイトル: 白玲5期・清麗1期・女王7期・女流王座2期・女流名人2期・女流王将7期",
       "奨励会三段で14勝4敗の好成績（次点獲得）",
       "白玲戦連覇など通算18期タイトル",
       "マイナビ女子オープン「永世女王」獲得"
@@ -14587,13 +14340,15 @@
       "kifuDatabase": "https://shogidb2.com/search?q=%E8%A5%BF%E5%B1%B1%E6%9C%8B%E4%BD%B3",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E8%A5%BF%E5%B1%B1%E6%9C%8B%E4%BD%B3"
     },
-    "photoUrl": "https://www.shogi.or.jp/images/lady/73.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/lady/73.jpg",
+    "eiseiTitles": [
+      "永世女王",
+      "クイーン王将"
+    ]
   },
   {
     "id": "fukuma-kana",
     "name": "福間 香奈",
-    "kana": "ふくま かな",
-    "romaji": "Fukuma Kana",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四冠",
@@ -14611,8 +14366,8 @@
       "女流王位",
       "倉敷藤花"
     ],
-    "totalTitles": 58,
-    "titleHistory": "「出雲のイナズマ」。女流タイトル獲得通算58期（史上最多記録独走中）。クイーン四冠保持。",
+    "totalTitles": 69,
+    "titleHistory": "白玲 1期（第2期-2022年度）、 清麗 6期（第1期-2019年度・2期・4～7期）－クイーン清麗、 女王 3期（第6期-2013年度・18期・19期）、 女流王座 9期（第3期-2013年度・6～8期・11～15期）－クイーン王座、 女流名人 14期（第36期-2009年度～47・50期・51期）－クイーン名人、 女流王位 12期（第23期-2012年度・26～28期・30～37期） －クイーン王位、 女流王将 8期（第32期-2010年度～34期・37～40・43期） －クイーン王将、 倉敷藤花 16期（第16期-2008年度～20期・23～33期） －クイーン倉敷藤花",
     "careerWins": 482,
     "careerLosses": 175,
     "careerWinRate": 0.7336,
@@ -14629,9 +14384,17 @@
     "avatarBg": "linear-gradient(135deg, #500724 0%, #9d174d 100%)",
     "shortBio": "女流将棋界の絶対女王。旧姓・里見香奈。鋭いさばきと電光石火の寄せ「イナズマ」で女流棋界を牽引し続ける第一人者。",
     "highlights": [
+      "クイーン六冠（清麗・王座・名人・王位・王将・倉敷藤花）",
+      "クイーン清麗",
+      "クイーン王座",
+      "クイーン名人",
+      "クイーン王位",
+      "クイーン王将",
+      "クイーン倉敷藤花",
+      "通算タイトル獲得 69期",
+      "主なタイトル: 白玲1期・清麗6期・女王3期・女流王座9期・女流名人14期・女流王位12期・女流王将8期・倉敷藤花16期",
       "女流タイトル通算58期・歴代最多記録保持",
-      "女性として史上初の棋士編入試験受験",
-      "クイーン名人・クイーン王位・クイーン王将・クイーン倉敷藤花"
+      "女性として史上初の棋士編入試験受験"
     ],
     "yearRecords": [
       {
@@ -14718,13 +14481,19 @@
       "kifuDatabase": "https://shogidb2.com/search?q=%E7%A6%8F%E9%96%93%E9%A6%99%E5%A5%88",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E7%A6%8F%E9%96%93%E9%A6%99%E5%A5%88"
     },
-    "photoUrl": "https://www.shogi.or.jp/images/lady/33.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/lady/33.jpg",
+    "eiseiTitles": [
+      "クイーン清麗",
+      "クイーン王座",
+      "クイーン名人",
+      "クイーン王位",
+      "クイーン王将",
+      "クイーン倉敷藤花"
+    ]
   },
   {
     "id": "shimizu-ichiyo",
     "name": "清水 市代",
-    "kana": "しみず いちよ",
-    "romaji": "Shimizu Ichiyo",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流七段",
@@ -14738,7 +14507,7 @@
     "junisenClass": "C級2位",
     "heldTitles": [],
     "totalTitles": 43,
-    "titleHistory": "クイーン四冠（名人・王位・王将・倉敷藤花）保持。通算タイトル獲得43期（歴代2位）。日本将棋連盟常務理事。",
+    "titleHistory": "女流名人 10期（第14期-1987年度・16期・21～25期・30～31期・35期） －クイーン名人、 女流王将 9期（第14期-1991年度～15期・18期・20期・22～23期・29～31期） －クイーン王将、 女流王位 14期（第4期-1993年度～7期・9～17期・20期） －クイーン王位、 倉敷藤花 10期（第2期-1994年度～8期・12～13期・15期） －クイーン倉敷藤花",
     "careerWins": 729,
     "careerLosses": 372,
     "careerWinRate": 0.6621,
@@ -14755,7 +14524,13 @@
     "avatarBg": "linear-gradient(135deg, #4c0519 0%, #be123c 100%)",
     "shortBio": "女流将棋界の偉大なるレジェンド。クイーン四冠を保持し、通算43期のタイトル獲得。日本将棋連盟の要職を務めつつ第一線で活躍中。",
     "highlights": [
-      "クイーン名人・クイーン王位・クイーン王将・クイーン倉敷藤花",
+      "クイーン四冠（名人・王位・王将・倉敷藤花）",
+      "クイーン名人",
+      "クイーン王将",
+      "クイーン王位",
+      "クイーン倉敷藤花",
+      "通算タイトル獲得 43期",
+      "主なタイトル: 女流名人10期・女流王将9期・女流王位14期・倉敷藤花10期",
       "女流タイトル獲得通算43期（歴代2位）",
       "女性初の日本将棋連盟常務理事に就任"
     ],
@@ -14837,13 +14612,17 @@
       "kifuDatabase": "https://shogidb2.com/search?q=%E6%B8%85%E6%B0%B4%E5%B8%82%E4%BB%A3",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E6%B8%85%E6%B0%B4%E5%B8%82%E4%BB%A3"
     },
-    "photoUrl": "https://www.shogi.or.jp/images/lady/7.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/lady/7.jpg",
+    "eiseiTitles": [
+      "クイーン名人",
+      "クイーン王将",
+      "クイーン王位",
+      "クイーン倉敷藤花"
+    ]
   },
   {
     "id": "lady-rieko_yauchi",
     "name": "矢内 理絵子",
-    "kana": "りえこ やうち",
-    "romaji": "rieko yauchi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -14857,7 +14636,7 @@
     "junisenClass": "D級9位",
     "heldTitles": [],
     "totalTitles": 6,
-    "titleHistory": "",
+    "titleHistory": "女王 2期（第1期-2008年度～2期）、 女流名人 3期（第32期-2005年度～34期）、 女流王位 1期（第8期-1997年度）",
     "careerWins": 434,
     "careerLosses": 328,
     "careerWinRate": 0.5696,
@@ -14870,6 +14649,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
     "shortBio": "日本将棋連盟所属の現役女流棋士（女流五段）。女流番号: 16。",
     "highlights": [
+      "通算タイトル獲得 6期",
+      "主なタイトル: 女王2期・女流名人3期・女流王位1期",
       "日本将棋連盟現役女流棋士 女流五段"
     ],
     "yearRecords": [
@@ -14918,13 +14699,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/rieko_yauchi",
       "kifuDatabase": "https://shogidb2.com/search?q=%E7%9F%A2%E5%86%85%20%E7%90%86%E7%B5%B5%E5%AD%90",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E7%9F%A2%E5%86%85%E7%90%86%E7%B5%B5%E5%AD%90"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "lady-chikako_nagasawa",
     "name": "長沢 千和子",
-    "kana": "ちかこ ながさわ",
-    "romaji": "chikako nagasawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -15004,8 +14784,6 @@
   {
     "id": "lady-hatsumi_ueda",
     "name": "上田 初美",
-    "kana": "はつみ うえだ",
-    "romaji": "hatsumi ueda",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -15018,8 +14796,8 @@
     "ryuoClass": "-",
     "junisenClass": "A級5位",
     "heldTitles": [],
-    "totalTitles": 0,
-    "titleHistory": "",
+    "totalTitles": 2,
+    "titleHistory": "女王 2期（第4期-2011年度～5期）",
     "careerWins": 435,
     "careerLosses": 262,
     "careerWinRate": 0.6241,
@@ -15032,6 +14810,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
     "shortBio": "日本将棋連盟所属の現役女流棋士（女流五段）。女流番号: 26。",
     "highlights": [
+      "通算タイトル獲得 2期",
+      "主なタイトル: 女王2期",
       "日本将棋連盟現役女流棋士 女流五段"
     ],
     "yearRecords": [
@@ -15080,13 +14860,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/hatsumi_ueda",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%8A%E7%94%B0%20%E5%88%9D%E7%BE%8E",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%8A%E7%94%B0%E5%88%9D%E7%BE%8E"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "lady-ryoko_chiba",
     "name": "千葉 涼子",
-    "kana": "りょこ ちば",
-    "romaji": "ryoko chiba",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -15099,8 +14878,8 @@
     "ryuoClass": "-",
     "junisenClass": "B級7位",
     "heldTitles": [],
-    "totalTitles": 0,
-    "titleHistory": "",
+    "totalTitles": 2,
+    "titleHistory": "女流王将 2期（第27期-2005年度～28期）",
     "careerWins": 448,
     "careerLosses": 327,
     "careerWinRate": 0.5781,
@@ -15113,6 +14892,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
     "shortBio": "日本将棋連盟所属の現役女流棋士（女流五段）。女流番号: 17。",
     "highlights": [
+      "通算タイトル獲得 2期",
+      "主なタイトル: 女流王将2期",
       "日本将棋連盟現役女流棋士 女流五段"
     ],
     "yearRecords": [
@@ -15161,13 +14942,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/ryoko_chiba",
       "kifuDatabase": "https://shogidb2.com/search?q=%E5%8D%83%E8%91%89%20%E6%B6%BC%E5%AD%90",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%8D%83%E8%91%89%E6%B6%BC%E5%AD%90"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "lady-kumi_yamada",
     "name": "山田 久美",
-    "kana": "くみ やまだ",
-    "romaji": "kumi yamada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15247,8 +15027,6 @@
   {
     "id": "lady-sayuri_takebe",
     "name": "竹部 さゆり",
-    "kana": "さゆり たけべ",
-    "romaji": "sayuri takebe",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15328,8 +15106,6 @@
   {
     "id": "lady-manao_kagawa",
     "name": "香川 愛生",
-    "kana": "まなお かがわ",
-    "romaji": "manao kagawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15343,7 +15119,7 @@
     "junisenClass": "A級10位",
     "heldTitles": [],
     "totalTitles": 2,
-    "titleHistory": "",
+    "titleHistory": "女流王将 2期（第35期-2013年度～36期）",
     "careerWins": 302,
     "careerLosses": 200,
     "careerWinRate": 0.6016,
@@ -15356,6 +15132,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
     "shortBio": "日本将棋連盟所属の現役女流棋士（女流四段）。女流番号: 40。",
     "highlights": [
+      "通算タイトル獲得 2期",
+      "主なタイトル: 女流王将2期",
       "日本将棋連盟現役女流棋士 女流四段"
     ],
     "yearRecords": [
@@ -15404,13 +15182,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/manao_kagawa",
       "kifuDatabase": "https://shogidb2.com/search?q=%E9%A6%99%E5%B7%9D%20%E6%84%9B%E7%94%9F",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E9%A6%99%E5%B7%9D%E6%84%9B%E7%94%9F"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "lady-sae_itou",
     "name": "伊藤 沙恵",
-    "kana": "さえ いtおう",
-    "romaji": "sae itou",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15424,7 +15201,7 @@
     "junisenClass": "A級2位",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "",
+    "titleHistory": "女流名人 1期（第48期-2021年度）",
     "careerWins": 343,
     "careerLosses": 147,
     "careerWinRate": 0.7,
@@ -15437,6 +15214,8 @@
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
     "shortBio": "日本将棋連盟所属の現役女流棋士（女流四段）。女流番号: 52。",
     "highlights": [
+      "通算タイトル獲得 1期",
+      "主なタイトル: 女流名人1期",
       "日本将棋連盟現役女流棋士 女流四段"
     ],
     "yearRecords": [
@@ -15485,13 +15264,12 @@
       "officialProfile": "https://www.shogi.or.jp/player/sae_itou",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%BC%8A%E8%97%A4%20%E6%B2%99%E6%81%B5",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%BC%8A%E8%97%A4%E6%B2%99%E6%81%B5"
-    }
+    },
+    "eiseiTitles": []
   },
   {
     "id": "lady-marika_nakamura",
     "name": "中村 真梨花",
-    "kana": "まりか なかむら",
-    "romaji": "marika nakamura",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15571,8 +15349,6 @@
   {
     "id": "kato-momoko",
     "name": "加藤 桃子",
-    "kana": "かとう ももこ",
-    "romaji": "Kato Momoko",
     "type": "women",
     "rank": "女流四段",
     "playerNumber": 67,
@@ -15584,7 +15360,7 @@
     "junisenClass": "A級4位",
     "heldTitles": [],
     "totalTitles": 9,
-    "titleHistory": "元女王（4期）、元女流王座（4期）、元清麗。重厚な力強い居飛車本格派。",
+    "titleHistory": "清麗 1期（第3期-2021年度）、 女王 4期（第7期-2014年度～10期）、 女流王座 4期（第1期-2011年度～2期・4～5期）",
     "careerWins": 227,
     "careerLosses": 111,
     "careerWinRate": 0.6716,
@@ -15601,6 +15377,8 @@
     "avatarBg": "linear-gradient(135deg, #4c0519 0%, #be123c 100%)",
     "shortBio": "奨励会在籍時からタイトル戦で大活躍した実力派女流棋士。剛直で粘り強い本格居飛車の将棋でファンを魅了。",
     "highlights": [
+      "通算タイトル獲得 9期",
+      "主なタイトル: 清麗1期・女王4期・女流王座4期",
       "現役奨励会員として女王・女流王座を獲得",
       "タイトル通算9期獲得",
       "常にタイトル戦リーグでトップ争い"
@@ -15691,13 +15469,12 @@
       "wikipedia": "https://ja.wikipedia.org/wiki/%E5%8A%A0%E8%97%A4%E6%A1%83%E5%AD%90"
     },
     "affiliation": "日本将棋連盟",
-    "photoUrl": "https://www.shogi.or.jp/images/lady/67.jpg"
+    "photoUrl": "https://www.shogi.or.jp/images/lady/67.jpg",
+    "eiseiTitles": []
   },
   {
     "id": "lady-sayuri_honda",
     "name": "本田 小百合",
-    "kana": "さゆり ほんだ",
-    "romaji": "sayuri honda",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15777,8 +15554,6 @@
   {
     "id": "lady-chisa_hayamizu",
     "name": "早水 千紗",
-    "kana": "ちさ はやみず",
-    "romaji": "chisa hayamizu",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -15858,8 +15633,6 @@
   {
     "id": "lady-shinobu_iwane",
     "name": "岩根 忍",
-    "kana": "しのぶ いわね",
-    "romaji": "shinobu iwane",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -15939,8 +15712,6 @@
   {
     "id": "lady-yuki_muroya",
     "name": "室谷 由紀",
-    "kana": "ゆき むろや",
-    "romaji": "yuki muroya",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16020,8 +15791,6 @@
   {
     "id": "suzuki-kanna",
     "name": "鈴木 環那",
-    "kana": "すずき かんな",
-    "romaji": "Suzuki Kanna",
     "type": "women",
     "rank": "女流三段",
     "playerNumber": 29,
@@ -16138,8 +15907,6 @@
   {
     "id": "lady-kotomi_yamane",
     "name": "山根 ことみ",
-    "kana": "ことみ やまね",
-    "romaji": "kotomi yamane",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16219,8 +15986,6 @@
   {
     "id": "lady-eriko_yamaguchi",
     "name": "山口 恵梨子",
-    "kana": "えりこ やまぐち",
-    "romaji": "eriko yamaguchi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16300,8 +16065,6 @@
   {
     "id": "lady-io_murota",
     "name": "室田 伊緒",
-    "kana": "いお むろた",
-    "romaji": "io murota",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16381,8 +16144,6 @@
   {
     "id": "lady-chiho_murata",
     "name": "村田 智穂",
-    "kana": "ちほ むらた",
-    "romaji": "chiho murata",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16462,8 +16223,6 @@
   {
     "id": "lady-nanami_naka",
     "name": "中 七海",
-    "kana": "ななみ なか",
-    "romaji": "nanami naka",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16543,8 +16302,6 @@
   {
     "id": "lady-yuuki_hasegawa",
     "name": "長谷川 優貴",
-    "kana": "yううき はせがわ",
-    "romaji": "yuuki hasegawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16624,8 +16381,6 @@
   {
     "id": "lady-sumie_ishitaka",
     "name": "石高 澄恵",
-    "kana": "すみえ いしたか",
-    "romaji": "sumie ishitaka",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16705,8 +16460,6 @@
   {
     "id": "lady-sakura_ishimoto",
     "name": "石本 さくら",
-    "kana": "さくら いしもと",
-    "romaji": "sakura ishimoto",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16786,8 +16539,6 @@
   {
     "id": "lady-akemi_yamada",
     "name": "山田 朱未",
-    "kana": "あけみ やまだ",
-    "romaji": "akemi yamada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -16867,8 +16618,6 @@
   {
     "id": "lady-aya_fujita",
     "name": "藤田 綾",
-    "kana": "あや ふじた",
-    "romaji": "aya fujita",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -16948,8 +16697,6 @@
   {
     "id": "lady-chihiro_idoh",
     "name": "井道 千尋",
-    "kana": "ちひろ いdおう",
-    "romaji": "chihiro idoh",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17029,8 +16776,6 @@
   {
     "id": "lady-shino_miyaso",
     "name": "宮宗 紫野",
-    "kana": "しの みやそ",
-    "romaji": "shino miyaso",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17110,8 +16855,6 @@
   {
     "id": "lady-minami_sadamasu",
     "name": "貞升 南",
-    "kana": "みなみ さだます",
-    "romaji": "minami sadamasu",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17191,8 +16934,6 @@
   {
     "id": "lady-kei_kato",
     "name": "加藤 圭",
-    "kana": "けい かと",
-    "romaji": "kei kato",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17272,8 +17013,6 @@
   {
     "id": "lady-manaka_inagawa",
     "name": "伊奈川 愛菓",
-    "kana": "まなか いながわ",
-    "romaji": "manaka inagawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17353,8 +17092,6 @@
   {
     "id": "lady-saya_nakazawa",
     "name": "中澤 沙耶",
-    "kana": "さや なかざわ",
-    "romaji": "saya nakazawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17434,8 +17171,6 @@
   {
     "id": "lady-keika_kitamura",
     "name": "北村 桂香",
-    "kana": "けいか きたむら",
-    "romaji": "keika kitamura",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17515,8 +17250,6 @@
   {
     "id": "lady-mio_watanabe",
     "name": "渡辺 弥生",
-    "kana": "みお わたなべ",
-    "romaji": "mio watanabe",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17596,8 +17329,6 @@
   {
     "id": "lady-erika_tsukada",
     "name": "塚田 恵梨花",
-    "kana": "えりか つかだ",
-    "romaji": "erika tsukada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17677,8 +17408,6 @@
   {
     "id": "lady-aki_wada",
     "name": "和田 あき",
-    "kana": "あき わだ",
-    "romaji": "aki wada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17758,8 +17487,6 @@
   {
     "id": "lady-ayaka_ooshima",
     "name": "大島 綾華",
-    "kana": "あやか おうしま",
-    "romaji": "ayaka ooshima",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17839,8 +17566,6 @@
   {
     "id": "lady-yuria_kato",
     "name": "加藤 結李愛",
-    "kana": "ゆりあ かと",
-    "romaji": "yuria kato",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -17920,8 +17645,6 @@
   {
     "id": "nohara-milan",
     "name": "野原 未蘭",
-    "kana": "のはら みらん",
-    "romaji": "Nohara Milan",
     "type": "women",
     "rank": "女流二段",
     "playerNumber": 70,
@@ -18038,8 +17761,6 @@
   {
     "id": "lady-nana_yorimoto",
     "name": "頼本 奈菜",
-    "kana": "なな よりもと",
-    "romaji": "nana yorimoto",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -18119,8 +17840,6 @@
   {
     "id": "lady-rei_takedomi",
     "name": "武富 礼衣",
-    "kana": "れい たけどみ",
-    "romaji": "rei takedomi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -18200,8 +17919,6 @@
   {
     "id": "lady-saki_kawamata",
     "name": "川又 咲紀",
-    "kana": "さき かわまた",
-    "romaji": "saki kawamata",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -18281,8 +17998,6 @@
   {
     "id": "lady-aya_uchiyama",
     "name": "内山 あや",
-    "kana": "あや うちやま",
-    "romaji": "aya uchiyama",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -18362,8 +18077,6 @@
   {
     "id": "lady-saki_miyazawa",
     "name": "宮澤 紗希",
-    "kana": "さき みやざわ",
-    "romaji": "saki miyazawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流二段",
@@ -18443,8 +18156,6 @@
   {
     "id": "lady-haruka_aikawa",
     "name": "相川 春香",
-    "kana": "はるか あいかわ",
-    "romaji": "haruka aikawa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18524,8 +18235,6 @@
   {
     "id": "lady-ai_iino",
     "name": "飯野 愛",
-    "kana": "あい いいの",
-    "romaji": "ai iino",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18605,8 +18314,6 @@
   {
     "id": "lady-miyu_mizumachi",
     "name": "水町 みゆ",
-    "kana": "みゆ みずまち",
-    "romaji": "miyu mizumachi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18686,8 +18393,6 @@
   {
     "id": "lady-nana_fujii",
     "name": "藤井 奈々",
-    "kana": "なな ふじい",
-    "romaji": "nana fujii",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18767,8 +18472,6 @@
   {
     "id": "lady-nanako_hagita",
     "name": "萩田 菜々子",
-    "kana": "ななこ はぎた",
-    "romaji": "nanako hagita",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18848,8 +18551,6 @@
   {
     "id": "lady-sakiko_odaka",
     "name": "小高 佐季子",
-    "kana": "さきこ おだか",
-    "romaji": "sakiko odaka",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -18929,8 +18630,6 @@
   {
     "id": "lady-marin_matsushita",
     "name": "松下 舞琳",
-    "kana": "まりん まつした",
-    "romaji": "marin matsushita",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19010,8 +18709,6 @@
   {
     "id": "lady-aya_imai",
     "name": "今井 絢",
-    "kana": "あや いまい",
-    "romaji": "aya imai",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19091,8 +18788,6 @@
   {
     "id": "lady-aiko_takahama",
     "name": "高浜 愛子",
-    "kana": "あいこ たかはま",
-    "romaji": "aiko takahama",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19172,8 +18867,6 @@
   {
     "id": "lady-minori_sasaki",
     "name": "佐々木 海法",
-    "kana": "みのり ささき",
-    "romaji": "minori sasaki",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19253,8 +18946,6 @@
   {
     "id": "lady-juri_kimura",
     "name": "木村 朱里",
-    "kana": "じゅり きむら",
-    "romaji": "juri kimura",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19334,8 +19025,6 @@
   {
     "id": "lady-kirari_yamaguchi",
     "name": "山口 稀良莉",
-    "kana": "きらり やまぐち",
-    "romaji": "kirari yamaguchi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19415,8 +19104,6 @@
   {
     "id": "lady-mikoto_umezu",
     "name": "梅津 美琴",
-    "kana": "みこと うめず",
-    "romaji": "mikoto umezu",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19496,8 +19183,6 @@
   {
     "id": "lady-natsuko_iwasaki",
     "name": "岩崎 夏子",
-    "kana": "なつこ いわさき",
-    "romaji": "natsuko iwasaki",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19577,8 +19262,6 @@
   {
     "id": "lady-hana_wada",
     "name": "和田 はな",
-    "kana": "はな わだ",
-    "romaji": "hana wada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19658,8 +19341,6 @@
   {
     "id": "lady-mihoko_iwasa",
     "name": "岩佐 美帆子",
-    "kana": "みほこ いわさ",
-    "romaji": "mihoko iwasa",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -19739,8 +19420,6 @@
   {
     "id": "lady-chihiro_sakihara",
     "name": "崎原 知宙",
-    "kana": "ちひろ さきはら",
-    "romaji": "chihiro sakihara",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -19820,8 +19499,6 @@
   {
     "id": "lady-nikori_yamaguchi",
     "name": "山口 仁子梨",
-    "kana": "にこり やまぐち",
-    "romaji": "nikori yamaguchi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -19901,8 +19578,6 @@
   {
     "id": "lady-shouko_kubo",
     "name": "久保 翔子",
-    "kana": "shおうこ くぼ",
-    "romaji": "shouko kubo",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -19982,8 +19657,6 @@
   {
     "id": "lady-riko_morimoto",
     "name": "森本 理子",
-    "kana": "りこ もりもと",
-    "romaji": "riko morimoto",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -20063,8 +19736,6 @@
   {
     "id": "lady-hiyori_yagi",
     "name": "八木 日和",
-    "kana": "ひより やぎ",
-    "romaji": "hiyori yagi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -20144,8 +19815,6 @@
   {
     "id": "lady-yuzuki_takeuchi",
     "name": "竹内 優月",
-    "kana": "ゆずき たけうち",
-    "romaji": "yuzuki takeuchi",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流1級",
@@ -20225,8 +19894,6 @@
   {
     "id": "lady-mirei_kamada",
     "name": "鎌田 美礼",
-    "kana": "みれい かまだ",
-    "romaji": "mirei kamada",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流2級",
@@ -20306,8 +19973,6 @@
   {
     "id": "lady-kanade_sunahara",
     "name": "砂原 奏",
-    "kana": "かなで すなはら",
-    "romaji": "kanade sunahara",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流2級",
@@ -20387,8 +20052,6 @@
   {
     "id": "lady-mao_ito",
     "name": "伊藤 真央",
-    "kana": "まお いと",
-    "romaji": "mao ito",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流2級",
@@ -20468,8 +20131,6 @@
   {
     "id": "lady-ayumi_takenaka",
     "name": "竹中 歩美",
-    "kana": "あゆみ たけなか",
-    "romaji": "ayumi takenaka",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流2級",
@@ -20549,8 +20210,6 @@
   {
     "id": "lady-hanae_ono",
     "name": "小野 花依",
-    "kana": "はなえ おの",
-    "romaji": "hanae ono",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流2級",
@@ -20630,8 +20289,6 @@
   {
     "id": "watanabe-mana",
     "name": "渡部 愛",
-    "kana": "わたなべ まな",
-    "romaji": "Watanabe Mana",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流四段",
@@ -20645,7 +20302,7 @@
     "junisenClass": "A級8位",
     "heldTitles": [],
     "totalTitles": 1,
-    "titleHistory": "2018年第29期女流王位獲得。日本女子プロ将棋協会（LPSA）公認プロ第1号として史上初のタイトルを獲得したLPSAのエース。",
+    "titleHistory": "2018年 第29期女流王位獲得（1期）。LPSA公認プロ第1号タイトルホルダー。",
     "careerWins": 240,
     "careerLosses": 180,
     "careerWinRate": 0.5714,
@@ -20662,10 +20319,9 @@
     "avatarBg": "linear-gradient(135deg, #082f49 0%, #0369a1 100%)",
     "shortBio": "LPSA所属のエース女流棋士（女流四段・LPSA番号19）。「まなちゃん」の愛称で親しまれ、里見香奈（現・福間）女流王位を破りタイトルを獲得した実績を持つ剛腕居飛車党。",
     "highlights": [
-      "2018年第29期女流王位戦にてタイトル奪取",
-      "LPSA公認女流棋士第1号として歴史的偉業達成",
-      "白玲戦A級在籍などトップクラスで活躍中",
-      "座右の銘: 磨斧作針"
+      "通算タイトル獲得 1期",
+      "主なタイトル: 女流王位1期",
+      "LPSA所属棋士として史上初のタイトル獲得"
     ],
     "yearRecords": [
       {
@@ -20759,8 +20415,6 @@
   {
     "id": "nakakura-hiromi",
     "name": "中倉 宏美",
-    "kana": "なかくら ひろみ",
-    "romaji": "Nakakura Hiromi",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -20868,8 +20522,6 @@
   {
     "id": "shimai-saori",
     "name": "島井 咲緒里",
-    "kana": "しまい さおり",
-    "romaji": "Shimai Saori",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -20980,8 +20632,6 @@
   {
     "id": "uekawa-kaori",
     "name": "上川 香織",
-    "kana": "うえかわ かおり",
-    "romaji": "Uekawa Kaori",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -21071,8 +20721,6 @@
   {
     "id": "isotani-maho",
     "name": "礒谷 真帆",
-    "kana": "いそたに まほ",
-    "romaji": "Isotani Maho",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -21179,8 +20827,6 @@
   {
     "id": "isoya-yui",
     "name": "磯谷 祐維",
-    "kana": "いそや ゆい",
-    "romaji": "Isoya Yui",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -21286,8 +20932,6 @@
   {
     "id": "hori-ayano",
     "name": "堀 彩乃",
-    "kana": "ほり あやの",
-    "romaji": "Hori Ayano",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流初段",
@@ -21377,8 +21021,6 @@
   {
     "id": "tanaka-saki",
     "name": "田中 沙紀",
-    "kana": "たなか さき",
-    "romaji": "Tanaka Saki",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流1級",
@@ -21468,8 +21110,6 @@
   {
     "id": "nakai-hiroe",
     "name": "中井 広恵",
-    "kana": "なかい ひろえ",
-    "romaji": "Nakai Hiroe",
     "type": "women",
     "affiliation": "無所属",
     "rank": "女流六段",
@@ -21481,7 +21121,7 @@
     "junisenClass": "B級6位",
     "heldTitles": [],
     "totalTitles": 19,
-    "titleHistory": "クイーン名人。女流棋士として史上初の女流六段昇段。タイトル獲得通算19期。女流公式戦通算782勝（歴代2位）のレジェンド。元LPSA代表理事、現在は無所属（フリー）として第一線で活躍。",
+    "titleHistory": "女流名人9期、女流王位3期、女流王将4期、倉敷藤花3期（通算19期）。クイーン名人獲得。",
     "careerWins": 782,
     "careerLosses": 448,
     "careerWinRate": 0.6358,
@@ -21498,10 +21138,10 @@
     "avatarBg": "linear-gradient(135deg, #451a03 0%, #b45309 100%)",
     "shortBio": "女流将棋界の偉大なるパイオニア。卓越した大局観と切れ味鋭い攻めで、クイーン名人獲得など数多くの金字塔を打ち立て、無所属となった現在も若手トップを脅かす現役屈指の実力者。",
     "highlights": [
-      "女流タイトル通算19期獲得（歴代3位）",
-      "女性として史上初の女流六段へ昇段",
-      "女流公式戦通算782勝（歴代2位・1230対局）",
-      "女流名人位通算9期・クイーン名人称号保持"
+      "クイーン名人有資格者",
+      "通算タイトル獲得 19期",
+      "主なタイトル: 女流名人9期・女流王位3期・女流王将4期・倉敷藤花3期",
+      "女流公式戦通算780勝以上のレジェンド"
     ],
     "yearRecords": [
       {
@@ -21587,6 +21227,9 @@
       "officialProfile": "https://www.shogi.or.jp/player/hiroe_nakai",
       "kifuDatabase": "https://shogidb2.com/search?q=%E4%B8%AD%E4%BA%95%E5%BA%83%E6%81%B5",
       "wikipedia": "https://ja.wikipedia.org/wiki/%E4%B8%AD%E4%BA%95%E5%BA%83%E6%81%B5"
-    }
+    },
+    "eiseiTitles": [
+      "クイーン名人"
+    ]
   }
 ]

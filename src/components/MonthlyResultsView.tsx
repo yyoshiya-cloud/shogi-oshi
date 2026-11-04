@@ -29,10 +29,19 @@ interface MonthlyResultsViewProps {
   onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
 }
 
-const FISCAL_YEARS = [
-  { year: 2026, label: '2026年度 (2026年4月〜2027年3月)', short: '2026年度' },
-  { year: 2025, label: '2025年度 (2025年4月〜2026年3月)', short: '2025年度' },
-];
+export function getFiscalYearsList(): { year: number; label: string; short: string }[] {
+  const now = new Date();
+  const currentFY = (now.getMonth() + 1) >= 4 ? now.getFullYear() : now.getFullYear() - 1;
+  const yearSet = new Set<number>([currentFY, 2026, 2025]);
+  const years = Array.from(yearSet).sort((a, b) => b - a);
+  return years.map((y) => ({
+    year: y,
+    label: `${y}年度 (${y}年4月〜${y + 1}年3月)`,
+    short: `${y}年度`,
+  }));
+}
+
+const FISCAL_YEARS = getFiscalYearsList();
 
 export function getFiscalYearMonths(year: number) {
   const months: { key: string; label: string; short: string; isNextYear?: boolean }[] = [];
@@ -82,12 +91,12 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
   const [hideEmptyMonths, setHideEmptyMonths] = useState<boolean>(true); // デフォルトで対局のない月を除外
 
-  // 対局データが1局以上ある月のみを抽出（hideEmptyMonthsがtrueの場合）
+  // 対局データが1局以上ある月のみを抽出（hideEmptyMonthsがtrueの場合、選択中の月は除外しない）
   const availableFiscalYearMonths = useMemo(() => {
     if (!hideEmptyMonths) return activeFiscalYearMonths;
-    const withMatches = activeFiscalYearMonths.filter((m) => (monthlyData[m.key]?.length || 0) > 0);
+    const withMatches = activeFiscalYearMonths.filter((m) => (monthlyData[m.key]?.length || 0) > 0 || m.key === selectedMonth);
     return withMatches.length > 0 ? withMatches : activeFiscalYearMonths;
-  }, [activeFiscalYearMonths, hideEmptyMonths, monthlyData]);
+  }, [activeFiscalYearMonths, hideEmptyMonths, monthlyData, selectedMonth]);
 
   const displayFiscalYearMonths = useMemo(() => {
     return monthSortDir === 'desc' ? [...availableFiscalYearMonths].reverse() : availableFiscalYearMonths;
@@ -269,31 +278,46 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
   }, []);
 
-  // Manual refresh for current selected month from server/official site
+  // 最新取得: システム日付（new Date()）から年・月を抽出し、最新の公式対局結果を取得して同期
   const handleRefreshMonth = async () => {
     setIsRefreshing(true);
     setRefreshMessage(null);
+
+    // システム日付から年・月を抽出
+    const now = new Date();
+    const systemYear = now.getFullYear();
+    const systemMonth = now.getMonth() + 1; // 1〜12
+    const targetMonthKey = `${systemYear}${String(systemMonth).padStart(2, '0')}`;
+    const targetFiscalYear = systemMonth >= 4 ? systemYear : systemYear - 1;
+
+    // 選択年月および年度をシステム日付へ同期
+    setSelectedFiscalYear(targetFiscalYear);
+    setSelectedMonth(targetMonthKey);
+    setSelectedDate(null);
+
     try {
-      const res = await fetch(`/api/matches/results?month=${selectedMonth}&force=true`);
+      const res = await fetch(`/api/matches/results?month=${targetMonthKey}&force=true`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success && json.results) {
         const updated = {
           ...monthlyData,
-          [selectedMonth]: json.results,
+          [targetMonthKey]: json.results,
         };
         setMonthlyData(updated);
         saveStoredFiscalResults(updated);
         updateMatchStatsData(updated);
         clearPlayerMatchCache();
         onUpdateResults?.(updated);
-        setRefreshMessage(`最新の対局結果（${json.results.length}局）を更新し、棋士プロフィール成績へ同期しました`);
+        setRefreshMessage(
+          `システム日付（${systemYear}年${systemMonth}月）の最新対局結果（${json.results.length}局）を取得し、表示を更新しました`
+        );
       } else {
-        setRefreshMessage('現在のデータを最新として維持しています');
+        setRefreshMessage(`システム日付（${systemYear}年${systemMonth}月）の対局結果を確認しました`);
       }
     } catch (err: any) {
       console.warn('Refresh error:', err);
-      setRefreshMessage('通信エラーのため内蔵キャッシュを表示しています');
+      setRefreshMessage('通信エラーのため現在のデータを表示しています');
     } finally {
       setIsRefreshing(false);
       setTimeout(() => setRefreshMessage(null), 4000);
@@ -427,8 +451,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       const tempPlayer: Player = {
         id: `player-${clean.replace(/\s+/g, '')}`,
         name: clean,
-        kana: '',
-        romaji: clean,
         type: isWomen ? 'women' : 'pro',
         affiliation: playerName.includes('※') ? 'LPSA' : '日本将棋連盟',
         rank: isWomen ? '女流棋士' : '現役棋士',
@@ -544,7 +566,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               onClick={handleRefreshMonth}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1.5 text-xs text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1.5 rounded-lg border border-zinc-700 transition disabled:opacity-50"
-              title="この月の最新対局結果を再取得"
+              title="システム日付（現在年月）から最新の対局結果を取得"
             >
               <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-amber-400' : ''} />
               {isRefreshing ? '更新中...' : '最新取得'}

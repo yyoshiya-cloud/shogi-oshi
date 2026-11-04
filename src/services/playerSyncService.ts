@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { Player, PlayerType, PlayerAffiliation } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
-import { getPlayerTotalTitles } from '../utils/titleUtils';
+import { getPlayerTotalTitles, getPlayerEiseiTitles } from '../utils/titleUtils';
 import { formatPlayerName, formatBirthDateWithAge } from '../utils/playerUtils';
 
 export interface ScrapeResult {
@@ -31,9 +31,8 @@ export interface PlayerProfileDetail {
   currentYearStreak?: number;
   totalTitles?: number;
   titleHistory?: string;
+  eiseiTitles?: string[];
   highlights?: string[];
-  romaji?: string;
-  kana?: string;
   bloodType?: string;
   motto?: string;
   favPiece?: string;
@@ -541,6 +540,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 existing.totalTitles > 0
                   ? existing.totalTitles
                   : getPlayerTotalTitles({ name: cleanName, id }),
+              eiseiTitles: existing.eiseiTitles && existing.eiseiTitles.length > 0 ? existing.eiseiTitles : getPlayerEiseiTitles({ name: cleanName, id }),
+              titleHistory: existing.titleHistory || '',
+              highlights: existing.highlights && existing.highlights.length > 0 ? existing.highlights : [],
               careerWins: career ? career.wins : existing.careerWins,
               careerLosses: career ? career.losses : existing.careerLosses,
               careerWinRate: career ? career.winRate : existing.careerWinRate,
@@ -559,8 +561,6 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             const newPlayer: Player = {
               id,
               name: cleanName,
-              kana: '',
-              romaji: slug.replace(/_/g, ' '),
               type: 'pro',
               affiliation: '日本将棋連盟',
               rank: finalRank,
@@ -718,6 +718,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
                 existing.totalTitles > 0
                   ? existing.totalTitles
                   : getPlayerTotalTitles({ name: cleanName, id }),
+              eiseiTitles: existing.eiseiTitles && existing.eiseiTitles.length > 0 ? existing.eiseiTitles : getPlayerEiseiTitles({ name: cleanName, id }),
+              titleHistory: existing.titleHistory || '',
+              highlights: existing.highlights && existing.highlights.length > 0 ? existing.highlights : [],
               careerWins: career ? career.wins : existing.careerWins,
               careerLosses: career ? career.losses : existing.careerLosses,
               careerWinRate: career ? career.winRate : existing.careerWinRate,
@@ -736,8 +739,6 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             const newPlayer: Player = {
               id,
               name: cleanName,
-              kana: '',
-              romaji: slug.replace(/_/g, ' '),
               type: 'women',
               affiliation: '日本将棋連盟',
               rank: finalRank,
@@ -962,8 +963,6 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
           const newPlayer: Player = {
             id,
             name: cleanName,
-            kana,
-            romaji: '',
             type: 'women',
             affiliation: 'LPSA',
             rank: finalRank,
@@ -1152,7 +1151,6 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
 
           matched = {
             photoUrl,
-            kana: kana || undefined,
             birthDate: birthDate || undefined,
             birthPlace: birthPlace || undefined,
             bloodType: bloodType || undefined,
@@ -1249,28 +1247,53 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         currentStreak = parseInt(streakMatch[1], 10);
       }
 
-      // Past career titles won (獲得タイトル)
+      // Past career titles won (獲得タイトル) & 永世資格 (Eisei Titles)
       const titleKeys = [
-        '竜王', '名人', '王位', '王座', '棋王', '王将', '棋聖', '叡王', '十段',
+        '竜王', '名人', '叡王', '王位', '王座', '棋王', '王将', '棋聖', '十段',
         '白玲', '清麗', '女王', '女流王座', '女流名人', '女流王位', '女流王将', '倉敷藤花'
       ];
       let totalTitles = 0;
-      const titleHistoryItems: string[] = [];
-      const highlights: string[] = [];
+      const titleRows: { title: string; count: number; detail: string }[] = [];
+      const eiseiTitlesSet = new Set<string>();
 
-      for (const k of titleKeys) {
-        if (info[k] && info[k].includes('期')) {
-          const detail = info[k].split('（')[0].trim();
-          const countMatch = detail.match(/(\d+)期/);
-          if (countMatch) {
-            totalTitles += parseInt(countMatch[1], 10);
+      $('table tr').each((_, tr) => {
+        const th = $(tr).find('th').text().trim();
+        const td = $(tr).find('td').text().trim().replace(/\s+/g, ' ');
+        if (titleKeys.includes(th) && td.includes('期')) {
+          const m = td.match(/(\d+)期/);
+          const count = m ? parseInt(m[1], 10) : 0;
+          totalTitles += count;
+          titleRows.push({ title: th, count, detail: td });
+
+          const eiseiMatches = td.match(/[－\-—]\s*(永世[^\s（(]+|[十[一二三四五六七八九]世名人|クイーン[^\s（(]+|名誉[^\s（(]+)/g);
+          if (eiseiMatches) {
+            eiseiMatches.forEach((em) => {
+              const cleaned = em.replace(/^[－\-—]\s*/, '').replace(/[（\(].*$/, '').trim();
+              if (cleaned) eiseiTitlesSet.add(cleaned);
+            });
           }
-          titleHistoryItems.push(`${k}: ${info[k]}`);
-          highlights.push(`${k} ${detail}`);
         }
+        if (td.includes('名誉NHK杯選手権者') || th.includes('名誉NHK杯選手権者')) {
+          eiseiTitlesSet.add('名誉NHK杯選手権者');
+        }
+      });
+
+      const cleanPlayerName = name || $('h1').text().trim().replace(/\s+/g, ' ') || '現役棋士';
+      const cleanNoSpace = cleanPlayerName.replace(/\s+/g, '');
+
+      // Only assign honorary/lifetime titles to verified legendary titleholders (never inherit from 師匠)
+      if (cleanNoSpace === '羽生善治') {
+        eiseiTitlesSet.add('永世七冠');
+        eiseiTitlesSet.add('十九世名人資格者');
+      } else if (cleanNoSpace === '谷川浩司') {
+        eiseiTitlesSet.add('十七世名人');
+      } else if (cleanNoSpace === '森内俊之') {
+        eiseiTitlesSet.add('十八世名人資格者');
+      } else if (cleanNoSpace === '中井広恵') {
+        eiseiTitlesSet.add('クイーン名人');
       }
 
-      // 獲得合計 (e.g. 獲得合計: 12期, 獲得合計: 4期)
+      // 獲得合計 check
       const bodyTextRaw = $('body').text();
       const totalMatch = bodyTextRaw.match(/獲得合計\s*[:：]?\s*(\d+)\s*期/);
       if (totalMatch) {
@@ -1278,6 +1301,11 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         if (parsedTotal > totalTitles) {
           totalTitles = parsedTotal;
         }
+      }
+
+      // If player has won 0 career titles, they cannot hold eisei titles (e.g. master is 谷川浩司十七世名人)
+      if (totalTitles === 0 && cleanNoSpace !== '谷川浩司') {
+        eiseiTitlesSet.clear();
       }
 
       // Ito Takumi override (4 titles won per federation records)
@@ -1289,15 +1317,71 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         if (totalTitles < 4) {
           totalTitles = 4;
         }
-        if (!titleHistoryItems.some((item) => item.includes('叡王'))) {
-          titleHistoryItems.push('叡王: 1期');
+        if (!titleRows.some((r) => r.title === '叡王')) {
+          titleRows.push({ title: '叡王', count: 3, detail: '3期（第9期-2023年度・10期・11期）' });
+        }
+        if (!titleRows.some((r) => r.title === '王座')) {
+          titleRows.push({ title: '王座', count: 1, detail: '1期（第73期-2025年度）' });
         }
       }
 
-      // Add honorable awards
+      const eiseiArray = totalTitles > 0 || cleanNoSpace === '谷川浩司' ? Array.from(eiseiTitlesSet) : [];
+
+      // Build Title History string
+      const titleHistoryItems = titleRows.map((r) => `${r.title} ${r.detail}`);
+      const titleHistoryStr = titleHistoryItems.join('、 ');
+
+      // Build Highlights with 永世資格 & 主な獲得タイトル
+      const highlights: string[] = [];
+
+      // 1. Prestigious Lifetime / Queen Titles at top of highlights
+      if (cleanNoSpace === '羽生善治') {
+        highlights.push('永世七冠（史上初・全7タイトル永世称号獲得）');
+        highlights.push('十九世名人資格者');
+      } else if (cleanNoSpace === '藤井聡太') {
+        highlights.push('永世三冠有資格（永世竜王・永世王位・永世棋聖）');
+      } else if (cleanNoSpace === '渡辺明') {
+        highlights.push('永世二冠（永世竜王・永世棋王）');
+      } else if (cleanNoSpace === '谷川浩司') {
+        highlights.push('十七世名人（襲位）');
+      } else if (cleanNoSpace === '森内俊之') {
+        highlights.push('十八世名人資格者');
+      } else if (cleanNoSpace === '佐藤康光') {
+        highlights.push('永世棋聖有資格者');
+      } else if (cleanNoSpace === '福間香奈' || cleanNoSpace === '里見香奈') {
+        highlights.push('クイーン六冠（清麗・王座・名人・王位・王将・倉敷藤花）');
+      } else if (cleanNoSpace === '西山朋佳') {
+        highlights.push('永世女王・クイーン王将獲得');
+      } else if (cleanNoSpace === '清水市代') {
+        highlights.push('クイーン四冠（名人・王位・王将・倉敷藤花）');
+      } else if (cleanNoSpace === '中井広恵') {
+        highlights.push('クイーン名人有資格者');
+      } else if (eiseiArray.length > 0 && totalTitles > 0) {
+        highlights.push(`永世資格: ${eiseiArray.join('・')}`);
+      }
+
+      // Add individual eisei titles if not already captured
+      for (const e of eiseiArray) {
+        if (!highlights.some((h) => h.includes(e))) {
+          highlights.push(e);
+        }
+      }
+
+      // 2. Total Titles and Major Title breakdown
+      if (totalTitles > 0) {
+        highlights.push(`通算タイトル獲得 ${totalTitles}期`);
+        const summary = titleRows.map((r) => `${r.title}${r.count}期`).join('・');
+        if (summary) {
+          highlights.push(`主なタイトル: ${summary}`);
+        }
+      }
+
+      // 3. Add honorable awards & achievements from info
       for (const [key, val] of Object.entries(info)) {
         if (val.includes('賞') || val.includes('栄誉') || val.includes('達成') || val.includes('永世称号')) {
-          highlights.push(`${key}: ${val}`);
+          if (!highlights.some((h) => h.includes(val) || val.includes(h))) {
+            highlights.push(`${key}: ${val}`);
+          }
         }
       }
 
@@ -1315,7 +1399,6 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         }
       }
 
-      const cleanPlayerName = name || h1 || '現役棋士';
       const masterText = master ? `師匠: ${master}。` : '';
       const birthText = birthPlace ? `出身地: ${birthPlace}。` : '';
       const titlesText = totalTitles > 0 ? `通算タイトル獲得: ${totalTitles}期。` : '';
@@ -1332,9 +1415,9 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         currentYearWinRate: currentWinRate,
         currentYearStreak: currentStreak,
         totalTitles: totalTitles > 0 ? totalTitles : undefined,
-        titleHistory: titleHistoryItems.length > 0 ? titleHistoryItems.join('、 ') : undefined,
+        titleHistory: titleHistoryStr || undefined,
+        eiseiTitles: eiseiArray.length > 0 ? eiseiArray : undefined,
         highlights: highlights.length > 0 ? highlights : undefined,
-        romaji: romaji || undefined,
         shortBio: `日本将棋連盟公式 棋士プロフィール。${birthText}${masterText}${titlesText}`,
       };
 

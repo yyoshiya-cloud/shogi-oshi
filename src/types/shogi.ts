@@ -28,8 +28,6 @@ export interface HeadToHeadRecord {
 export interface Player {
   id: string;
   name: string;
-  kana: string;
-  romaji: string;
   type: PlayerType;
   affiliation?: PlayerAffiliation; // 日本将棋連盟 | LPSA | 無所属
   rank: string; // 竜王・名人, 九段, 女流五冠, etc.
@@ -49,6 +47,7 @@ export interface Player {
   heldTitles: string[]; // 現在保持しているタイトル
   totalTitles: number; // 通算タイトル獲得数
   titleHistory: string;
+  eiseiTitles?: string[]; // 永世資格・名誉称号・クイーン称号リスト (永世竜王, 永世棋聖, クイーン名人など)
   careerWins: number;
   careerLosses: number;
   careerWinRate: number;

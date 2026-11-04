@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
-import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate, convertRomajiToHiragana } from '../utils/playerUtils';
+import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
@@ -12,6 +12,7 @@ import {
   X,
   Heart,
   Trophy,
+  Crown,
   ExternalLink,
   Loader2,
   Filter,
@@ -112,7 +113,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       player.affiliation === 'LPSA' || (profileUrl && profileUrl.includes('joshi-shogi.com'));
 
     if (
-      (!player.birthDate || !player.master || player.careerWins === 0 || !player.kana) &&
+      (!player.birthDate || !player.master || player.careerWins === 0) &&
       (isJSA || isLPSA)
     ) {
       let isCancelled = false;
@@ -152,9 +153,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   ? d.totalTitles
                   : player.totalTitles,
               titleHistory: d.titleHistory || player.titleHistory,
+              eiseiTitles: d.eiseiTitles || player.eiseiTitles,
               highlights: d.highlights || player.highlights,
-              romaji: d.romaji || player.romaji,
-              kana: d.kana || player.kana,
               bloodType: d.bloodType || player.bloodType,
               motto: d.motto || player.motto,
               favPiece: d.favPiece || player.favPiece,
@@ -401,15 +401,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider mt-1">
                   {formatPlayerName(activePlayer.name)}
-                  {activePlayer.kana ? (
-                    <span className="text-xs font-normal text-zinc-300 ml-2">
-                      ({activePlayer.kana})
-                    </span>
-                  ) : activePlayer.romaji ? (
-                    <span className="text-xs font-normal text-zinc-300 ml-2">
-                      ({convertRomajiToHiragana(activePlayer.romaji)})
-                    </span>
-                  ) : null}
                 </h2>
                 <p className="text-sm font-bold text-amber-300 font-serif-jp">
                   {activePlayer.danRank && !activePlayer.rank.includes(activePlayer.danRank)
@@ -482,6 +473,34 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             </div>
           )}
 
+          {/* Permanent Titles / Eisei Qualifications Banner */}
+          {(() => {
+            const eiseiList = getPlayerEiseiTitles(activePlayer);
+            const badgeLabel = formatEiseiBadgeLabel(activePlayer);
+            if (eiseiList.length === 0 && !badgeLabel) return null;
+            return (
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-amber-500/20 text-xs">
+                <span className="text-amber-300 flex items-center gap-1 mr-1 font-bold">
+                  <Crown size={14} className="text-amber-400 fill-amber-400/40" />
+                  永世資格・名誉称号:
+                </span>
+                {badgeLabel && (
+                  <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-gradient-to-r from-amber-500/30 to-yellow-500/20 text-amber-200 border border-amber-400/50 shadow-sm flex items-center gap-1">
+                    👑 {badgeLabel}
+                  </span>
+                )}
+                {eiseiList.filter(e => e !== badgeLabel).map((eisei) => (
+                  <span
+                    key={eisei}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 shadow-sm"
+                  >
+                    {eisei}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* Past / Career Titles Won */}
           {(() => {
             const totalTitles = getPlayerTotalTitles(activePlayer);
@@ -498,7 +517,14 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 </span>
                 {activePlayer.titleHistory && (
                   <span className="text-[11px] text-zinc-300 ml-1">
-                    ({activePlayer.titleHistory})
+                    ({(() => {
+                      const parts = activePlayer.titleHistory.split('、 ').map((p) => {
+                        const m = p.match(/^([^\s]+)\s*(\d+期)/);
+                        if (m) return `${m[1]}${m[2]}`;
+                        return p.split('（')[0].trim();
+                      });
+                      return parts.join('・');
+                    })()})
                   </span>
                 )}
               </div>
@@ -669,26 +695,81 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   )}
                 </div>
 
-                {activePlayer.highlights && activePlayer.highlights.length > 0 && (
+                {/* 通算タイトル獲得（一本化） */}
+                {((activePlayer.totalTitles && activePlayer.totalTitles > 0) ||
+                  activePlayer.titleHistory ||
+                  (activePlayer.eiseiTitles && activePlayer.eiseiTitles.length > 0 && isEiseiPlayer(activePlayer))) && (
                   <div className="mt-3 pt-3 border-t border-zinc-800/80 text-xs text-zinc-300">
-                    <span className="text-amber-400 font-bold block mb-1.5">主な獲得タイトル・ハイライト:</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {activePlayer.highlights.map((h, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-0.5 rounded-md bg-zinc-850 text-zinc-200 text-[11px] border border-zinc-700/60"
-                        >
-                          {h}
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-amber-400 font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+                        <Trophy size={14} className="text-amber-400" />
+                        通算タイトル獲得
+                      </span>
+                      {activePlayer.totalTitles > 0 && (
+                        <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm flex items-center gap-1">
+                          <span>通算獲得</span>
+                          <strong className="text-amber-300 font-black">{activePlayer.totalTitles}期</strong>
                         </span>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
 
-                {activePlayer.titleHistory && (
-                  <div className="mt-3 pt-3 border-t border-zinc-800/80 text-xs text-zinc-300">
-                    <span className="text-amber-400 font-bold mr-1">タイトル獲得履歴:</span>
-                    <span>{activePlayer.titleHistory}</span>
+                    {/* 永世資格・名誉称号コールアウト */}
+                    {activePlayer.eiseiTitles && activePlayer.eiseiTitles.length > 0 && isEiseiPlayer(activePlayer) && (
+                      <div className="mb-2.5 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-400/40 text-amber-200 shadow-sm">
+                        <div className="flex items-center gap-1.5 font-bold mb-1 text-amber-300">
+                          <Crown size={13} className="text-amber-400 fill-amber-400/40" />
+                          <span>連盟公認 永世資格・称号:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {activePlayer.eiseiTitles.map((et) => (
+                            <span
+                              key={et}
+                              className="px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-200 font-bold border border-amber-400/40 text-[11px]"
+                            >
+                              {et}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* タイトル詳細一覧（獲得期数・年度・永世資格） */}
+                    {activePlayer.titleHistory && (
+                      <div className="space-y-1.5">
+                        {activePlayer.titleHistory.split('、 ').map((item, idx) => {
+                          const hasEisei =
+                            item.includes('永世') ||
+                            item.includes('クイーン') ||
+                            item.includes('世名人') ||
+                            item.includes('名誉');
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-2 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 ${
+                                hasEisei
+                                  ? 'bg-amber-950/30 border-amber-500/40 text-amber-100'
+                                  : 'bg-zinc-900/80 border-zinc-800 text-zinc-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-amber-300 font-serif-jp">
+                                  {item.split(' ')[0] || item.split(':')[0]}
+                                </span>
+                                <span className="text-[11px] text-zinc-300">
+                                  {item.split(' ').slice(1).join(' ') || item}
+                                </span>
+                              </div>
+                              {hasEisei && (
+                                <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-300 border border-amber-400/50 flex items-center gap-1 shrink-0 self-start sm:self-center">
+                                  <Crown size={10} className="text-amber-400 fill-amber-400/40" />
+                                  永世資格
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -963,16 +1044,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             {r.isPlayerWinner ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                 <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
-                                <span className="text-[10px] text-emerald-400/80">
-                                  ({r.isPlayerSente ? '☗先手' : '☖後手'})
-                                </span>
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
                                 <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
-                                <span className="text-[10px] text-zinc-400">
-                                  ({r.isPlayerSente ? '☗先手' : '☖後手'})
-                                </span>
                               </span>
                             )}
                           </div>

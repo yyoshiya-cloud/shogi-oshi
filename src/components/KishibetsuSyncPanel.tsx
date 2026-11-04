@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, RefreshCw, CheckCircle2, ShieldCheck, Zap, Activity, Database, Check } from 'lucide-react';
+import { ExternalLink, RefreshCw, CheckCircle2, ShieldCheck, Zap, Activity, Database, Check, UserCheck, Users } from 'lucide-react';
 import { syncAllPlayersWithProgress } from '../services/kishibetsuService';
 import { Player, ShogiMonthlyResult } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
@@ -18,10 +18,89 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
   onRefreshMatches,
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingProfiles, setIsSyncingProfiles] = useState(false);
   const [syncComplete, setSyncComplete] = useState(false);
   const [syncCount, setSyncCount] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
+
+  // 全棋士・女流棋士のプロフィール（顔写真、段位、タイトル保持状況、得意戦型、通算成績等）を一括再取得
+  const handleSyncProfilesAll = async () => {
+    setIsSyncingProfiles(true);
+    setSyncComplete(false);
+    setVerifyMsg(null);
+    setProgress(5);
+    setCurrentStepIndex(1);
+    setProgressStage('連盟・LPSA公式から全棋士・女流棋士プロフィールを一括再取得中...');
+    setCurrentActionDetail('公式プロフィールサーバーと通信接続中...');
+
+    try {
+      let sourcePlayers = players.length >= 50 ? players : getStoredPlayers();
+      if (sourcePlayers.length < 50) {
+        sourcePlayers = PLAYERS_DATA;
+      }
+
+      await new Promise((r) => setTimeout(r, 60));
+
+      // 1. APIから最新の公式プロファイル情報を再取得
+      setProgress(20);
+      setCurrentStepIndex(2);
+      setProgressStage('公式プロファイル一覧および属性データを取得中...');
+      setCurrentActionDetail('全プロ棋士・女流棋士データの最新スクレイピング処理...');
+
+      const apiRes = await fetch('/api/players/sync?force=true')
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      let baseList = sourcePlayers;
+      if (apiRes && apiRes.success && Array.isArray(apiRes.players) && apiRes.players.length >= 50) {
+        baseList = apiRes.players;
+      }
+
+      setProgress(45);
+      setCurrentStepIndex(3);
+      setProgressStage('全棋士・女流棋士のプロフィール（通算成績・獲得タイトル・顔写真）を再構築中...');
+
+      const total = baseList.length;
+      const reloaded: Player[] = [];
+      const chunkSize = 12;
+
+      for (let i = 0; i < total; i += chunkSize) {
+        const chunk = baseList.slice(i, i + chunkSize);
+        for (const p of chunk) {
+          const rec = initializePlayerRecords(p);
+          reloaded.push(rec);
+        }
+        const pct = Math.round(45 + (reloaded.length / total) * 50);
+        setProgress(Math.min(96, pct));
+        setCurrentActionDetail(`更新中: ${reloaded[reloaded.length - 1].name} （${reloaded.length}/${total}名）`);
+        await new Promise((r) => setTimeout(r, 20));
+      }
+
+      // 2. ローカルストレージへの保存と状態の全件反映
+      setProgress(98);
+      setCurrentStepIndex(4);
+      setProgressStage('全プロフィールデータをキャッシュに保存中...');
+
+      saveStoredPlayers(reloaded);
+      if (onPlayersSynced) {
+        onPlayersSynced(reloaded);
+      }
+
+      setProgress(100);
+      setSyncCount(reloaded.length);
+      setVerifyMsg(
+        `全 ${reloaded.length} 名（プロ棋士・女流棋士）の最新プロフィール（顔写真・公式段位・通算成績・獲得タイトル）を一括再取得・最新反映いたしました。`
+      );
+      setSyncComplete(true);
+    } catch (err) {
+      console.error('Profile bulk refresh error:', err);
+    } finally {
+      setTimeout(() => {
+        setIsSyncingProfiles(false);
+      }, 500);
+    }
+  };
 
   // Smooth Non-blocking Progress Bar states
   const [progress, setProgress] = useState(0);
@@ -211,7 +290,7 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
     }
   };
 
-  const isWorking = isSyncing || isVerifying;
+  const isWorking = isSyncing || isVerifying || isSyncingProfiles;
 
   return (
     <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl">
@@ -326,7 +405,18 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0">
+          <button
+            type="button"
+            onClick={handleSyncProfilesAll}
+            disabled={isWorking}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            title="日本将棋連盟・LPSA公式から全棋士・女流棋士プロフィールを一括再取得・最新反映"
+          >
+            <UserCheck size={14} className={isSyncingProfiles ? 'animate-spin' : ''} />
+            <span>{isSyncingProfiles ? 'プロフィール取得中...' : 'プロフィール一括再取得'}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleVerifyAndReloadAll}

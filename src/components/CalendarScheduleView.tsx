@@ -83,8 +83,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
     return {
       id,
       name: id.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' '),
-      kana: '',
-      romaji: clean,
       type: 'pro',
       affiliation: '日本将棋連盟',
       rank: '棋士',

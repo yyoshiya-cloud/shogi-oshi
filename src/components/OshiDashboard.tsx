@@ -3,10 +3,12 @@ import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
 import { formatPlayerName } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
+import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
   Heart,
   Calendar,
   Trophy,
+  Crown,
   ChevronRight,
   Plus,
   Smartphone
@@ -362,6 +364,37 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                           ? `${player.birthPlace} / ${player.style || '居飛車'}`
                           : player.style || '居飛車'}
                       </div>
+
+                      {/* Titles & Eisei Badges */}
+                      {(() => {
+                        const totalTitles = getPlayerTotalTitles(player);
+                        const eiseiLabel = formatEiseiBadgeLabel(player);
+                        if (!eiseiLabel && player.heldTitles.length === 0 && totalTitles === 0) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {eiseiLabel && (
+                              <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-gradient-to-r from-amber-500/30 to-yellow-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-0.5 shadow-sm">
+                                <Crown size={9} className="text-amber-400 fill-amber-400/50" />
+                                {eiseiLabel}
+                              </span>
+                            )}
+                            {player.heldTitles.map((t) => (
+                              <span
+                                key={t}
+                                className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-500/40"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {totalTitles > 0 && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-300/90 border border-amber-500/30 flex items-center gap-0.5">
+                                <Trophy size={9} className="text-amber-400" />
+                                通算{totalTitles}期
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* 3段目: 応援メモ（設定されている場合） */}
                       {config.cheeringNote && (

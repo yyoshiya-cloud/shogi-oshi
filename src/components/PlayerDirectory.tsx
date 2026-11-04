@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { OshiConfigModal } from './OshiConfigModal';
-import { getPlayerTotalTitles } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, convertRomajiToHiragana } from '../utils/playerUtils';
+import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
+import { formatPlayerName, isPlayerOnLeave } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
   Search,
   Heart,
   Trophy,
+  Crown,
   SlidersHorizontal,
   Check,
   UserCheck,
@@ -68,6 +69,12 @@ function normalizeRankForFilter(rank: string): string {
 
 function matchesRankFilter(playerOrRank: Player | string, filter: string): boolean {
   if (filter === 'all') return true;
+  if (filter === '永世') {
+    if (typeof playerOrRank === 'string') {
+      return playerOrRank.includes('永世') || playerOrRank.includes('名誉') || playerOrRank.includes('クイーン');
+    }
+    return isEiseiPlayer(playerOrRank);
+  }
   const rankStr =
     typeof playerOrRank === 'string'
       ? playerOrRank
@@ -239,20 +246,10 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             </div>
           )}
 
-          {/* 1段目: 氏名 (ふりがな) 段位 */}
           <div className="flex items-baseline gap-2 flex-wrap">
             <h3 className="text-base sm:text-lg font-black text-zinc-100 font-serif-jp tracking-wide group-hover:text-amber-300 transition-colors">
               {formatPlayerName(player.name)}
             </h3>
-            {player.kana ? (
-              <span className="text-[11px] font-normal text-zinc-400">
-                ({player.kana})
-              </span>
-            ) : player.romaji ? (
-              <span className="text-[11px] font-normal text-zinc-400">
-                ({convertRomajiToHiragana(player.romaji)})
-              </span>
-            ) : null}
             <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp ml-1">
               {player.danRank && !player.rank.includes(player.danRank)
                 ? `${player.rank} (${player.danRank})`
@@ -269,25 +266,37 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               : player.style || '居飛車'}
           </div>
 
-          {/* Titles / Career Titles Badges */}
-          {(player.heldTitles.length > 0 || totalTitles > 0) && (
-            <div className="flex flex-wrap items-center gap-1 mt-1">
-              {player.heldTitles.map((t) => (
-                <span
-                  key={t}
-                  className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                >
-                  {t}
-                </span>
-              ))}
-              {totalTitles > 0 && (
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-300/90 border border-amber-500/30 flex items-center gap-0.5">
-                  <Trophy size={9} className="text-amber-400" />
-                  通算獲得 {totalTitles}期
-                </span>
-              )}
-            </div>
-          )}
+          {/* Titles / Career Titles / Eisei Qualification Badges */}
+          {(() => {
+            const eiseiBadge = formatEiseiBadgeLabel(player);
+            const hasTitlesOrEisei = player.heldTitles.length > 0 || totalTitles > 0 || !!eiseiBadge;
+            if (!hasTitlesOrEisei) return null;
+
+            return (
+              <div className="flex flex-wrap items-center gap-1 mt-1">
+                {eiseiBadge && (
+                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-gradient-to-r from-amber-500/30 to-yellow-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-0.5 shadow-sm">
+                    <Crown size={9} className="text-amber-400 fill-amber-400/50" />
+                    {eiseiBadge}
+                  </span>
+                )}
+                {player.heldTitles.map((t) => (
+                  <span
+                    key={t}
+                    className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-500/40"
+                  >
+                    {t}
+                  </span>
+                ))}
+                {totalTitles > 0 && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-300/90 border border-amber-500/30 flex items-center gap-0.5">
+                    <Trophy size={9} className="text-amber-400" />
+                    通算獲得 {totalTitles}期
+                  </span>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Cheering Note Display */}
           {isFollowed && followConfig?.cheeringNote && (
@@ -428,7 +437,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
-          const nameMatch = p.name.toLowerCase().includes(q) || (p.kana && p.kana.toLowerCase().includes(q)) || (p.romaji && p.romaji.toLowerCase().includes(q));
+          const nameMatch = p.name.toLowerCase().includes(q);
           const numMatch = p.playerNumber?.toString().includes(q);
           const titleMatch = p.heldTitles.some((t) => t.toLowerCase().includes(q));
           const masterMatch = p.master && p.master.toLowerCase().includes(q);
@@ -709,6 +718,30 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             >
               すべて
             </button>
+
+            {/* 永世 Tab */}
+            {(() => {
+              const count = getRankCount('永世');
+              const isEiseiDisabled = affiliationFilter === 'oshi' || count === 0;
+              return (
+                <button
+                  type="button"
+                  disabled={isEiseiDisabled}
+                  onClick={() => setRankFilter('永世')}
+                  title={isEiseiDisabled ? '不活性' : '永世称号・クイーン称号資格保持者'}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-medium transition flex items-center gap-1 ${
+                    isEiseiDisabled
+                      ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                      : rankFilter === '永世'
+                      ? 'bg-amber-500 text-stone-950 font-bold shadow-sm'
+                      : 'bg-zinc-950 text-amber-300 hover:bg-zinc-800 border border-amber-500/40'
+                  }`}
+                >
+                  <span>永世</span>
+                  <span className="text-[9px] opacity-80">({count})</span>
+                </button>
+              );
+            })()}
 
             {/* Pro Ranks */}
             {PRO_RANKS.map((rank) => {

@@ -178,6 +178,9 @@ export function saveStoredFollowed(data: FollowedPlayerConfig[], userEmail?: str
 export function getStoredPlayers(): Player[] {
   try {
     pruneOldStorage();
+    if (PLAYERS_DATA.length === 0) {
+      return [];
+    }
     const raw = localStorage.getItem(STORAGE_KEYS.PLAYERS);
     let players: Player[];
     if (!raw) {
