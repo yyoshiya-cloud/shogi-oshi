@@ -3,7 +3,7 @@ import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../t
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, isPlayerRetired } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -210,7 +210,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               {aff}
             </span>
 
-            {(player.rank.includes('引退') || player.shortBio?.includes('引退') || player.titleHistory?.includes('引退')) && (
+            {isPlayerRetired(player) && (
               <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-300 border border-zinc-600">
                 引退
               </span>

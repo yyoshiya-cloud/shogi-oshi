@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
@@ -384,6 +384,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   >
                     {activePlayer.affiliation || '日本将棋連盟'}
                   </span>
+                  {isPlayerRetired(activePlayer) && (
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300 border border-zinc-600">
+                      引退
+                    </span>
+                  )}
                   {isPlayerOnLeave(activePlayer) && (
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40">
                       休場中

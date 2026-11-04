@@ -171,6 +171,39 @@ export function isPlayerOnLeave(player: { highlights?: string[]; shortBio?: stri
   return false;
 }
 
+/**
+ * Checks if a player is officially retired.
+ * Correctly ignores lifetime title notes like "就位は原則引退後" or "引退後に就位".
+ */
+export function isPlayerRetired(player: { rank?: string; shortBio?: string; titleHistory?: string; highlights?: string[] }): boolean {
+  if (!player) return false;
+
+  // 1. Explicit rank check (e.g. "引退", "引退九段", "引退棋士", "引退女流...")
+  if (player.rank && player.rank.includes('引退')) {
+    return true;
+  }
+
+  // 2. ShortBio check: look for explicit retirement statements, excluding "就位は原則引退後" / "引退後"
+  if (player.shortBio) {
+    const cleanBio = player.shortBio.replace(/就位は原則引退後|引退後に就位|引退後/g, '');
+    if (cleanBio.includes('引退棋士') || cleanBio.includes('引退女流棋士') || cleanBio.includes('現役引退') || cleanBio.includes('引退発表') || cleanBio.includes('正式に引退')) {
+      return true;
+    }
+  }
+
+  // 3. Highlights check
+  if (player.highlights && player.highlights.length > 0) {
+    for (const h of player.highlights) {
+      const cleanH = h.replace(/就位は原則引退後|引退後に就位|引退後/g, '');
+      if (cleanH.includes('現役引退') || cleanH.includes('引退決定') || cleanH.includes('引退表明')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 export function applyPlayerOverrides(p: Player): Player {
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
   if (nameClean.includes('山田朱未')) {
