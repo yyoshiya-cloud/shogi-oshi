@@ -469,7 +469,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
-      {/* Header & Kishibetsu Sync Panel */}
+      {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg">
           <div>
@@ -482,20 +482,6 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
             </p>
           </div>
         </div>
-
-        {onSyncPlayers && (
-          <KishibetsuSyncPanel
-            players={players}
-            onPlayersSynced={(updated) => {
-              if (onUpdateAllPlayers) {
-                onUpdateAllPlayers(updated);
-              } else if (onImportScrapedPlayer) {
-                updated.forEach((p) => onImportScrapedPlayer(p));
-              }
-            }}
-            onRefreshMatches={onRefreshMatches}
-          />
-        )}
       </div>
 
       {/* Search & Filtering Toolbar */}

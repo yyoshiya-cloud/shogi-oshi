@@ -560,17 +560,8 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               title="日本将棋連盟の該当月公式結果ページを別タブで開く"
             >
               <ExternalLink size={13} />
-              公式連盟ページ
+              <span>公式連盟ページ</span>
             </a>
-            <button
-              onClick={handleRefreshMonth}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 text-xs text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1.5 rounded-lg border border-zinc-700 transition disabled:opacity-50"
-              title="システム日付（現在年月）から最新の対局結果を取得"
-            >
-              <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-amber-400' : ''} />
-              {isRefreshing ? '更新中...' : '最新取得'}
-            </button>
           </div>
         </div>
 

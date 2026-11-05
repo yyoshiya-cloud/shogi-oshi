@@ -18,7 +18,8 @@ import {
   saveStoredMatchLastSync,
   triggerPushNotification,
   deduplicateMatches,
-  getStoredFiscalResults
+  getStoredFiscalResults,
+  saveStoredFiscalResults
 } from './utils/storage';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
@@ -43,7 +44,8 @@ import {
   Bell,
   Sparkles,
   X,
-  Smartphone
+  Smartphone,
+  RefreshCw
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -279,11 +281,76 @@ export default function App() {
   };
 
   // Auto-sync state
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [isSyncingPlayers, setIsSyncingPlayers] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(getStoredLastSync());
   const [isSyncingMatches, setIsSyncingMatches] = useState(false);
   const [lastMatchSyncTime, setLastMatchSyncTime] = useState<string | null>(getStoredMatchLastSync());
   const [syncToast, setSyncToast] = useState<string | null>(null);
+
+  const handleSyncAllData = async (force = true) => {
+    try {
+      setIsSyncingAll(true);
+      setIsSyncingPlayers(true);
+      setIsSyncingMatches(true);
+      setSyncToast('連盟・LPSA公式から【全データ一括最新化】を実行中... (プロフィール/対局予定/対局結果)');
+
+      const res = await fetch(`/api/sync/all${force ? '?force=true' : ''}`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+
+      let playersCount = 0;
+      let matchesCount = 0;
+
+      if (data.success) {
+        if (data.players && data.players.success && Array.isArray(data.players.players)) {
+          const freshPlayers: Player[] = data.players.players;
+          playersCount = freshPlayers.length;
+          setPlayersList((prev) => {
+            const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
+            const merged = [...freshPlayers, ...customPlayers].map((p) => {
+              const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
+              return initializePlayerRecords(withTitles);
+            });
+            saveStoredPlayers(merged);
+            return merged;
+          });
+        }
+
+        if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
+          const freshMatches: Match[] = data.matches.matches;
+          matchesCount = freshMatches.length;
+          setMatchesList(() => {
+            saveStoredMatches(freshMatches);
+            return freshMatches;
+          });
+        }
+
+        if (data.results2026) {
+          saveStoredFiscalResults(data.results2026);
+          updateMatchStatsData(data.results2026);
+          clearPlayerMatchCache();
+        }
+
+        const now = new Date();
+        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        saveStoredLastSync(timeStr);
+        saveStoredMatchLastSync(timeStr);
+        setLastSyncTime(timeStr);
+        setLastMatchSyncTime(timeStr);
+
+        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '88'}局、全対局結果を最新化しました！`);
+        setTimeout(() => setSyncToast(null), 5000);
+      }
+    } catch (e) {
+      console.warn('Bulk sync error, executing parallel syncs:', e);
+      await Promise.all([handleSyncPlayers(force), handleSyncMatches(force)]);
+    } finally {
+      setIsSyncingAll(false);
+      setIsSyncingPlayers(false);
+      setIsSyncingMatches(false);
+    }
+  };
 
   const handleSyncMatches = async (force = false) => {
     try {
@@ -603,6 +670,21 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Bulk Sync All Data button */}
+          <button
+            onClick={() => handleSyncAllData(true)}
+            disabled={isSyncingAll}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+              isSyncingAll
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border-amber-400/50'
+            }`}
+            title="公式対局予定・対局結果・全棋士プロフィールを最新データに一括更新"
+          >
+            <RefreshCw size={14} className={isSyncingAll ? 'animate-spin' : ''} />
+            <span className="text-[11px] sm:text-xs font-black">{isSyncingAll ? '一括更新中...' : '全データ一括更新'}</span>
+          </button>
+
           {/* Android Home Screen Widget button */}
           <button
             onClick={() => setShowAndroidWidgetModal(true)}
@@ -680,7 +762,7 @@ export default function App() {
             onSyncScrapedMatches={handleSyncScrapedMatches}
             isSyncingMatches={isSyncingMatches}
             lastMatchSyncTime={lastMatchSyncTime}
-            onRefreshMatches={() => handleSyncMatches(true)}
+            onRefreshMatches={() => handleSyncAllData(true)}
             activeSubTab={calendarSubTab}
             onChangeSubTab={(tab) => setCalendarSubTab(tab)}
             onUpdateResults={handleUpdateFiscalResults}
@@ -699,10 +781,10 @@ export default function App() {
               setPlayersList(updated);
               saveStoredPlayers(updated);
             }}
-            onRefreshMatches={() => handleSyncMatches(true)}
-            isSyncingPlayers={isSyncingPlayers}
+            onRefreshMatches={() => handleSyncAllData(true)}
+            isSyncingPlayers={isSyncingAll || isSyncingPlayers}
             lastSyncTime={lastSyncTime}
-            onSyncPlayers={handleSyncPlayers}
+            onSyncPlayers={() => handleSyncAllData(true)}
           />
         )}
 

@@ -71,6 +71,34 @@ async function startServer() {
     }
   });
 
+  // API Route for bulk syncing all data: players, match schedules, and monthly match results
+  app.get('/api/sync/all', async (req, res) => {
+    try {
+      const force = req.query.force === 'true';
+      console.log(`[Bulk Sync All] Starting complete data synchronization (force=${force})...`);
+
+      const [playersRes, matchesRes, results2026] = await Promise.all([
+        scrapeAllActivePlayers(force),
+        scrapeMatchPlan(force),
+        getAll2026Results(force),
+      ]);
+
+      res.json({
+        success: true,
+        timestamp: new Date().toISOString(),
+        players: playersRes,
+        matches: matchesRes,
+        results2026,
+      });
+    } catch (error: any) {
+      console.error('Error in /api/sync/all:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to bulk sync all data',
+      });
+    }
+  });
+
 
   app.get('/api/players/profile-details', async (req, res) => {
     try {

@@ -513,7 +513,7 @@ export function getFiscalYearMonths(fiscalYear = 2026): string[] {
  * Get results for multiple fiscal years (2025 and 2026),
  * keeping complete historical archive for 2025 and live scraping for 2026.
  */
-async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<string, ShogiMonthlyResult[]>> {
+async function getAllMultiYearResults(years = [2025, 2026], force = false): Promise<Record<string, ShogiMonthlyResult[]>> {
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
   const res: Record<string, ShogiMonthlyResult[]> = { ...bundled };
 
@@ -521,7 +521,7 @@ async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<stri
   if (years.includes(2026)) {
     const months2026 = getFiscalYearMonths(2026);
     for (const m of months2026) {
-      const data = await scrapeMonthlyResults(m, false);
+      const data = await scrapeMonthlyResults(m, force);
       if (data.results && data.results.length > 0) {
         res[m] = data.results;
       }
@@ -533,8 +533,8 @@ async function getAllMultiYearResults(years = [2025, 2026]): Promise<Record<stri
 /**
  * Get results for fiscal years (includes 2025 and 2026)
  */
-export async function getAll2026Results(): Promise<Record<string, ShogiMonthlyResult[]>> {
-  return getAllMultiYearResults([2025, 2026]);
+export async function getAll2026Results(force = false): Promise<Record<string, ShogiMonthlyResult[]>> {
+  return getAllMultiYearResults([2025, 2026], force);
 }
 
 

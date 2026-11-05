@@ -310,21 +310,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
               <span>本日 {todayInfo.shortDisplay}</span>
             </button>
 
-            {onRefreshMatches && (
-              <button
-                onClick={onRefreshMatches}
-                disabled={isSyncingMatches}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md ${
-                  isSyncingMatches
-                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                    : 'bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-amber-500/20'
-                }`}
-                title="https://www.shogi.or.jp/game/?tab=schedule から最新対局予定を再取得"
-              >
-                <RefreshCw size={13} className={isSyncingMatches ? 'animate-spin' : ''} />
-                <span>{isSyncingMatches ? '同期中...' : '予定を更新'}</span>
-              </button>
-            )}
           </div>
         </div>
       </div>

@@ -405,36 +405,16 @@ export const KishibetsuSyncPanel: React.FC<KishibetsuSyncPanelProps> = ({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0">
-          <button
-            type="button"
-            onClick={handleSyncProfilesAll}
-            disabled={isWorking}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
-            title="日本将棋連盟・LPSA公式から全棋士・女流棋士プロフィールを一括再取得・最新反映"
-          >
-            <UserCheck size={14} className={isSyncingProfiles ? 'animate-spin' : ''} />
-            <span>{isSyncingProfiles ? 'プロフィール取得中...' : 'プロフィール一括再取得'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleVerifyAndReloadAll}
-            disabled={isWorking}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-bold text-xs shadow transition disabled:opacity-50 cursor-pointer border border-amber-500/30 whitespace-nowrap"
-          >
-            <ShieldCheck size={14} className={isVerifying ? 'animate-spin' : ''} />
-            <span>{isVerifying ? '検証中...' : '全件検証・再構築'}</span>
-          </button>
-
+        <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
           <button
             type="button"
             onClick={handleSyncAll}
             disabled={isWorking}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-black text-xs shadow-lg transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            title="公式対局予定・月別対局結果・全棋士プロフィールを一括して最新データに最新化"
           >
-            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-            <span>{isSyncing ? '一括同期中...' : '全データ一括同期'}</span>
+            <RefreshCw size={15} className={isWorking ? 'animate-spin' : ''} />
+            <span>{isWorking ? '全データ一括同期中...' : '全データ一括最新化'}</span>
           </button>
         </div>
       </div>
