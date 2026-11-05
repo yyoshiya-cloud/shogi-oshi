@@ -330,7 +330,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
       <div className="relative w-full max-w-3xl h-[92vh] max-h-[900px] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Top Header Banner with Player Color */}
         <div

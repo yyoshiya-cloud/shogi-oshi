@@ -63,7 +63,7 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
   const selectedBadgeObj = getOshiBadgeConfig(selectedBadge);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5 relative">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">

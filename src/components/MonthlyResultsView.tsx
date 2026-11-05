@@ -1039,7 +1039,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           {groupedByDate.map((group) => (
             <div key={group.date} className="space-y-2">
               {/* Date Header Sticky Bar */}
-              <div className="sticky top-0 z-10 flex items-center justify-between bg-zinc-950/90 backdrop-blur-md px-3 py-2 rounded-xl border border-zinc-800 shadow-sm">
+              <div className="sticky top-0 z-10 flex items-center justify-between bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Calendar size={14} className="text-amber-400" />
                   <span className="text-xs font-bold text-zinc-200">

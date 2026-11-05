@@ -7,7 +7,7 @@ interface AppInfoModalProps {
 
 export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">

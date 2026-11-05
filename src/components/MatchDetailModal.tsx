@@ -110,10 +110,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const visibleMatches = showAllHistory ? h2h.recentMatches : h2h.recentMatches.slice(0, 5);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Modal Top Bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/60 sticky top-0 z-20 backdrop-blur-md">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900 sticky top-0 z-20">
           <div className="flex items-center gap-2">
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeStyle}`}

@@ -924,7 +924,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/95 animate-fade-in"
       onClick={onClose}
     >
       <div

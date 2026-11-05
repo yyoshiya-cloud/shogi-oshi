@@ -651,7 +651,7 @@ export default function App() {
       }}
     >
       {/* Top Application Bar */}
-      <header className="px-4 sm:px-6 py-3.5 bg-zinc-950/90 border-b border-zinc-800/80 sticky top-0 z-20 backdrop-blur-md flex items-center justify-between">
+      <header className="px-4 sm:px-6 py-3.5 bg-zinc-950 border-b border-zinc-800/80 sticky top-0 z-20 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Shogi Koma Logo Icon */}
           <div className="w-9 h-10 koma-shape bg-gradient-to-b from-[#f9ecc9] to-[#cfa058] border-b-2 border-amber-950 flex items-center justify-center shadow-md">
@@ -714,7 +714,7 @@ export default function App() {
       {/* Main Tab Content */}
       <main className="flex-1 p-3 sm:p-6 pb-24 overflow-y-auto relative">
         {syncToast && (
-          <div className="mb-3 px-3.5 py-2 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between shadow-lg backdrop-blur-sm animate-fadeIn">
+          <div className="mb-3 px-3.5 py-2 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between shadow-lg animate-fadeIn">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span>{syncToast}</span>
@@ -791,7 +791,7 @@ export default function App() {
       </main>
 
       {/* Android Bottom Navigation Bar (Material 3 style) */}
-      <nav className="fixed sm:sticky bottom-0 left-0 right-0 z-30 bg-zinc-950/95 border-t border-zinc-800/80 px-2 py-1.5 backdrop-blur-lg">
+      <nav className="fixed sm:sticky bottom-0 left-0 right-0 z-30 bg-zinc-950 border-t border-zinc-800/80 px-2 py-1.5">
         <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
           {/* Dashboard Tab */}
           <button
@@ -939,7 +939,7 @@ export default function App() {
 
       {/* Notification Center Modal (triggered by top-right Bell button) */}
       {showNotificationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 animate-fadeIn">
           <div className="relative w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/70 flex-shrink-0">

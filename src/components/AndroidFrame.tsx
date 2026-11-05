@@ -20,7 +20,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
       {/* Heads-Up Notification Banner */}
       {activeNotification && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-bounce-once">
-          <div className="bg-zinc-900/95 border-2 border-amber-500/70 rounded-2xl p-3 shadow-2xl flex items-start gap-3 backdrop-blur-md">
+          <div className="bg-zinc-900 border-2 border-amber-500/70 rounded-2xl p-3 shadow-2xl flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-stone-950 flex-shrink-0 mt-0.5 shadow-md">
               <Bell size={16} />
             </div>
