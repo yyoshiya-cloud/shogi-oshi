@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { scrapeAllActivePlayers, fetchPlayerProfileDetail } from './src/services/playerSyncService';
@@ -136,10 +137,13 @@ async function startServer() {
   const httpServer = http.createServer(app);
 
   // Setup Vite in Dev mode or serve static files in Production
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+  const distPath = path.resolve(__dirname, 'dist');
+  const isProduction = process.env.NODE_ENV === 'production' || fs.existsSync(path.resolve(distPath, 'index.html'));
+
+  if (isProduction) {
+    app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.resolve(distPath, 'index.html'));
     });
   } else {
     const vite = await createViteServer({
