@@ -140,7 +140,7 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 overscroll-contain">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 sm:p-6 space-y-5 overscroll-contain">
 
         {/* 1. 推しバッジの選択 */}
         <div className="space-y-2">
@@ -156,12 +156,12 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
                   key={opt.badge}
                   type="button"
                   onClick={() => setSelectedBadge(opt.badge)}
-                  className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between gap-1 relative ${
-                    opt.bg
-                  } ${opt.text} ${
+                  className={`p-3 rounded-2xl text-left flex flex-col justify-between gap-1 relative cursor-pointer box-border ${
+                    opt.text
+                  } ${
                     isSelected
-                      ? `${opt.border} ring-2 ${opt.ring} shadow-md shadow-${opt.ring}/20 bg-opacity-40`
-                      : 'border-zinc-800 opacity-60 hover:opacity-100'
+                      ? `border-2 ${opt.border} bg-zinc-950 font-bold`
+                      : 'border border-zinc-800 bg-zinc-950/60 opacity-60 hover:opacity-100'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -207,8 +207,10 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
                   key={c.color}
                   type="button"
                   onClick={() => setSelectedColor(c.color)}
-                  className={`w-full aspect-square rounded-xl transition flex items-center justify-center relative shadow-sm hover:scale-105 ${
-                    isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-105' : 'opacity-80 hover:opacity-100'
+                  className={`w-full aspect-square rounded-xl flex items-center justify-center relative cursor-pointer box-border ${
+                    isSelected
+                      ? 'border-2 border-white'
+                      : 'border border-transparent opacity-80 hover:opacity-100'
                   }`}
                   style={{ backgroundColor: c.color }}
                   title={c.name}

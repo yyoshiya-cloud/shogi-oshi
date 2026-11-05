@@ -23,8 +23,8 @@ export const OSHI_BADGE_CONFIGS: Record<OshiBadge, OshiBadgeConfig> = {
     Icon: Heart,
     bg: 'bg-rose-500/20 hover:bg-rose-500/30',
     text: 'text-rose-300',
-    border: 'border-rose-500/50',
-    ring: 'ring-rose-500',
+    border: 'border-rose-500',
+    ring: 'border-rose-500',
   },
   神推し: {
     badge: '神推し',
@@ -34,8 +34,8 @@ export const OSHI_BADGE_CONFIGS: Record<OshiBadge, OshiBadgeConfig> = {
     Icon: Sparkles,
     bg: 'bg-amber-500/20 hover:bg-amber-500/30',
     text: 'text-amber-300',
-    border: 'border-amber-500/50',
-    ring: 'ring-amber-500',
+    border: 'border-amber-500',
+    ring: 'border-amber-500',
   },
   激推し: {
     badge: '激推し',
@@ -45,8 +45,8 @@ export const OSHI_BADGE_CONFIGS: Record<OshiBadge, OshiBadgeConfig> = {
     Icon: Flame,
     bg: 'bg-purple-500/20 hover:bg-purple-500/30',
     text: 'text-purple-300',
-    border: 'border-purple-500/50',
-    ring: 'ring-purple-500',
+    border: 'border-purple-500',
+    ring: 'border-purple-500',
   },
   注目: {
     badge: '注目',
@@ -56,8 +56,8 @@ export const OSHI_BADGE_CONFIGS: Record<OshiBadge, OshiBadgeConfig> = {
     Icon: Lightbulb,
     bg: 'bg-sky-500/20 hover:bg-sky-500/30',
     text: 'text-sky-300',
-    border: 'border-sky-500/50',
-    ring: 'ring-sky-500',
+    border: 'border-sky-500',
+    ring: 'border-sky-500',
   },
 };
 

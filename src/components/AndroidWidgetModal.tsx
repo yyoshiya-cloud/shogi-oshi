@@ -567,8 +567,8 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
                             t.bg
                           } ${
                             config.theme === t.id
-                              ? 'border-amber-400 ring-2 ring-amber-400/40'
-                              : 'border-zinc-800 opacity-70 hover:opacity-100'
+                              ? 'border-2 border-amber-400 font-black'
+                              : 'border border-zinc-800 opacity-70 hover:opacity-100'
                           }`}
                         >
                           {t.name}
