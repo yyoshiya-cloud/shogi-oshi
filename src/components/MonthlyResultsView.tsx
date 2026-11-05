@@ -21,6 +21,8 @@ import {
   BookOpen
 } from 'lucide-react';
 
+import { getTodayInfo } from '../utils/dateUtils';
+
 interface MonthlyResultsViewProps {
   players: Player[];
   followedList: FollowedPlayerConfig[];
@@ -74,9 +76,22 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   onSelectMatch,
   onUpdateResults,
 }) => {
-  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number>(2026);
+  // システム時間（現在日時）から初期の年度および年月キーを自動算出
+  const initialSystemState = useMemo(() => {
+    const today = getTodayInfo();
+    const systemYear = today.year;
+    const systemMonth = today.month + 1; // 1-12
+    const targetFiscalYear = systemMonth >= 4 ? systemYear : systemYear - 1;
+    const targetMonthKey = `${systemYear}${String(systemMonth).padStart(2, '0')}`;
+    return {
+      fiscalYear: targetFiscalYear,
+      monthKey: targetMonthKey,
+    };
+  }, []);
+
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number>(initialSystemState.fiscalYear);
   const activeFiscalYearMonths = useMemo(() => getFiscalYearMonths(selectedFiscalYear), [selectedFiscalYear]);
-  const [selectedMonth, setSelectedMonth] = useState<string>('202610');
+  const [selectedMonth, setSelectedMonth] = useState<string>(initialSystemState.monthKey);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'oshi' | 'pro' | 'women' | 'title'>('all');
@@ -583,7 +598,16 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                     key={fy.year}
                     onClick={() => {
                       setSelectedFiscalYear(fy.year);
-                      const defaultM = fy.year === 2026 ? '202610' : '202603';
+                      const today = getTodayInfo();
+                      const curSystemM = today.month + 1;
+                      const curSystemFY = curSystemM >= 4 ? today.year : today.year - 1;
+                      let defaultM: string;
+                      if (fy.year === curSystemFY) {
+                        defaultM = `${today.year}${String(curSystemM).padStart(2, '0')}`;
+                      } else {
+                        // For past/other fiscal year, default to the latest available month
+                        defaultM = `${fy.year + 1}03`;
+                      }
                       setSelectedMonth(defaultM);
                       setSelectedDate(null);
                     }}
