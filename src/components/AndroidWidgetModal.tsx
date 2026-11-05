@@ -495,17 +495,21 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
                   </div>
 
                   {/* Android Launcher Dock Icons simulation */}
-                  <div className="flex items-center justify-around pt-3 border-t border-zinc-800/60 opacity-60">
-                    <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-300 text-xs">
+                  <div className="flex items-center justify-around pt-3 border-t border-zinc-800/60 opacity-80">
+                    <div className="w-9 h-9 rounded-2xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-300 text-xs">
                       📞
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-xs">
+                    <div className="w-9 h-9 rounded-2xl bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-300 text-xs">
                       💬
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-xs shadow-lg">
-                      推
+                    <div className="w-10 h-10 rounded-2xl overflow-hidden border border-amber-500/50 shadow-lg shrink-0">
+                      <img
+                        src="/icon-192.png"
+                        alt="将棋推し活アプリ"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 text-xs">
+                    <div className="w-9 h-9 rounded-2xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 text-xs">
                       🌐
                     </div>
                   </div>

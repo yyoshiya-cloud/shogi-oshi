@@ -662,59 +662,63 @@ export default function App() {
       }}
     >
       {/* Top Application Bar */}
-      <header className="px-4 sm:px-6 py-3.5 bg-zinc-950 border-b border-zinc-800/80 sticky top-0 z-20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Shogi Koma Logo Icon */}
-          <div className="w-9 h-10 koma-shape bg-gradient-to-b from-[#f9ecc9] to-[#cfa058] border-b-2 border-amber-950 flex items-center justify-center shadow-md">
-            <span className="font-serif-jp text-stone-950 font-black text-sm">推</span>
+      <header className="px-3.5 sm:px-6 py-2.5 bg-zinc-950/95 border-b border-zinc-800/80 sticky top-0 z-20 flex items-center justify-between gap-2.5 backdrop-blur-none">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {/* Shogi Koma App Logo Icon */}
+          <div className="relative w-10 h-10 rounded-2xl overflow-hidden shrink-0 border border-amber-500/30 shadow-md bg-zinc-900 group">
+            <img
+              src="/icon-192.png"
+              alt="将棋推し活アプリ"
+              className="w-full h-full object-cover"
+            />
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-black text-zinc-100 font-serif-jp tracking-wider whitespace-nowrap truncate">
-                将棋推し活アプリ
-              </h1>
-            </div>
-            <p className="text-[11px] text-zinc-400">
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-base font-black text-zinc-100 font-serif-jp tracking-wide truncate flex items-center gap-1.5">
+              <span>将棋推し活アプリ</span>
+            </h1>
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">
               棋士・女流棋士 応援ナビ
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Bulk Sync All Data button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Bulk Sync All Data button - Smart pill design */}
           <button
             onClick={() => handleSyncAllData(true)}
             disabled={isSyncingAll}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+            className={`h-9 px-2.5 sm:px-3 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
               isSyncingAll
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse'
-                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 border-amber-400/50'
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse'
+                : 'bg-zinc-900 hover:bg-zinc-850 text-amber-300 hover:text-amber-200 border-amber-500/30 hover:border-amber-500/60'
             }`}
             title="公式対局予定・対局結果・全棋士プロフィールを最新データに一括更新"
           >
-            <RefreshCw size={14} className={isSyncingAll ? 'animate-spin' : ''} />
-            <span className="text-[11px] sm:text-xs font-black">{isSyncingAll ? '一括更新中...' : '全データ一括更新'}</span>
+            <RefreshCw size={13} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
+            <span className="text-[11px] sm:text-xs font-bold tracking-tight">
+              {isSyncingAll ? '更新中...' : '一括更新'}
+            </span>
           </button>
 
-          {/* Android Home Screen Widget button */}
+          {/* Android Home Screen Widget button - Smart pill design */}
           <button
             onClick={() => setShowAndroidWidgetModal(true)}
-            className="p-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
             title="Android ホーム画面ウィジェット設定"
           >
-            <Smartphone size={18} />
-            <span className="text-xs font-bold hidden sm:inline">ウィジェット</span>
+            <Smartphone size={15} className="shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">ウィジェット</span>
           </button>
 
           {/* Quick notification bell */}
           <button
             onClick={() => setShowNotificationModal(true)}
-            className="relative p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition border border-zinc-800 cursor-pointer"
+            className="h-9 w-9 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white transition border border-zinc-800 hover:border-zinc-700 flex items-center justify-center relative cursor-pointer active:scale-95 shadow-sm"
             title="通知速報を開く"
           >
-            <Bell size={18} />
+            <Bell size={16} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-black flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border border-zinc-950 animate-pulse">
                 {unreadCount}
               </span>
             )}
