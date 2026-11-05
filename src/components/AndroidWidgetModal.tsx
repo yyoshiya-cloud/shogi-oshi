@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Player, Match, FollowedPlayerConfig } from '../types/shogi';
 import { getOshiBadgeConfig, renderOshiBadgeIcon, OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles } from '../utils/titleUtils';
@@ -195,8 +196,8 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
     setTimeout(() => setIsAddedSuccess(false), 4000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 sm:p-4">
       <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/80 shrink-0">
@@ -743,6 +744,7 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

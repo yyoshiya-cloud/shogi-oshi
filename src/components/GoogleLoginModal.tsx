@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
 import { Player, FollowedPlayerConfig } from '../types/shogi';
 import { OshiBadgeTag } from '../utils/badgeUtils';
@@ -45,8 +46,8 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
     }, 600);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 sm:p-6 text-zinc-100 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
@@ -283,6 +284,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

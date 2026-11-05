@@ -12,7 +12,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg'],
+        includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'],
         manifest: ({
           id: '/',
           name: '将棋推し活アプリ',
@@ -25,15 +25,21 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: '/icon.svg',
-              sizes: '192x192 512x512',
-              type: 'image/svg+xml',
+              src: '/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/icon.svg',
+              src: '/icon-512.png',
               sizes: '512x512',
-              type: 'image/svg+xml',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/maskable-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
               purpose: 'maskable',
             },
           ],
@@ -43,7 +49,7 @@ export default defineConfig(() => {
               short_name: '直近対局',
               description: '推し棋士の直近の対局・結果をすばやく確認',
               url: '/?tab=dashboard',
-              icons: [{ src: '/icon.svg', sizes: '192x192' }],
+              icons: [{ src: '/icon-192.png', sizes: '192x192' }],
             },
           ],
           widgets: [
@@ -56,14 +62,14 @@ export default defineConfig(() => {
               ms_ac_template: 'widgets/oshi-match.json',
               screenshots: [
                 {
-                  src: '/icon.svg',
+                  src: '/icon-512.png',
                   sizes: '512x512',
                   label: '推し棋士直近対局ウィジェット',
                 },
               ],
               icons: [
                 {
-                  src: '/icon.svg',
+                  src: '/icon-192.png',
                   sizes: '192x192',
                 },
               ],

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Player, YearRecord } from '../types/shogi';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
 import { isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
@@ -922,9 +923,9 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
   const isPreDebut = activeRecord?.isPreDebut === true;
   const isZeroGames = totalGames === 0;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/95 animate-fade-in"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/95"
       onClick={onClose}
     >
       <div
@@ -1103,6 +1104,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

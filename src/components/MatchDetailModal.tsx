@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Match, Player } from '../types/shogi';
 import { getTodayDateString } from '../utils/dateUtils';
 import { getDirectHeadToHead } from '../utils/headToHeadUtils';
@@ -109,7 +110,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const p2Ratio = h2h.totalMatches > 0 ? (h2h.player2Wins / h2h.totalMatches) * 100 : 50;
   const visibleMatches = showAllHistory ? h2h.recentMatches : h2h.recentMatches.slice(0, 5);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Modal Top Bar */}
@@ -339,6 +340,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

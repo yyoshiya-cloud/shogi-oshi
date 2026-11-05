@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
@@ -329,7 +330,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     });
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
       <div className="relative w-full max-w-3xl h-[92vh] max-h-[900px] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Top Header Banner with Player Color */}
@@ -1218,6 +1219,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           onClose={() => setIsConfigModalOpen(false)}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
