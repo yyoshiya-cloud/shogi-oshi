@@ -145,7 +145,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
                   4. 棋士・女流棋士名鑑（連盟・LPSA・無所属 全網羅）
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  全現役プロ棋士・女流棋士256名以上を網羅。ふりがな（ひらがな自動変換）、順位戦・竜王戦クラス、通算タイトル数、今年度・通算成績、多彩な検索・ソート機能を搭載。
+                  全現役プロ棋士・女流棋士256名以上を網羅。順位戦・竜王戦クラス、通算タイトル数、今年度・通算成績、多彩な検索・ソート機能を搭載。
                 </p>
               </div>
             </div>
