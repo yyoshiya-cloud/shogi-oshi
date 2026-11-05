@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
 import { Player, FollowedPlayerConfig } from '../types/shogi';
@@ -32,6 +32,15 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
   const [customName, setCustomName] = useState('Y.Yoshiya');
   const [isCustomMode, setIsCustomMode] = useState(false);
 
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const handleLogin = (name: string, email: string) => {
     setIsSigningIn(true);
     setTimeout(() => {
@@ -47,8 +56,26 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 sm:p-6 text-zinc-100 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 sm:p-6 text-zinc-100 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">

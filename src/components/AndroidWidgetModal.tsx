@@ -184,6 +184,15 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
 
   const themeStyles = getThemeStyles(config.theme);
 
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const handleCopyEmbedCode = () => {
     const embedHtml = `<iframe src="${window.location.origin}/?widget=true&playerId=${activePlayer?.id || 'auto'}&size=${config.size}&theme=${config.theme}" width="380" height="240" style="border:none;border-radius:16px;" title="将棋推し棋士直近対局ウィジェット"></iframe>`;
     navigator.clipboard.writeText(embedHtml);
@@ -197,8 +206,26 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 sm:p-4 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/80 shrink-0">
           <div className="flex items-center gap-3">

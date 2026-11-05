@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles, Trophy, Heart, Calendar, Users, Bell, X, ExternalLink, TrendingUp, Swords, Smartphone } from 'lucide-react';
 
@@ -7,9 +7,36 @@ interface AppInfoModalProps {
 }
 
 export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5">
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5 touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">

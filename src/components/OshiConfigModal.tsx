@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, OshiBadge } from '../types/shogi';
 import { X, Check, Bell, Palette, MessageSquareHeart, Trash2, Heart } from 'lucide-react';
@@ -45,6 +45,17 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
     resultImmediately: currentConfig?.notifyTiming?.resultImmediately ?? true,
   });
 
+  // Lock body scroll to prevent mobile Android Chrome GPU compositor tearing
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+    };
+  }, []);
+
   const handleSave = () => {
     const newConfig: FollowedPlayerConfig = {
       playerId: player.id,
@@ -64,13 +75,31 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
   const selectedBadgeObj = getOshiBadgeConfig(selectedBadge);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5 relative">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+    <div
+      className="fixed inset-0 z-[100] bg-black/85 flex flex-col justify-end sm:justify-center items-center sm:p-4 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full sm:max-w-md bg-zinc-900 border-t sm:border border-zinc-800 rounded-t-3xl sm:rounded-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl text-zinc-100 overflow-hidden relative touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
+        {/* Header - Pinned at top */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold font-serif-jp text-white shadow-md overflow-hidden shrink-0"
+              className="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold font-serif-jp text-white shadow-md overflow-hidden shrink-0 border border-white/20"
               style={{ backgroundColor: selectedColor }}
             >
               {player.photoUrl ? (
@@ -103,11 +132,15 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition shrink-0"
+            className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition shrink-0 cursor-pointer"
+            title="閉じる"
           >
             <X size={18} />
           </button>
         </div>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 overscroll-contain">
 
         {/* 1. 推しバッジの選択 */}
         <div className="space-y-2">
@@ -255,8 +288,10 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="pt-2 flex items-center gap-2.5">
+        </div>
+
+        {/* Action Buttons - Pinned at bottom */}
+        <div className="p-4 border-t border-zinc-800 bg-zinc-900 shrink-0 flex items-center gap-2.5">
           {isEditing && onRemove && (
             <button
               type="button"
@@ -264,7 +299,7 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
                 onRemove(player.id);
                 onClose();
               }}
-              className="p-3 rounded-2xl bg-zinc-800 hover:bg-rose-950/60 text-zinc-400 hover:text-rose-400 text-xs font-bold transition border border-zinc-700 shrink-0 flex items-center gap-1"
+              className="p-3 rounded-2xl bg-zinc-850 hover:bg-rose-950/60 text-zinc-400 hover:text-rose-400 text-xs font-bold transition border border-zinc-700 shrink-0 flex items-center gap-1 cursor-pointer"
               title="推し登録を解除"
             >
               <Trash2 size={15} />

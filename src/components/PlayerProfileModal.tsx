@@ -89,6 +89,15 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<boolean>(false);
   const [resultsRevision, setResultsRevision] = useState(0);
 
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   useEffect(() => {
     const handleResultsUpdated = () => {
       setResultsRevision((prev) => prev + 1);
@@ -331,8 +340,26 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
-      <div className="relative w-full max-w-3xl h-[92vh] max-h-[900px] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="relative w-full max-w-3xl h-[92vh] max-h-[900px] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
         {/* Top Header Banner with Player Color */}
         <div
           className="relative px-6 pt-6 pb-5 text-white flex-shrink-0"

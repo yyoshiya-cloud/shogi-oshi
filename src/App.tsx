@@ -54,6 +54,16 @@ type TabType = 'dashboard' | 'calendar' | 'directory';
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showNotificationModal, setShowNotificationModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (showNotificationModal) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [showNotificationModal]);
   const [playersList, setPlayersList] = useState<Player[]>(() => {
     // 起動時に2025・2026両年度の対局結果データをインデックス化
     updateMatchStatsData(getStoredFiscalResults());
@@ -940,8 +950,26 @@ export default function App() {
 
       {/* Notification Center Modal (triggered by top-right Bell button) */}
       {showNotificationModal && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90">
-          <div className="relative w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 touch-none"
+          style={{
+            transform: 'translateZ(0)',
+            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: 'hidden',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowNotificationModal(false);
+          }}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden touch-auto overscroll-contain"
+            style={{
+              transform: 'translateZ(0)',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              isolation: 'isolate',
+            }}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/70 flex-shrink-0">
               <div className="flex items-center gap-2.5">

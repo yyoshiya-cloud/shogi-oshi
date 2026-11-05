@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Match, Player } from '../types/shogi';
 import { getTodayDateString } from '../utils/dateUtils';
@@ -45,6 +45,15 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   onSelectPlayer,
 }) => {
   const [showAllHistory, setShowAllHistory] = useState(false);
+
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const player1 = match ? players.find((p) => p.id === match.player1Id) : null;
   const player2 = match ? players.find((p) => p.id === match.player2Id) : null;
@@ -111,8 +120,26 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const visibleMatches = showAllHistory ? h2h.recentMatches : h2h.recentMatches.slice(0, 5);
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 overflow-y-auto touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
+      >
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900 sticky top-0 z-20">
           <div className="flex items-center gap-2">

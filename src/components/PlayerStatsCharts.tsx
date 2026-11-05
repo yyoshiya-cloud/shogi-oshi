@@ -906,10 +906,13 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
     };
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = originalOverflow;
+      };
     }
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -925,11 +928,22 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/95"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6 bg-black/95 touch-none"
+      style={{
+        transform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+      }}
       onClick={onClose}
     >
       <div
-        className="bg-zinc-950 border border-zinc-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto"
+        className="bg-zinc-950 border border-zinc-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto touch-auto overscroll-contain"
+        style={{
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden',
+          isolation: 'isolate',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
