@@ -218,7 +218,7 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
       }}
     >
       <div
-        className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden touch-auto overscroll-contain"
+        className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden touch-auto overscroll-contain"
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',
@@ -226,69 +226,64 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
           isolation: 'isolate',
         }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/80 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md">
-              <Smartphone size={22} />
+        {/* Header - Sleek & Modern */}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/90 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm shrink-0">
+              <Smartphone size={17} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-black font-serif-jp text-zinc-100 tracking-wide">
-                  Android ホーム画面ウィジェット
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                  PWA Widget 対応
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400">
-                推し棋士の直近の対局予定・勝敗結果をスマホのホーム画面でいつでも確認
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-black font-serif-jp text-zinc-100 tracking-wide truncate">
+                Android ホーム画面ウィジェット
+              </h3>
+              <p className="text-[10px] text-zinc-400 truncate">
+                推し棋士の最新対局予定・勝敗をスマホで確認
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white transition cursor-pointer shrink-0 border border-zinc-800"
             title="閉じる"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-zinc-800 bg-zinc-900/40 px-5 pt-2 shrink-0 gap-2">
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`pb-2.5 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'preview'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Smartphone size={14} />
-            ライブプレビュー & カスタマイズ
-          </button>
+        {/* Tab Navigation - Sleek minimal segmented tabs */}
+        <div className="flex border-b border-zinc-800/80 bg-zinc-950 px-3 pt-2 shrink-0 gap-1 overflow-x-auto">
           <button
             onClick={() => setActiveTab('instructions')}
-            className={`pb-2.5 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'instructions'
-                ? 'border-amber-500 text-amber-400'
+                ? 'border-amber-400 text-amber-400 font-black'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Info size={14} />
-            Android追加手順ガイド
+            <Info size={13} />
+            Android表示・追加ガイド
+          </button>
+          <button
+            onClick={() => setActiveTab('preview')}
+            className={`pb-2 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              activeTab === 'preview'
+                ? 'border-amber-400 text-amber-400 font-black'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Smartphone size={13} />
+            プレビュー & カスタマイズ
           </button>
           <button
             onClick={() => setActiveTab('web_widget')}
-            className={`pb-2.5 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer ${
+            className={`pb-2 px-3 text-xs font-bold transition border-b-2 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'web_widget'
-                ? 'border-amber-500 text-amber-400'
+                ? 'border-amber-400 text-amber-400 font-black'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Share2 size={14} />
-            Web埋め込みコード
+            <Share2 size={13} />
+            Web埋め込み
           </button>
         </div>
 
@@ -344,8 +339,12 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
                       <div className="flex items-center justify-between border-b border-white/10 pb-2.5 mb-2.5">
                         <div className="flex items-center gap-2 truncate">
                           {/* App icon mini badge */}
-                          <div className="w-5 h-5 rounded-md koma-shape bg-amber-500 text-stone-950 font-black font-serif-jp text-[10px] flex items-center justify-center shrink-0">
-                            推
+                          <div className="w-5 h-5 rounded-md overflow-hidden border border-amber-500/40 shrink-0 shadow-sm">
+                            <img
+                              src="/icon-192.png"
+                              alt="将棋推し活"
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <span className="text-xs font-bold font-serif-jp truncate text-white/90">
                             推し棋士 直近対局
@@ -663,61 +662,61 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
           )}
 
           {activeTab === 'instructions' && (
-            <div className="space-y-5">
-              <div className="bg-[#0e131f] p-4.5 rounded-2xl border border-sky-500/30 text-xs space-y-3">
-                <div className="flex items-center gap-2 text-sky-400 font-bold text-sm">
-                  <Smartphone size={18} />
-                  <span>Android ホーム画面ウィジェット設定手順 (2ステップ)</span>
+            <div className="space-y-4">
+              {/* Important Clarification Banner */}
+              <div className="bg-amber-950/30 p-4 rounded-2xl border border-amber-500/30 text-xs space-y-2">
+                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs sm:text-sm">
+                  <Smartphone size={16} />
+                  <span>Androidでのホーム画面連携について</span>
                 </div>
-                <p className="text-zinc-300 leading-relaxed">
-                  将棋推し活アプリは Progressive Web App (PWA) ウィジェット規格およびショートカット連携に対応しています。
+                <p className="text-zinc-300 text-[11px] sm:text-xs leading-relaxed">
+                  Webアプリ（PWA）のウィジェット機能は、お使いの<strong>Android OSバージョンやホーム画面アプリ（Pixel Launcher, One UI, Xperia等）</strong>によって動作が異なります。
                 </p>
               </div>
 
-              <div className="space-y-4">
+              {/* Steps Guide */}
+              <div className="space-y-3">
                 {/* Step 1 */}
-                <div className="flex items-start gap-3 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800">
-                  <div className="w-8 h-8 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-sm shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 bg-zinc-900/80 p-3.5 rounded-2xl border border-zinc-800">
+                  <div className="w-7 h-7 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-xs shrink-0 mt-0.5">
                     1
                   </div>
-                  <div className="space-y-1.5 text-xs">
-                    <h5 className="font-bold text-zinc-100 text-sm">
-                      アプリをホーム画面に追加（PWAインストール）
+                  <div className="space-y-1 text-xs">
+                    <h5 className="font-bold text-zinc-100 text-xs sm:text-sm">
+                      まずアプリを「ホーム画面に追加」する
                     </h5>
-                    <p className="text-zinc-400 leading-relaxed">
-                      AndroidのChromeブラウザで本アプリを開き、画面右上の「⋮（メニュー）」→
-                      <strong>「ホーム画面に追加」</strong>
-                      または<strong>「アプリをインストール」</strong>をタップします。
+                    <p className="text-zinc-400 text-[11px] sm:text-xs leading-relaxed">
+                      AndroidのChromeブラウザ右上「⋮（メニュー）」から<strong>「ホーム画面に追加」</strong>または<strong>「アプリをインストール」</strong>を行ってください。未インストールの状態ではウィジェット一覧に表示されません。
                     </p>
                   </div>
                 </div>
 
                 {/* Step 2 */}
-                <div className="flex items-start gap-3 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800">
-                  <div className="w-8 h-8 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-sm shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 bg-zinc-900/80 p-3.5 rounded-2xl border border-zinc-800">
+                  <div className="w-7 h-7 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-xs shrink-0 mt-0.5">
                     2
                   </div>
-                  <div className="space-y-1.5 text-xs">
-                    <h5 className="font-bold text-zinc-100 text-sm">
-                      ホーム画面の長押しから「ウィジェット」を選択
+                  <div className="space-y-1 text-xs">
+                    <h5 className="font-bold text-zinc-100 text-xs sm:text-sm">
+                      「ウィジェット一覧に出ない場合」の確実な起動方法
                     </h5>
-                    <p className="text-zinc-400 leading-relaxed">
-                      スマホのホーム画面の空きスペースを長押しし、<strong>「ウィジェット」</strong>メニューを選択。一覧から「将棋推し活アプリ」を選んでホーム画面の好きな場所に配置します。
+                    <p className="text-zinc-400 text-[11px] sm:text-xs leading-relaxed">
+                      端末のホーム画面上で<strong>「将棋推し活アプリ」のアイコンを長押し</strong>してください。ポップアップ表示される<strong>「推し棋士直近対局」</strong>や<strong>「対局予定」</strong>のショートカットをホーム画面へドラッグ＆ドロップすると、いつでも1タップで推し棋士の最新対局・勝敗速報へダイレクトアクセスできます。
                     </p>
                   </div>
                 </div>
 
                 {/* Step 3 */}
-                <div className="flex items-start gap-3 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800">
-                  <div className="w-8 h-8 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-sm shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 bg-zinc-900/80 p-3.5 rounded-2xl border border-zinc-800">
+                  <div className="w-7 h-7 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-xs shrink-0 mt-0.5">
                     3
                   </div>
-                  <div className="space-y-1.5 text-xs">
-                    <h5 className="font-bold text-zinc-100 text-sm">
-                      対局予定・勝敗結果のリアルタイム更新
+                  <div className="space-y-1 text-xs">
+                    <h5 className="font-bold text-zinc-100 text-xs sm:text-sm">
+                      Webサイト・ブログ埋め込みウィジェット
                     </h5>
-                    <p className="text-zinc-400 leading-relaxed">
-                      連盟公式からの対局結果・対局予定が自動同期され、ウィジェットの表示も最新状態にアップデートされます。
+                    <p className="text-zinc-400 text-[11px] sm:text-xs leading-relaxed">
+                      「Web埋め込み」タブに表示されているHTMLコードをブログやWebサイトに貼り付けることで、PC・スマホ問わずリアルタイムな対局カードを表示させることも可能です。
                     </p>
                   </div>
                 </div>
@@ -759,20 +758,6 @@ export const AndroidWidgetModal: React.FC<AndroidWidgetModalProps> = ({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-900/90 flex items-center justify-between shrink-0">
-          <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>PWA Widget / Android ホーム画面連動アクティブ</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition cursor-pointer"
-          >
-            閉じる
-          </button>
         </div>
       </div>
     </div>,
