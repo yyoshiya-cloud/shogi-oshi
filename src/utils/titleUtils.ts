@@ -128,22 +128,173 @@ const KNOWN_EISEI_PLAYERS = new Set([
   '福間香奈',
   '里見香奈',
   '西山朋佳',
-  '矢内理絵子',
 ]);
+
+export interface EiseiCriterion {
+  eiseiName: string;
+  tournamentName: string;
+  titleName: string;
+  conditionText: string;
+  minTotal?: number;
+  minConsecutive?: number;
+}
+
+/**
+ * 棋士（男性プロ）の永世称号獲得規定（全主要タイトル）
+ */
+export const MEN_EISEI_TITLES_CRITERIA: EiseiCriterion[] = [
+  {
+    eiseiName: '永世竜王',
+    tournamentName: '竜王戦',
+    titleName: '竜王',
+    conditionText: '連続5期もしくは通算7期',
+    minConsecutive: 5,
+    minTotal: 7,
+  },
+  {
+    eiseiName: '永世名人',
+    tournamentName: '名人戦',
+    titleName: '名人',
+    conditionText: '通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: '永世十段',
+    tournamentName: '十段戦',
+    titleName: '十段',
+    conditionText: '通算10期',
+    minTotal: 10,
+  },
+  {
+    eiseiName: '永世王位',
+    tournamentName: '王位戦',
+    titleName: '王位',
+    conditionText: '連続5期もしくは通算10期',
+    minConsecutive: 5,
+    minTotal: 10,
+  },
+  {
+    eiseiName: '永世叡王',
+    tournamentName: '叡王戦',
+    titleName: '叡王',
+    conditionText: '通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: '名誉王座',
+    tournamentName: '王座戦',
+    titleName: '王座',
+    conditionText: '連続5期もしくは通算10期',
+    minConsecutive: 5,
+    minTotal: 10,
+  },
+  {
+    eiseiName: '永世棋王',
+    tournamentName: '棋王戦',
+    titleName: '棋王',
+    conditionText: '連続5期',
+    minConsecutive: 5,
+  },
+  {
+    eiseiName: '永世王将',
+    tournamentName: '王将戦',
+    titleName: '王将',
+    conditionText: '通算10期',
+    minTotal: 10,
+  },
+  {
+    eiseiName: '永世棋聖',
+    tournamentName: '棋聖戦',
+    titleName: '棋聖',
+    conditionText: '通算5期',
+    minTotal: 5,
+  },
+];
+
+export interface WomenEiseiCriterion {
+  eiseiName: string;
+  tournamentName: string;
+  titleName: string;
+  conditionText: string;
+  minTotal: number;
+  minConsecutive?: number;
+}
+
+/**
+ * 女流棋士の永世称号獲得規定（全8主要女流タイトル）
+ */
+export const WOMEN_EISEI_TITLES_CRITERIA: WomenEiseiCriterion[] = [
+  {
+    eiseiName: 'クイーン白玲',
+    tournamentName: 'ヒューリック杯白玲戦',
+    titleName: '白玲',
+    conditionText: '白玲 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: 'クイーン清麗',
+    tournamentName: '大成建設杯清麗戦',
+    titleName: '清麗',
+    conditionText: '清麗 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: '永世女王',
+    tournamentName: 'マイナビ女子オープン',
+    titleName: '女王',
+    conditionText: 'マイナビ女子オープン 女王 連続5期または通算7期',
+    minTotal: 7,
+    minConsecutive: 5,
+  },
+  {
+    eiseiName: 'クイーン王座',
+    tournamentName: 'リコー杯女流王座戦',
+    titleName: '女流王座',
+    conditionText: '女流王座 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: 'クイーン名人',
+    tournamentName: '岡田美術館杯女流名人戦',
+    titleName: '女流名人',
+    conditionText: '女流名人 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: 'クイーン王位',
+    tournamentName: '大島眼科グループ杯女流王位戦',
+    titleName: '女流王位',
+    conditionText: '女流王位 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: 'クイーン倉敷藤花',
+    tournamentName: '大山名人杯倉敷藤花戦',
+    titleName: '倉敷藤花',
+    conditionText: '倉敷藤花戦 通算5期',
+    minTotal: 5,
+  },
+  {
+    eiseiName: 'クイーン王将',
+    tournamentName: '霧島酒造杯女流王将戦',
+    titleName: '女流王将',
+    conditionText: '女流王将 通算5期',
+    minTotal: 5,
+  },
+];
 
 export const KNOWN_EISEI_TITLES_MAP: Record<string, string[]> = {
   '羽生善治': ['永世七冠', '十九世名人資格者', '永世竜王', '永世王位', '名誉王座', '永世棋聖', '永世棋王', '永世王将', '名誉NHK杯選手権者'],
   '藤井聡太': ['永世三冠有資格', '永世竜王', '永世王位', '永世棋聖'],
   '渡辺明': ['永世二冠', '永世竜王', '永世棋王'],
-  '谷川浩司': ['十七世名人'],
+  '谷川浩司': ['十七世名人', '永世王位'],
   '森内俊之': ['十八世名人資格者'],
   '佐藤康光': ['永世棋聖'],
   '福間香奈': ['クイーン六冠', 'クイーン清麗', 'クイーン王座', 'クイーン名人', 'クイーン王位', 'クイーン王将', 'クイーン倉敷藤花'],
   '里見香奈': ['クイーン六冠', 'クイーン清麗', 'クイーン王座', 'クイーン名人', 'クイーン王位', 'クイーン王将', 'クイーン倉敷藤花'],
-  '西山朋佳': ['永世女王', 'クイーン王将'],
+  '西山朋佳': ['クイーン白玲', '永世女王', 'クイーン王将'],
   '清水市代': ['クイーン四冠', 'クイーン名人', 'クイーン王将', 'クイーン王位', 'クイーン倉敷藤花'],
   '中井広恵': ['クイーン名人'],
-  '矢内理絵子': ['クイーン名人有資格'],
 };
 
 /**
@@ -214,6 +365,51 @@ export function getPlayerEiseiTitles(player?: Partial<Player> | null): string[] 
 }
 
 /**
+ * タイトル獲得履歴・期数を規定に基づき自動検査し、獲得永世称号・クイーン称号のリストを返す
+ */
+export function evaluatePlayerEiseiTitles(player?: Partial<Player> | null): string[] {
+  if (!player) return [];
+  const cleanName = (player.name || '').replace(/\s+/g, '').replace(/[※＊\*\(\)（）]/g, '');
+
+  if (cleanName === '都成竜馬' || player.id === 'pro-ryuuma_tonari') return [];
+
+  const text = `${player.rank || ''} ${player.danRank || ''} ${player.titleHistory || ''}`;
+  const criteriaList = player.type === 'women' ? WOMEN_EISEI_TITLES_CRITERIA : MEN_EISEI_TITLES_CRITERIA;
+  const found: string[] = [];
+
+  for (const item of criteriaList) {
+    const regex = new RegExp(`${item.titleName}\\s*(\\d+)期`, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+      const count = parseInt(match[1], 10);
+      let qualified = false;
+      if (item.minTotal !== undefined && count >= item.minTotal) {
+        qualified = true;
+      }
+      const blockText = text.slice(match.index, match.index + 120);
+      if (item.minConsecutive !== undefined && (blockText.includes('連続') || blockText.includes('〜') || blockText.includes('～'))) {
+        if (count >= item.minConsecutive) {
+          qualified = true;
+        }
+      }
+      if (qualified && !found.includes(item.eiseiName)) {
+        found.push(item.eiseiName);
+      }
+    }
+  }
+
+  if (player.eiseiTitles && player.eiseiTitles.length > 0) {
+    player.eiseiTitles.forEach(t => {
+      if (!t.includes('師匠') && !t.includes('門下') && !found.includes(t)) {
+        found.push(t);
+      }
+    });
+  }
+
+  return found;
+}
+
+/**
  * 永世資格のサマリーバッジ表示用テキストを取得（例: "永世七冠", "永世三冠", "十七世名人", "クイーン六冠"）
  */
 export function formatEiseiBadgeLabel(player?: Partial<Player> | null): string | null {
@@ -221,12 +417,12 @@ export function formatEiseiBadgeLabel(player?: Partial<Player> | null): string |
   const cleanName = (player.name || '').replace(/\s+/g, '').replace(/[※＊\*\(\)（）]/g, '');
   if (cleanName === '羽生善治') return '永世七冠';
   if (cleanName === '藤井聡太') return '永世三冠';
-  if (cleanName === '谷川浩司') return '十七世名人';
+  if (cleanName === '谷川浩司') return '十七世名人・永世王位';
   if (cleanName === '森内俊之') return '十八世名人資格';
   if (cleanName === '佐藤康光') return '永世棋聖';
   if (cleanName === '渡辺明') return '永世二冠';
   if (cleanName === '福間香奈' || cleanName === '里見香奈') return 'クイーン六冠';
-  if (cleanName === '西山朋佳') return '永世女王・クイーン王将';
+  if (cleanName === '西山朋佳') return 'クイーン白玲・永世女王・クイーン王将';
   if (cleanName === '清水市代') return 'クイーン四冠';
   if (cleanName === '中井広恵') return 'クイーン名人';
 
