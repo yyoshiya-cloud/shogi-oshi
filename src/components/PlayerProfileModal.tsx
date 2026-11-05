@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
@@ -160,12 +160,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               favPiece: d.favPiece || player.favPiece,
               achievements: d.achievements || player.achievements,
               shortBio:
-                d.shortBio ||
-                (d.master
-                  ? `${player.affiliation || '日本将棋連盟'}所属の${player.type === 'women' ? '現役女流棋士' : '現役棋士'}（${player.rank}）。${d.master}門下。${
-                      d.birthPlace ? `${d.birthPlace}出身。` : ''
-                    }`
-                  : player.shortBio),
+                d.shortBio && !isBoilerplateBio(d.shortBio)
+                  ? d.shortBio
+                  : (player.shortBio && !isBoilerplateBio(player.shortBio) ? player.shortBio : undefined),
             };
             setActivePlayer(updated);
             onUpdatePlayer?.(updated);
@@ -778,9 +775,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   </div>
                 )}
 
-                <div className="mt-3 pt-3 border-t border-zinc-800/80 text-xs text-zinc-300 leading-relaxed">
-                  {activePlayer.shortBio}
-                </div>
+                {activePlayer.shortBio && !isBoilerplateBio(activePlayer.shortBio) && (
+                  <div className="mt-3 pt-3 border-t border-zinc-800/80 text-xs text-zinc-300 leading-relaxed">
+                    {activePlayer.shortBio}
+                  </div>
+                )}
               </div>
 
               {/* Statistical Charts Component */}

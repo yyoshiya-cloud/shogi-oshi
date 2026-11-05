@@ -586,7 +586,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               rankingInFederation: {},
               colorAccent: accent,
               avatarBg: getAvatarBg(accent),
-              shortBio: `日本将棋連盟所属の現役棋士（${finalRank}）。公式棋士番号: ${playerNumber}。`,
+              shortBio: '',
               highlights: [`日本将棋連盟所属 ${finalRank}`],
               yearRecords: [],
               senteWinRate,
@@ -764,7 +764,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               rankingInFederation: {},
               colorAccent: accent,
               avatarBg: getAvatarBg(accent),
-              shortBio: `日本将棋連盟所属の現役女流棋士（${finalRank}）。女流番号: ${playerNumber}。`,
+              shortBio: '',
               highlights: [`日本将棋連盟現役女流棋士 ${finalRank}`],
               yearRecords: [],
               senteWinRate,
@@ -989,9 +989,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             rankingInFederation: {},
             colorAccent: accent,
             avatarBg: getAvatarBg(accent),
-            shortBio: `日本女子プロ将棋協会（LPSA）所属の現役女流棋士（${finalRank}）。LPSA番号: ${num}。${
-              birthPlace ? `${birthPlace}出身。` : ''
-            }${motto ? `座右の銘: 「${motto}」` : ''}`,
+            shortBio: motto ? `座右の銘: 「${motto}」` : '',
             highlights: [
               `LPSA現役女流棋士 ${finalRank}`,
               motto ? `座右の銘: ${motto}` : '',
@@ -1157,7 +1155,7 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
             motto: motto || undefined,
             achievements: achievements || undefined,
             favPiece: favPiece || undefined,
-            shortBio: `日本女子プロ将棋協会（LPSA）所属の現役女流棋士。出身地: ${birthPlace || '非公開'}。${motto ? `座右の銘:「${motto}」。` : ''}`,
+            shortBio: motto ? `座右の銘: 「${motto}」` : '',
             highlights: [
               `日本女子プロ将棋協会（LPSA）所属`,
               ...(achievements ? [achievements.slice(0, 60)] : []),
@@ -1418,7 +1416,7 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
         titleHistory: titleHistoryStr || undefined,
         eiseiTitles: eiseiArray.length > 0 ? eiseiArray : undefined,
         highlights: highlights.length > 0 ? highlights : undefined,
-        shortBio: `日本将棋連盟公式 棋士プロフィール。${birthText}${masterText}${titlesText}`,
+        shortBio: '',
       };
 
       detailCache.set(cacheKey, { data: detailResult, timestamp: Date.now() });

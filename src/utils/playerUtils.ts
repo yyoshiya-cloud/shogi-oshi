@@ -204,6 +204,27 @@ export function isPlayerRetired(player: { rank?: string; shortBio?: string; titl
   return false;
 }
 
+export function isBoilerplateBio(bio?: string | null): boolean {
+  if (!bio) return true;
+  const cleaned = bio.trim();
+  if (!cleaned) return true;
+
+  if (
+    cleaned.includes('所属の現役棋士') ||
+    cleaned.includes('所属の現役女流棋士') ||
+    cleaned.includes('公式棋士番号') ||
+    cleaned.includes('女流番号') ||
+    cleaned.includes('LPSA番号') ||
+    cleaned.includes('公式 棋士プロフィール') ||
+    cleaned.includes('公式女流棋士プロフィール') ||
+    cleaned.includes('日本将棋連盟公式 棋士プロフィール')
+  ) {
+    if (cleaned.includes('休場中')) return false;
+    return true;
+  }
+  return false;
+}
+
 export function applyPlayerOverrides(p: Player): Player {
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
   if (nameClean.includes('山田朱未')) {
@@ -217,7 +238,7 @@ export function applyPlayerOverrides(p: Player): Player {
       currentYearWinRate: 0,
       yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
       highlights: ['休場中'],
-      shortBio: `${p.affiliation || '日本将棋連盟'}所属の女流棋士（${p.rank}）。現在は休場中。`,
+      shortBio: '現在は休場中。',
     };
   }
   if (nameClean.includes('早水千紗')) {
@@ -231,7 +252,7 @@ export function applyPlayerOverrides(p: Player): Player {
       currentYearWinRate: 0,
       yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
       highlights: ['休場中'],
-      shortBio: `${p.affiliation || '日本将棋連盟'}所属の女流棋士（${p.rank}）。現在は休場中。`,
+      shortBio: '現在は休場中。',
     };
   }
   if (nameClean.includes('井道千尋')) {
@@ -245,7 +266,7 @@ export function applyPlayerOverrides(p: Player): Player {
       currentYearWinRate: 0,
       yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
       highlights: ['休場中'],
-      shortBio: `${p.affiliation || '日本将棋連盟'}所属の女流棋士（${p.rank}）。現在は休場中。`,
+      shortBio: '現在は休場中。',
     };
   }
   if (nameClean.includes('中倉宏美')) {
