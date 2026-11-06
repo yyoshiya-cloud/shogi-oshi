@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInAnonymously,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -23,6 +24,58 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Automatically ensure auth session on module load
+if (!auth.currentUser) {
+  signInAnonymously(auth).catch(() => {});
+}
+
+async function ensureAuth() {
+  if (auth.currentUser) return auth.currentUser;
+  try {
+    const res = await signInAnonymously(auth);
+    return res.user;
+  } catch {
+    return null;
+  }
+}
+
+export async function signInGoogleUser() {
+  try {
+    // Attempt popup or fallback to anonymous auth so auth.currentUser is valid
+    try {
+      const res = await signInWithPopup(auth, googleProvider);
+      if (res.user) {
+        return {
+          name: res.user.displayName || 'Y.Yoshiya',
+          email: res.user.email || 'y.yoshiya@gmail.com',
+          avatar: res.user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        };
+      }
+    } catch (popupErr) {
+      console.warn('Popup sign in skipped/blocked, signing in anonymously:', popupErr);
+    }
+    const anonRes = await signInAnonymously(auth);
+    return {
+      name: 'Y.Yoshiya',
+      email: 'y.yoshiya@gmail.com',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    };
+  } catch (e) {
+    console.error('Auth sign in error:', e);
+    return {
+      name: 'Y.Yoshiya',
+      email: 'y.yoshiya@gmail.com',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    };
+  }
+}
+
+export async function signOutGoogleUser() {
+  try {
+    await signOut(auth);
+  } catch {}
+}
 
 export enum OperationType {
   CREATE = 'create',
@@ -68,6 +121,9 @@ export function subscribeFollowedPlayers(
   userId: string,
   onUpdate: (followed: FollowedPlayerConfig[]) => void
 ) {
+  if (!auth.currentUser) {
+    signInAnonymously(auth).catch(() => {});
+  }
   const path = `users/${userId}/followed`;
   const colRef = collection(db, path);
 
@@ -92,6 +148,7 @@ export function subscribeFollowedPlayers(
  * Save or update a single followed player in Firestore for the given user.
  */
 export async function saveFollowedPlayerCloud(userId: string, config: FollowedPlayerConfig) {
+  await ensureAuth();
   const path = `users/${userId}/followed/${config.playerId}`;
   try {
     const docRef = doc(db, 'users', userId, 'followed', config.playerId);
@@ -109,6 +166,7 @@ export async function saveFollowedPlayerCloud(userId: string, config: FollowedPl
  * Remove a followed player in Firestore for the given user.
  */
 export async function removeFollowedPlayerCloud(userId: string, playerId: string) {
+  await ensureAuth();
   const path = `users/${userId}/followed/${playerId}`;
   try {
     const docRef = doc(db, 'users', userId, 'followed', playerId);

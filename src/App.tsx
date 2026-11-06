@@ -26,7 +26,8 @@ import {
   subscribeFollowedPlayers,
   saveFollowedPlayerCloud,
   removeFollowedPlayerCloud,
-  syncLocalListToCloud
+  syncLocalListToCloud,
+  signInGoogleUser
 } from './services/firebaseSync';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
@@ -509,6 +510,11 @@ export default function App() {
       storedMatches.length === 0 ||
       storedMatches.some((m) => m.id.startsWith('match-live-') || m.id.startsWith('match-up-'));
     handleSyncMatches(needsMatchSync);
+  }, []);
+
+  // Ensure Firebase Auth session exists on mount
+  useEffect(() => {
+    signInGoogleUser().catch(() => {});
   }, []);
 
   // Cloud Firestore Real-time Multi-device Sync Effect

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
 import { Player, FollowedPlayerConfig } from '../types/shogi';
 import { OshiBadgeTag } from '../utils/badgeUtils';
+import { signInGoogleUser, signOutGoogleUser } from '../services/firebaseSync';
 
 export interface GoogleUser {
   name: string;
@@ -41,18 +42,22 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
     };
   }, []);
 
-  const handleLogin = (name: string, email: string) => {
+  const handleLogin = async (name: string, email: string) => {
     setIsSigningIn(true);
-    setTimeout(() => {
+    try {
+      const firebaseUser = await signInGoogleUser();
+      onLogin(firebaseUser);
+    } catch {
       const user: GoogleUser = {
         name: name || 'Y.Yoshiya',
         email: email || 'y.yoshiya@gmail.com',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       };
       onLogin(user);
+    } finally {
       setIsSigningIn(false);
       onClose();
-    }, 600);
+    }
   };
 
   return createPortal(
@@ -204,7 +209,8 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 閉じる
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await signOutGoogleUser();
                   onLogout();
                   onClose();
                 }}
