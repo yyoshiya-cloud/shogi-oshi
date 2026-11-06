@@ -136,10 +136,10 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
             <div className="bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-2xl text-xs text-amber-200 space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-amber-300">
                 <ShieldCheck size={14} />
-                <span>推し棋士データ クラウド自動保存完了</span>
+                <span>推し棋士データ 全端末クラウド同期中 (Firestore)</span>
               </div>
               <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                ログイン中のGoogleアカウントに登録済みの推し棋士・女流棋士データが安全にリンク保存されています。
+                ログイン中のGoogleアカウントに登録された推し棋士・応援メモ・カラー設定はCloud Firestoreに自動保存され、スマホ（Android/iOS）やPC（Windows/Mac）でリアルタイムに完全同期されます。
               </p>
             </div>
 

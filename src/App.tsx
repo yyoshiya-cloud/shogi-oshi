@@ -22,6 +22,12 @@ import {
   getStoredFiscalResults,
   saveStoredFiscalResults
 } from './utils/storage';
+import {
+  subscribeFollowedPlayers,
+  saveFollowedPlayerCloud,
+  removeFollowedPlayerCloud,
+  syncLocalListToCloud
+} from './services/firebaseSync';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString } from './utils/dateUtils';
@@ -505,6 +511,29 @@ export default function App() {
     handleSyncMatches(needsMatchSync);
   }, []);
 
+  // Cloud Firestore Real-time Multi-device Sync Effect
+  useEffect(() => {
+    if (!googleUser?.email) return;
+
+    const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    // 1. Initial push local storage items to cloud if any exist
+    const localList = getStoredFollowed(googleUser.email);
+    if (localList && localList.length > 0) {
+      syncLocalListToCloud(cloudUserId, localList);
+    }
+
+    // 2. Attach real-time Firestore listener for multi-device sync
+    const unsubscribe = subscribeFollowedPlayers(cloudUserId, (remoteList) => {
+      setFollowedList(remoteList);
+      saveStoredFollowed(remoteList, googleUser.email);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [googleUser?.email]);
+
   const refreshNotifications = () => {
     const followedIds = new Set(followedList.map((f) => f.playerId));
     const rawNotifs = getStoredNotifications(matchesList);
@@ -588,9 +617,13 @@ export default function App() {
     setFollowedList(updated);
     saveStoredFollowed(updated, googleUser?.email);
 
+    // Save directly to Cloud Firestore for multi-device sync
+    const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
+    saveFollowedPlayerCloud(cloudUserId, config);
+
     const target = playersList.find((p) => p.id === config.playerId) || PLAYERS_DATA.find((p) => p.id === config.playerId);
     if (target) {
-      setSyncToast(`【推し登録】${target.name} を登録しました。本日の対局・対局結果を速報通知します`);
+      setSyncToast(`【推し登録】${target.name} を登録・クラウド同期しました。全端末（Android, Windows, iOS）に即時反映されます`);
       setTimeout(() => setSyncToast(null), 3500);
 
       // If the followed player happens to have a match today, push today's match notification
@@ -618,7 +651,14 @@ export default function App() {
     const updated = followedList.filter((f) => f.playerId !== playerId);
     setFollowedList(updated);
     saveStoredFollowed(updated, googleUser?.email);
-    setSyncToast(`推し登録を解除し、Googleアカウントの保存データを更新しました`);
+
+    // Delete from Cloud Firestore for multi-device sync
+    if (googleUser?.email) {
+      const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
+      removeFollowedPlayerCloud(cloudUserId, playerId);
+    }
+
+    setSyncToast(`推し登録を解除し、クラウド同期データを削除・更新しました`);
     setTimeout(() => setSyncToast(null), 3000);
   };
 
@@ -638,12 +678,19 @@ export default function App() {
           minute: '2-digit',
         }),
       };
-      updated[idx] = {
+      const updatedConfig = {
         ...updated[idx],
         fanComments: [newComment, ...(updated[idx].fanComments || [])],
       };
+      updated[idx] = updatedConfig;
       setFollowedList(updated);
       saveStoredFollowed(updated, googleUser?.email);
+
+      // Save to Cloud Firestore for multi-device sync
+      if (googleUser?.email) {
+        const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
+        saveFollowedPlayerCloud(cloudUserId, updatedConfig);
+      }
     }
   };
 

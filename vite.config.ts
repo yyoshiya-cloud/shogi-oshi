@@ -49,17 +49,25 @@ export default defineConfig(() => {
               short_name: '直近対局',
               description: '推し棋士の直近の対局・結果をすばやく確認',
               url: '/?tab=dashboard',
-              icons: [{ src: '/icon-192.png', sizes: '192x192' }],
+              icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+            },
+            {
+              name: '対局予定カレンダー',
+              short_name: '対局予定',
+              description: '日本将棋連盟の全公式対局予定をチェック',
+              url: '/?tab=calendar',
+              icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
             },
           ],
           widgets: [
             {
-              name: '推し棋士 直近対局ウィジェット',
-              short_name: '対局ウィジェット',
-              description: '推し棋士の最新の対局・勝敗結果をホーム画面で確認',
+              name: '推し棋士 直近対局',
+              short_name: '直近対局',
+              description: '推し棋士の最新対局予定・勝敗結果',
               tag: 'oshi-match-widget',
-              template: 'oshi-widget-template',
-              ms_ac_template: 'widgets/oshi-match.json',
+              ms_ac_template: '/widgets/oshi-match.json',
+              data: '/widgets/oshi-data.json',
+              type: 'application/json',
               screenshots: [
                 {
                   src: '/icon-512.png',
@@ -71,6 +79,7 @@ export default defineConfig(() => {
                 {
                   src: '/icon-192.png',
                   sizes: '192x192',
+                  type: 'image/png',
                 },
               ],
             },

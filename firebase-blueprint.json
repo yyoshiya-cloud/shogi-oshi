@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "FollowedPlayer": {
+      "title": "FollowedPlayer",
+      "description": "User's followed shogi player configuration for oshi tracking",
+      "type": "object",
+      "properties": {
+        "playerId": {
+          "type": "string",
+          "description": "Unique identifier of the followed player"
+        },
+        "badge": {
+          "type": "string",
+          "description": "Oshi badge tier",
+          "enum": ["本命", "神推し", "激推し", "注目"]
+        },
+        "color": {
+          "type": "string",
+          "description": "Custom hex accent color for the followed player"
+        },
+        "cheeringNote": {
+          "type": "string",
+          "description": "Optional fan support memo or notes",
+          "maxLength": 100
+        },
+        "notificationsEnabled": {
+          "type": "boolean",
+          "description": "Whether push notifications are enabled for this player"
+        },
+        "cheerCount": {
+          "type": "number",
+          "description": "Total cheers sent to this player"
+        },
+        "followedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the player was followed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the setting was last modified"
+        }
+      },
+      "required": ["playerId", "badge", "color"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/followed/{playerId}": {
+      "schema": "FollowedPlayer",
+      "description": "Subcollection of followed player settings for a specific user"
+    }
+  }
+}
