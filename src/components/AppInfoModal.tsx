@@ -218,12 +218,6 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 mt-0.5 shrink-0">
-                <Smartphone size={16} />
-              </div>
-
-            </div>
           </div>
         </div>
 
