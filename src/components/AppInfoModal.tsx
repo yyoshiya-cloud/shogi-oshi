@@ -218,19 +218,11 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
                 </p>
               </div>
             </div>
-
             <div className="flex items-start gap-3 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80">
               <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 mt-0.5 shrink-0">
                 <Smartphone size={16} />
               </div>
-              <div>
-                <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  8. Android ホーム画面ウィジェット (PWA / Web Widget)
-                </strong>
-                <p className="text-zinc-400 leading-relaxed">
-                  推し棋士の直近の対局予定・勝敗結果をスマホのホーム画面でいつでも手軽に確認できるAndroidウィジェット機能。全4テーマ・3サイズ対応、ライブ更新・リアルタイムプレビュー完備。
-                </p>
-              </div>
+
             </div>
           </div>
         </div>
