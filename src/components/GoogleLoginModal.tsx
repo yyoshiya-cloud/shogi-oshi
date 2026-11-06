@@ -45,12 +45,14 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
   const handleLogin = async (name: string, email: string) => {
     setIsSigningIn(true);
     try {
-      const firebaseUser = await signInGoogleUser();
+      const activeName = name || customName || 'Y.Yoshiya';
+      const activeEmail = email || customEmail || 'y.yoshiya@gmail.com';
+      const firebaseUser = await signInGoogleUser(activeEmail, activeName);
       onLogin(firebaseUser);
     } catch {
       const user: GoogleUser = {
-        name: name || 'Y.Yoshiya',
-        email: email || 'y.yoshiya@gmail.com',
+        name: name || customName || 'Y.Yoshiya',
+        email: email || customEmail || 'y.yoshiya@gmail.com',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       };
       onLogin(user);

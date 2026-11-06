@@ -512,11 +512,6 @@ export default function App() {
     handleSyncMatches(needsMatchSync);
   }, []);
 
-  // Ensure Firebase Auth session exists on mount
-  useEffect(() => {
-    signInGoogleUser().catch(() => {});
-  }, []);
-
   // Cloud Firestore Real-time Multi-device Sync Effect
   useEffect(() => {
     if (!googleUser?.email) return;
