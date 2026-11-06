@@ -59,31 +59,7 @@ export default defineConfig(() => {
               icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
             },
           ],
-          widgets: [
-            {
-              name: '推し棋士 直近対局',
-              short_name: '直近対局',
-              description: '推し棋士の最新対局予定・勝敗結果',
-              tag: 'oshi-match-widget',
-              ms_ac_template: '/widgets/oshi-match.json',
-              data: '/widgets/oshi-data.json',
-              type: 'application/json',
-              screenshots: [
-                {
-                  src: '/icon-512.png',
-                  sizes: '512x512',
-                  label: '推し棋士直近対局ウィジェット',
-                },
-              ],
-              icons: [
-                {
-                  src: '/icon-192.png',
-                  sizes: '192x192',
-                  type: 'image/png',
-                },
-              ],
-            },
-          ],
+
         } as any),
         workbox: {
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,

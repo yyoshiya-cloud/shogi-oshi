@@ -10,8 +10,7 @@ import {
   Trophy,
   Crown,
   ChevronRight,
-  Plus,
-  Smartphone
+  Plus
 } from 'lucide-react';
 
 interface OshiDashboardProps {
@@ -25,7 +24,6 @@ interface OshiDashboardProps {
   onOpenDirectory: () => void;
   onOpenCalendar: () => void;
   onOpenResults?: () => void;
-  onOpenAndroidWidgetModal?: () => void;
   onRemoveFollow: (playerId: string) => void;
   onToggleFollow?: (config: FollowedPlayerConfig) => void;
 }
@@ -48,7 +46,6 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   onOpenDirectory,
   onOpenCalendar,
   onOpenResults,
-  onOpenAndroidWidgetModal,
   onRemoveFollow,
   onToggleFollow,
 }) => {
@@ -121,7 +118,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-amber-400 font-bold flex items-center gap-1">
-                    <span>棋譜・詳細を見る</span>
+                    <span>詳細を見る</span>
                     <ChevronRight size={14} />
                   </span>
                 </div>
@@ -186,34 +183,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
         )}
       </div>
 
-      {/* Android Widget Quick Banner */}
-      <div
-        onClick={onOpenAndroidWidgetModal}
-        className="cursor-pointer bg-gradient-to-r from-emerald-950/40 via-zinc-900 to-zinc-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 hover:border-emerald-400 transition flex items-center justify-between group shadow-md"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shrink-0">
-            <Smartphone size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Android新機能
-              </span>
-              <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-emerald-300 transition">
-                Android ホーム画面<br />ウィジェット機能
-              </h4>
-            </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
-              推し棋士の直近の対局予定・勝敗速報をスマホのホーム画面でいつでも確認・カスタマイズ
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold group-hover:translate-x-1 transition shrink-0 ml-2">
-          <span>設定・プレビュー</span>
-          <ChevronRight size={16} />
-        </div>
-      </div>
+
 
       {/* 2026年 公式対局結果 Quick Banner */}
       <div

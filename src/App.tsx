@@ -44,7 +44,6 @@ import { MatchDetailModal } from './components/MatchDetailModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
-import { AndroidWidgetModal } from './components/AndroidWidgetModal';
 import {
   Heart,
   Calendar,
@@ -52,7 +51,6 @@ import {
   Bell,
   Sparkles,
   X,
-  Smartphone,
   RefreshCw
 } from 'lucide-react';
 
@@ -275,7 +273,6 @@ export default function App() {
   });
   const [showGoogleLoginModal, setShowGoogleLoginModal] = useState(false);
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
-  const [showAndroidWidgetModal, setShowAndroidWidgetModal] = useState(false);
 
   const handleLoginGoogle = (user: { name: string; email: string; avatar: string }) => {
     setGoogleUser(user);
@@ -748,15 +745,7 @@ export default function App() {
             </span>
           </button>
 
-          {/* Android Home Screen Widget button - Smart pill design */}
-          <button
-            onClick={() => setShowAndroidWidgetModal(true)}
-            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-            title="Android ホーム画面ウィジェット設定"
-          >
-            <Smartphone size={15} className="shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">ウィジェット</span>
-          </button>
+
 
           {/* Quick notification bell */}
           <button
@@ -809,7 +798,6 @@ export default function App() {
               setCalendarSubTab('results');
               setActiveTab('calendar');
             }}
-            onOpenAndroidWidgetModal={() => setShowAndroidWidgetModal(true)}
             onRemoveFollow={handleRemoveFollow}
             onToggleFollow={handleToggleFollow}
           />
@@ -982,23 +970,7 @@ export default function App() {
         <AppInfoModal onClose={() => setShowAppInfoModal(false)} />
       )}
 
-      {/* Android Home Screen Widget Preview & Setup Modal */}
-      {showAndroidWidgetModal && (
-        <AndroidWidgetModal
-          followedList={followedList}
-          players={playersList}
-          matches={matchesList}
-          onClose={() => setShowAndroidWidgetModal(false)}
-          onSelectMatch={(m) => {
-            setShowAndroidWidgetModal(false);
-            setSelectedMatch(m);
-          }}
-          onSelectPlayer={(p) => {
-            setShowAndroidWidgetModal(false);
-            setSelectedPlayer(p);
-          }}
-        />
-      )}
+
 
       {/* Notification Center Modal (triggered by top-right Bell button) */}
       {showNotificationModal && createPortal(
