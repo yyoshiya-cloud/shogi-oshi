@@ -56,6 +56,17 @@ const OFFICIAL_LPSA_PHOTO_MAP: Record<string, string> = {
   '田中沙紀': 'https://joshi-shogi.com/wp-content/themes/lpsa/img/tanaka.jpg',
 };
 
+const OFFICIAL_LPSA_BIRTHDATE_MAP: Record<string, string> = {
+  '中倉宏美': '1979年1月26日',
+  '渡部愛': '1993年6月26日',
+  '島井咲緒里': '1980年5月15日',
+  '上川香織': '1974年7月30日',
+  '礒谷真帆': '2002年3月22日',
+  '磯谷祐維': '2003年1月15日',
+  '堀彩乃': '1993年5月28日',
+  '田中沙紀': '1994年11月18日',
+};
+
 const VERIFIED_TITLE_HOLDER_DAN_RANKS: Record<string, string> = {
   sota_fujii: '九段',
   takumi_ito: '九段',
@@ -884,12 +895,27 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
         if (!th && td && !kana) kana = td.replace(/\s+/g, ' ');
         if (th.includes('LPSA番号')) num = parseInt(td, 10) || 0;
         if (th.includes('出身')) birthPlace = td;
-        if (th.includes('生年月日')) birthDate = formatBirthDateWithAge(td);
+        if (th.includes('生年月日')) {
+          const fallback = OFFICIAL_LPSA_BIRTHDATE_MAP[cleanNoSpace];
+          const useStr = (fallback && (!td || !/^\d{4}/.test(td))) ? fallback : td;
+          birthDate = formatBirthDateWithAge(useStr);
+        }
         if (th.includes('血液型')) bloodType = td;
         if (th.includes('座右の銘')) motto = td;
         if (th.includes('好きな駒')) favPiece = td;
         if (th.includes('主な戦績')) achievements = td;
         if (td.includes('振り飛車') || favPiece.includes('飛車')) style = '振り飛車';
+      });
+
+      // Extract any external career or profile links inside the modal
+      let careerUrl = '';
+      modal.find('a[href]').each((_, a) => {
+        const href = $(a).attr('href') || '';
+        if (href && (href.includes('kishibetsu') || href.includes('profile') || href.startsWith('http'))) {
+          if (!careerUrl && !href.includes('joshi-shogi.com/profile')) {
+            careerUrl = href;
+          }
+        }
       });
 
       const existing = existingByName.get(cleanNoSpace);
@@ -954,7 +980,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             goteWinRate,
             externalLinks: {
               ...existing.externalLinks,
-              officialProfile: 'https://joshi-shogi.com/profile/',
+              officialProfile: careerUrl || 'https://joshi-shogi.com/profile/',
             },
           };
           updated.yearRecords = generateCompleteYearRecords(updated);
@@ -1004,7 +1030,7 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             favPiece,
             bloodType,
             externalLinks: {
-              officialProfile: 'https://joshi-shogi.com/profile/',
+              officialProfile: careerUrl || 'https://joshi-shogi.com/profile/',
               kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
               wikipedia: `https://ja.wikipedia.org/wiki/${encodeURIComponent(cleanName.replace(/\s+/g, ''))}`,
             },
@@ -1137,7 +1163,11 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
               const th = $(tr).find('th').text().trim();
               const td = $(tr).find('td').text().trim();
               if (!th && td && !kana) kana = td;
-              if (th.includes('生年月日')) birthDate = formatBirthDateWithAge(td);
+              if (th.includes('生年月日')) {
+                const fallback = OFFICIAL_LPSA_BIRTHDATE_MAP[targetClean];
+                const useStr = (fallback && (!td || !/^\d{4}/.test(td))) ? fallback : td;
+                birthDate = formatBirthDateWithAge(useStr);
+              }
               if (th.includes('出身')) birthPlace = td;
               if (th.includes('血液型')) bloodType = td;
               if (th.includes('座右の銘')) motto = td;
