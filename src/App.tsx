@@ -27,7 +27,17 @@ import {
   saveFollowedPlayerCloud,
   removeFollowedPlayerCloud,
   syncLocalListToCloud,
-  signInGoogleUser
+  signInGoogleUser,
+  testConnection,
+  fetchPlayersFromCloud,
+  savePlayersToCloud,
+  fetchMatchesFromCloud,
+  saveMatchesToCloud,
+  fetchFiscalResultsFromCloud,
+  saveFiscalResultsToCloud,
+  fetchUserNotificationsFromCloud,
+  saveUserNotificationsToCloud,
+  getSafeCloudUserId
 } from './services/firebaseSync';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
@@ -51,7 +61,8 @@ import {
   Bell,
   Sparkles,
   X,
-  RefreshCw
+  RefreshCw,
+  Cloud
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -318,6 +329,7 @@ export default function App() {
       let matchesCount = 0;
 
       if (data.success) {
+        let freshPlayersMerged: Player[] = [];
         if (data.players && data.players.success && Array.isArray(data.players.players)) {
           const freshPlayers: Player[] = data.players.players;
           playersCount = freshPlayers.length;
@@ -327,14 +339,17 @@ export default function App() {
               const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
               return initializePlayerRecords(withTitles);
             });
+            freshPlayersMerged = merged;
             saveStoredPlayers(merged);
             return merged;
           });
         }
 
+        let freshMatchesSaved: Match[] = [];
         if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
           const freshMatches: Match[] = data.matches.matches;
           matchesCount = freshMatches.length;
+          freshMatchesSaved = freshMatches;
           setMatchesList(() => {
             saveStoredMatches(freshMatches);
             return freshMatches;
@@ -345,6 +360,7 @@ export default function App() {
           saveStoredFiscalResults(data.results2026);
           updateMatchStatsData(data.results2026);
           clearPlayerMatchCache();
+          saveFiscalResultsToCloud(data.results2026);
         }
 
         const now = new Date();
@@ -354,7 +370,15 @@ export default function App() {
         setLastSyncTime(timeStr);
         setLastMatchSyncTime(timeStr);
 
-        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '88'}局、全対局結果を最新化しました！`);
+        // Also persist to Firebase Firestore
+        if (freshPlayersMerged.length > 0) {
+          savePlayersToCloud(freshPlayersMerged, timeStr);
+        }
+        if (freshMatchesSaved.length > 0) {
+          saveMatchesToCloud(freshMatchesSaved, timeStr);
+        }
+
+        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '88'}局、全対局結果をFirebaseに反映しました！`);
         setTimeout(() => setSyncToast(null), 5000);
       }
     } catch (e) {
@@ -421,6 +445,7 @@ export default function App() {
       const updated = [...prev];
       updated[idx] = playerToSave;
       saveStoredPlayers(updated);
+      savePlayersToCloud(updated);
       return updated;
     });
     if (selectedPlayer?.id === playerToSave.id) {
@@ -487,6 +512,68 @@ export default function App() {
     } else {
       setActiveHeadsUp(null);
     }
+
+    // Firebase Firestore Connection Test & Cloud Data Hydration
+    const hydrateAndSeedFirestore = async () => {
+      await testConnection();
+      try {
+        const [cloudPlayers, cloudMatches, cloudFiscal] = await Promise.all([
+          fetchPlayersFromCloud(),
+          fetchMatchesFromCloud(),
+          fetchFiscalResultsFromCloud(),
+        ]);
+
+        // 1. Players from Cloud
+        if (cloudPlayers && Array.isArray(cloudPlayers.players) && cloudPlayers.players.length > 0) {
+          const initialized = cloudPlayers.players.map(initializePlayerRecords);
+          setPlayersList(initialized);
+          saveStoredPlayers(initialized);
+          if (cloudPlayers.lastSyncTime) {
+            setLastSyncTime(cloudPlayers.lastSyncTime);
+            saveStoredLastSync(cloudPlayers.lastSyncTime);
+          }
+        } else {
+          // Seed Firestore with local players
+          const current = getStoredPlayers();
+          if (current && current.length > 0) {
+            savePlayersToCloud(current, getStoredLastSync() || undefined);
+          }
+        }
+
+        // 2. Matches from Cloud
+        if (cloudMatches && Array.isArray(cloudMatches.matches) && cloudMatches.matches.length > 0) {
+          setMatchesList(cloudMatches.matches);
+          saveStoredMatches(cloudMatches.matches);
+          if (cloudMatches.lastSyncTime) {
+            setLastMatchSyncTime(cloudMatches.lastSyncTime);
+            saveStoredMatchLastSync(cloudMatches.lastSyncTime);
+          }
+        } else {
+          // Seed Firestore with local matches
+          const currentMatches = getStoredMatches() || MATCHES_DATA;
+          if (currentMatches && currentMatches.length > 0) {
+            saveMatchesToCloud(currentMatches, getStoredMatchLastSync() || undefined);
+          }
+        }
+
+        // 3. Fiscal results from Cloud
+        if (cloudFiscal && Object.keys(cloudFiscal).length > 0) {
+          saveStoredFiscalResults(cloudFiscal);
+          updateMatchStatsData(cloudFiscal);
+          clearPlayerMatchCache();
+        } else {
+          // Seed Firestore with local fiscal results
+          const currentResults = getStoredFiscalResults();
+          if (currentResults && Object.keys(currentResults).length > 0) {
+            saveFiscalResultsToCloud(currentResults);
+          }
+        }
+      } catch (err) {
+        console.warn('Initial cloud data sync note:', err);
+      }
+    };
+
+    hydrateAndSeedFirestore();
 
     const stored = getStoredPlayers();
     const needsForceSync =
@@ -586,9 +673,11 @@ export default function App() {
   const handleUpdateFiscalResults = (updatedResults: Record<string, ShogiMonthlyResult[]>) => {
     updateMatchStatsData(updatedResults);
     clearPlayerMatchCache();
+    saveFiscalResultsToCloud(updatedResults);
     setPlayersList((prev) => {
       const updated = prev.map((p) => initializePlayerRecords(p));
       saveStoredPlayers(updated);
+      savePlayersToCloud(updated);
       return updated;
     });
     setSelectedPlayer((cur) => {
@@ -745,7 +834,15 @@ export default function App() {
             </span>
           </button>
 
-
+          {/* Cloud Sync Status button - Opens Firebase synchronization modal */}
+          <button
+            onClick={() => setShowGoogleLoginModal(true)}
+            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-sky-400 hover:text-sky-300 border border-sky-500/30 hover:border-sky-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            title="Firebase クラウド同期・移行ステータス"
+          >
+            <Cloud size={14} className="text-sky-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">クラウド同期</span>
+          </button>
 
           {/* Quick notification bell */}
           <button
@@ -953,15 +1050,24 @@ export default function App() {
         />
       )}
 
-      {/* Google Account Login Modal */}
+      {/* Google Account Login & Firebase Cloud Sync Modal */}
       {showGoogleLoginModal && (
         <GoogleLoginModal
           currentUser={googleUser}
           followedList={followedList}
           players={playersList}
+          matches={matchesList}
+          fiscalResults={getStoredFiscalResults()}
+          notifications={notifications}
+          lastSyncTime={lastSyncTime}
+          lastMatchSyncTime={lastMatchSyncTime}
           onLogin={handleLoginGoogle}
           onLogout={handleLogoutGoogle}
           onClose={() => setShowGoogleLoginModal(false)}
+          onCloudDataMigrated={() => {
+            setSyncToast('Firebaseへの全データ完全移行・同期が完了しました');
+            setTimeout(() => setSyncToast(null), 4000);
+          }}
         />
       )}
 

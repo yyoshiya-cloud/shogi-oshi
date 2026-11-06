@@ -127,10 +127,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
               </div>
               <div>
                 <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  1. 推し棋士管理 & Googleアカウントデータ同期
+                  1. 推し棋士管理 & Firebase クラウド完全同期
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定。紙吹雪付きの応援タップやファンコメント投稿に対応し、Googleアカウント連携で推しデータをクラウドに安全保存。
+                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定。棋士プロフィール・公式対局予定・全対局結果を含む全データをFirebase Firestoreに完全移行・アクセスでき、複数端末（Android, iOS, Windows, Mac）でリアルタイム同期。
                 </p>
               </div>
             </div>

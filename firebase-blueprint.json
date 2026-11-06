@@ -41,12 +41,104 @@
         }
       },
       "required": ["playerId", "badge", "color"]
+    },
+    "AppPlayersData": {
+      "title": "AppPlayersData",
+      "description": "Aggregated active shogi players profile data and rankings",
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "description": "List of active players and profiles"
+        },
+        "lastSyncTime": {
+          "type": "string",
+          "description": "Timestamp of last official sync"
+        },
+        "count": {
+          "type": "number",
+          "description": "Total active player count"
+        }
+      },
+      "required": ["players", "lastSyncTime"]
+    },
+    "AppMatchesData": {
+      "title": "AppMatchesData",
+      "description": "Aggregated shogi official matches and schedules",
+      "type": "object",
+      "properties": {
+        "matches": {
+          "type": "array",
+          "description": "List of upcoming and recent matches"
+        },
+        "lastSyncTime": {
+          "type": "string",
+          "description": "Timestamp of last match schedule sync"
+        },
+        "count": {
+          "type": "number",
+          "description": "Total matches count"
+        }
+      },
+      "required": ["matches", "lastSyncTime"]
+    },
+    "MonthlyResultDocument": {
+      "title": "MonthlyResultDocument",
+      "description": "Monthly official shogi match results for YYYYMM",
+      "type": "object",
+      "properties": {
+        "month": {
+          "type": "string",
+          "description": "Month in YYYYMM format"
+        },
+        "results": {
+          "type": "array",
+          "description": "List of match results in this month"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when monthly results were updated"
+        }
+      },
+      "required": ["month", "results"]
+    },
+    "UserNotificationsData": {
+      "title": "UserNotificationsData",
+      "description": "User notification bulletin items",
+      "type": "object",
+      "properties": {
+        "notifications": {
+          "type": "array",
+          "description": "List of push notification bulletin items"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last notification update"
+        }
+      },
+      "required": ["notifications"]
     }
   },
   "firestore": {
     "/users/{userId}/followed/{playerId}": {
       "schema": "FollowedPlayer",
       "description": "Subcollection of followed player settings for a specific user"
+    },
+    "/users/{userId}/metadata/notifications": {
+      "schema": "UserNotificationsData",
+      "description": "User notifications data"
+    },
+    "/app_data/players": {
+      "schema": "AppPlayersData",
+      "description": "Shared cache of all active shogi players profiles"
+    },
+    "/app_data/matches": {
+      "schema": "AppMatchesData",
+      "description": "Shared cache of all official match schedules"
+    },
+    "/fiscal_results/{month}": {
+      "schema": "MonthlyResultDocument",
+      "description": "Monthly official match results partition"
     }
   }
 }

@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ShieldCheck, LogOut, CheckCircle2, User, X, Heart } from 'lucide-react';
-import { Player, FollowedPlayerConfig } from '../types/shogi';
+import {
+  ShieldCheck,
+  LogOut,
+  CheckCircle2,
+  X,
+  Heart,
+  Cloud,
+  Database,
+  RefreshCw,
+  Users,
+  Calendar,
+  Trophy,
+  Bell,
+  Check
+} from 'lucide-react';
+import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult, PushNotificationItem } from '../types/shogi';
 import { OshiBadgeTag } from '../utils/badgeUtils';
-import { signInGoogleUser, signOutGoogleUser } from '../services/firebaseSync';
+import {
+  signInGoogleUser,
+  signOutGoogleUser,
+  migrateAllLocalStorageToFirebase,
+  getSafeCloudUserId,
+  MigrationSummary,
+} from '../services/firebaseSync';
 
 export interface GoogleUser {
   name: string;
@@ -15,23 +35,39 @@ interface GoogleLoginModalProps {
   currentUser: GoogleUser | null;
   followedList?: FollowedPlayerConfig[];
   players?: Player[];
+  matches?: Match[];
+  fiscalResults?: Record<string, ShogiMonthlyResult[]>;
+  notifications?: PushNotificationItem[];
+  lastSyncTime?: string | null;
+  lastMatchSyncTime?: string | null;
   onLogin: (user: GoogleUser) => void;
   onLogout: () => void;
   onClose: () => void;
+  onCloudDataMigrated?: () => void;
 }
 
 export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
   currentUser,
   followedList = [],
   players = [],
+  matches = [],
+  fiscalResults = {},
+  notifications = [],
+  lastSyncTime,
+  lastMatchSyncTime,
   onLogin,
   onLogout,
   onClose,
+  onCloudDataMigrated,
 }) => {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [customEmail, setCustomEmail] = useState('y.yoshiya@gmail.com');
   const [customName, setCustomName] = useState('Y.Yoshiya');
   const [isCustomMode, setIsCustomMode] = useState(false);
+
+  // Cloud migration state
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<MigrationSummary | null>(null);
 
   // Lock body scroll while modal is active
   useEffect(() => {
@@ -62,9 +98,32 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
     }
   };
 
+  const handleStartMigration = async () => {
+    setIsMigrating(true);
+    try {
+      const email = currentUser?.email || 'y.yoshiya@gmail.com';
+      const userId = getSafeCloudUserId(email);
+      const res = await migrateAllLocalStorageToFirebase(userId, {
+        followed: followedList,
+        players,
+        matches,
+        fiscalResults,
+        notifications,
+        lastSyncTime,
+        lastMatchSyncTime,
+      });
+      setMigrationResult(res);
+      onCloudDataMigrated?.();
+    } catch (e) {
+      console.error('Migration error:', e);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3 sm:p-4 touch-none"
       style={{
         transform: 'translateZ(0)',
         WebkitBackfaceVisibility: 'hidden',
@@ -75,7 +134,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
       }}
     >
       <div
-        className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-5 sm:p-6 text-zinc-100 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-auto overscroll-contain"
+        className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-md w-full p-4 sm:p-6 text-zinc-100 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto touch-auto overscroll-contain"
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',
@@ -108,9 +167,9 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black font-serif-jp text-zinc-100">
-                Google アカウント連携
+                Google 連携 & Firebase 同期
               </h3>
-              <p className="text-[11px] text-zinc-400">推し棋士・女流棋士データの同期・保存</p>
+              <p className="text-[11px] text-zinc-400">推し棋士・全公式データのクラウド移行</p>
             </div>
           </div>
           <button
@@ -136,21 +195,89 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 <h4 className="font-bold text-zinc-100 text-sm truncate">
                   {currentUser.name}
                 </h4>
-                <p className="text-xs text-zinc-400">連携完了</p>
+                <p className="text-xs text-zinc-400 truncate">{currentUser.email}</p>
               </div>
             </div>
 
-            <div className="bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-2xl text-xs text-amber-200 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                <ShieldCheck size={14} />
-                <span>推し棋士データ 全端末クラウド同期中 (Firestore)</span>
+            {/* Firebase Cloud Migration & Sync Card */}
+            <div className="bg-gradient-to-r from-sky-950/40 via-zinc-900 to-amber-950/20 border border-sky-500/30 p-3.5 rounded-2xl text-xs space-y-3 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-sky-300">
+                  <Database size={15} />
+                  <span>Firebase クラウドデータベース移行状態</span>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  接続中
+                </span>
               </div>
-              <p className="text-amber-200/80 text-[11px] leading-relaxed">
-                ログイン中のGoogleアカウントに登録された推し棋士・応援メモ・カラー設定はCloud Firestoreに自動保存され、スマホ（Android/iOS）やPC（Windows/Mac）でリアルタイムに完全同期されます。
-              </p>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="bg-zinc-950/70 p-2 rounded-xl border border-zinc-800/80">
+                  <div className="text-zinc-400 flex items-center gap-1">
+                    <Users size={12} className="text-amber-400" />
+                    <span>全棋士・女流棋士</span>
+                  </div>
+                  <div className="font-bold text-zinc-200 mt-0.5">
+                    {players.length} 名 (クラウド同期)
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950/70 p-2 rounded-xl border border-zinc-800/80">
+                  <div className="text-zinc-400 flex items-center gap-1">
+                    <Calendar size={12} className="text-amber-400" />
+                    <span>公式対局予定</span>
+                  </div>
+                  <div className="font-bold text-zinc-200 mt-0.5">
+                    {matches.length} 局 (クラウド同期)
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950/70 p-2 rounded-xl border border-zinc-800/80">
+                  <div className="text-zinc-400 flex items-center gap-1">
+                    <Trophy size={12} className="text-amber-400" />
+                    <span>2025/2026対局結果</span>
+                  </div>
+                  <div className="font-bold text-zinc-200 mt-0.5">
+                    {Object.keys(fiscalResults).length} ヶ月分 (Firestore)
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950/70 p-2 rounded-xl border border-zinc-800/80">
+                  <div className="text-zinc-400 flex items-center gap-1">
+                    <Heart size={12} className="text-rose-400" />
+                    <span>推し棋士・メモ</span>
+                  </div>
+                  <div className="font-bold text-zinc-200 mt-0.5">
+                    {followedList.length} 名 (リアルタイム)
+                  </div>
+                </div>
+              </div>
+
+              {migrationResult && (
+                <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-[11px] flex items-center gap-2 animate-fadeIn">
+                  <Check size={14} className="text-emerald-400 shrink-0" />
+                  <span>
+                    Firebaseへの全データ移行完了！(棋士{migrationResult.playersCount}名、対局{migrationResult.matchesCount}局、推し{migrationResult.followedCount}名、結果{migrationResult.resultsMonthsCount}月分)
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={handleStartMigration}
+                disabled={isMigrating}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Cloud size={14} className={isMigrating ? 'animate-bounce' : ''} />
+                <span>
+                  {isMigrating
+                    ? 'Firebase Firestore へデータ移行中...'
+                    : 'Firebaseへ全データを今すぐ移行・同期する'}
+                </span>
+              </button>
             </div>
 
-            {/* List of Linked Oshi Players & Female Players */}
+            {/* List of Linked Oshi Players */}
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between text-xs px-1">
                 <span className="font-bold text-zinc-200 flex items-center gap-1.5">
@@ -159,7 +286,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 </span>
                 <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  リンク済み
+                  リアルタイム同期
                 </span>
               </div>
 
@@ -206,7 +333,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
             <div className="flex items-center gap-2.5 pt-2">
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition"
+                className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition cursor-pointer"
               >
                 閉じる
               </button>
@@ -216,7 +343,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                   onLogout();
                   onClose();
                 }}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-500/30 transition"
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-500/30 transition cursor-pointer"
               >
                 <LogOut size={14} />
                 <span>ログアウト</span>
@@ -269,7 +396,7 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 <div className="text-center pt-1">
                   <button
                     onClick={() => setIsCustomMode(true)}
-                    className="text-[11px] text-zinc-400 hover:text-amber-300 underline transition"
+                    className="text-[11px] text-zinc-400 hover:text-amber-300 underline transition cursor-pointer"
                   >
                     別のアカウントでログインする
                   </button>
@@ -302,14 +429,14 @@ export const GoogleLoginModal: React.FC<GoogleLoginModalProps> = ({
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     onClick={() => setIsCustomMode(false)}
-                    className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold"
+                    className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold cursor-pointer"
                   >
                     戻る
                   </button>
                   <button
                     onClick={() => handleLogin(customName, customEmail)}
                     disabled={isSigningIn}
-                    className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition shadow"
+                    className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition shadow cursor-pointer"
                   >
                     {isSigningIn ? 'ログイン中...' : 'ログイン'}
                   </button>
