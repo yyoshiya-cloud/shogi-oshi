@@ -362,21 +362,59 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       >
         {/* Top Header Banner with Player Color */}
         <div
-          className="relative px-6 pt-6 pb-5 text-white flex-shrink-0"
+          className="relative px-4 sm:px-6 pt-3 pb-2.5 text-white flex-shrink-0"
           style={{ background: activePlayer.avatarBg || 'linear-gradient(135deg, #1c1917 0%, #292524 100%)' }}
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-black/60 text-zinc-300 hover:text-white transition"
+            className="absolute top-2.5 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-zinc-300 hover:text-white transition z-10"
           >
             <X size={18} />
           </button>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+          {/* Top badges row (above photo and name) */}
+          <div className="flex items-center gap-1.5 flex-wrap pr-10 mb-2">
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-black/40 text-amber-200 border border-white/10 shadow-sm">
+              {activePlayer.type === 'women' ? '女流棋士' : '棋士'} No.{activePlayer.playerNumber}
+            </span>
+            <span
+              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border shadow-sm ${
+                activePlayer.affiliation === 'LPSA'
+                  ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400/50'
+                  : activePlayer.affiliation === '無所属'
+                  ? 'bg-amber-500/30 text-amber-200 border-amber-400/50'
+                  : 'bg-white/10 text-zinc-200 border-white/20'
+              }`}
+            >
+              {activePlayer.affiliation || '日本将棋連盟'}
+            </span>
+            {isPlayerRetired(activePlayer) && (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300 border border-zinc-600">
+                引退
+              </span>
+            )}
+            {isPlayerOnLeave(activePlayer) && (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40">
+                休場中
+              </span>
+            )}
+            {followedConfig && (
+              <OshiBadgeTag badge={followedConfig.badge} size="sm" />
+            )}
+            {loadingDetails && (
+              <span className="text-[10px] text-amber-300 flex items-center gap-1 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
+                <Loader2 size={10} className="animate-spin" />
+                連盟データ同期中
+              </span>
+            )}
+          </div>
+
+          {/* Photo + Name row with Action Buttons on the right (shifted upward to avoid overlapping text) */}
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-serif-jp shadow-2xl border-2 border-white/20 overflow-hidden bg-zinc-900 flex-shrink-0"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-serif-jp shadow-2xl border-2 border-white/20 overflow-hidden bg-zinc-900 flex-shrink-0"
                 style={{ backgroundColor: activePlayer.type === 'women' ? '#ec4899' : '#3b82f6' }}
               >
                 {activePlayer.photoUrl ? (
@@ -393,64 +431,32 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   activePlayer.name[0]
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-black/40 text-amber-200 border border-white/10">
-                    {activePlayer.type === 'women' ? '女流棋士' : '棋士'} No.{activePlayer.playerNumber}
+              <div className="min-w-0 flex-1 pt-0.5">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider leading-tight">
+                    {formatPlayerName(activePlayer.name)}
+                  </h2>
+                  <span className="text-xs sm:text-sm font-bold text-amber-300 font-serif-jp leading-tight">
+                    {activePlayer.danRank && !activePlayer.rank.includes(activePlayer.danRank)
+                      ? `${activePlayer.rank} (${activePlayer.danRank})`
+                      : activePlayer.rank}
                   </span>
-                  <span
-                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                      activePlayer.affiliation === 'LPSA'
-                        ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400/50'
-                        : activePlayer.affiliation === '無所属'
-                        ? 'bg-amber-500/30 text-amber-200 border-amber-400/50'
-                        : 'bg-white/10 text-zinc-200 border-white/20'
-                    }`}
-                  >
-                    {activePlayer.affiliation || '日本将棋連盟'}
-                  </span>
-                  {isPlayerRetired(activePlayer) && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300 border border-zinc-600">
-                      引退
-                    </span>
-                  )}
-                  {isPlayerOnLeave(activePlayer) && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40">
-                      休場中
-                    </span>
-                  )}
-                  {followedConfig && (
-                    <OshiBadgeTag badge={followedConfig.badge} size="sm" />
-                  )}
-                  {loadingDetails && (
-                    <span className="text-[10px] text-amber-300 flex items-center gap-1 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
-                      <Loader2 size={10} className="animate-spin" />
-                      連盟データ同期中
-                    </span>
-                  )}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider mt-1">
-                  {formatPlayerName(activePlayer.name)}
-                </h2>
-                <p className="text-sm font-bold text-amber-300 font-serif-jp">
-                  {activePlayer.danRank && !activePlayer.rank.includes(activePlayer.danRank)
-                    ? `${activePlayer.rank} (${activePlayer.danRank})`
-                    : activePlayer.rank}
-                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Action buttons shifted upward */}
+            <div className="flex items-center gap-1.5 shrink-0 -mt-2 sm:-mt-2.5">
               {followedConfig ? (
                 <>
                   <button
                     type="button"
                     onClick={() => setIsConfigModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/40 hover:bg-black/60 text-amber-300 font-bold text-xs border border-amber-500/40 transition cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/50 hover:bg-black/70 text-amber-300 font-bold text-[11px] sm:text-xs border border-amber-500/40 shadow-sm transition cursor-pointer"
                     title="推し設定（バッジ・推しカラー・応援メモ）を変更"
                   >
-                    <Settings2 size={13} />
-                    <span>推し設定変更</span>
+                    <Settings2 size={12} />
+                    <span>設定変更</span>
                   </button>
                   <button
                     type="button"
@@ -458,7 +464,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       onRemoveFollow(activePlayer.id);
                       onClose();
                     }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/40 hover:bg-rose-950/60 text-zinc-300 hover:text-rose-300 font-bold text-xs border border-white/20 transition cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/50 hover:bg-rose-950/70 text-zinc-300 hover:text-rose-300 font-bold text-[11px] sm:text-xs border border-white/20 shadow-sm transition cursor-pointer"
+                    title="推し解除"
                   >
                     <span>推し解除</span>
                   </button>
@@ -467,9 +474,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsConfigModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs shadow-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs shadow-md transition cursor-pointer"
                 >
-                  <Heart size={14} className="fill-stone-950" />
+                  <Heart size={13} className="fill-stone-950" />
                   <span>推し登録する</span>
                 </button>
               )}
@@ -478,7 +485,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
           {/* Cheering note if set */}
           {followedConfig?.cheeringNote && (
-            <div className="mt-3 px-3.5 py-2 rounded-xl bg-black/40 border border-amber-500/30 flex items-center gap-2 text-xs text-amber-200">
+            <div className="mt-2 px-3 py-1.5 rounded-xl bg-black/40 border border-amber-500/30 flex items-center gap-2 text-xs text-amber-200">
               <span className="text-sm">💬</span>
               <span className="font-bold text-amber-300 shrink-0">応援メモ:</span>
               <span className="truncate">{followedConfig.cheeringNote}</span>
@@ -487,7 +494,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
           {/* Currently Held Titles */}
           {activePlayer.heldTitles.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5 pt-2 border-t border-white/10 items-center">
+            <div className="mt-2 flex flex-wrap gap-1.5 pt-1.5 border-t border-white/10 items-center">
               <span className="text-xs text-amber-300 flex items-center gap-1 mr-1 font-bold">
                 <Trophy size={13} className="text-amber-400" />
                 現在保持タイトル:
@@ -509,7 +516,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             const badgeLabel = formatEiseiBadgeLabel(activePlayer);
             if (eiseiList.length === 0 && !badgeLabel) return null;
             return (
-              <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-amber-500/20 text-xs">
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-amber-500/20 text-xs">
                 <span className="text-amber-300 flex items-center gap-1 mr-1 font-bold">
                   <Crown size={14} className="text-amber-400 fill-amber-400/40" />
                   永世資格・名誉称号:
@@ -536,7 +543,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             const totalTitles = getPlayerTotalTitles(activePlayer);
             if (totalTitles <= 0) return null;
             return (
-              <div className="mt-2.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10 text-xs">
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/10 text-xs">
                 <span className="text-amber-300/90 flex items-center gap-1 mr-1 font-bold">
                   <Trophy size={13} className="text-amber-400/80" />
                   通算タイトル獲得:
@@ -563,10 +570,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-zinc-800 bg-zinc-900/60 px-4 sm:px-6 pt-2 overflow-x-auto scrollbar-none gap-1">
+        <div className="flex border-b border-zinc-800 bg-zinc-900/60 px-4 sm:px-6 pt-1 overflow-x-auto scrollbar-none gap-1">
           <button
             onClick={() => setActiveTab('stats')}
-            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'stats'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -576,7 +583,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'results'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -587,7 +594,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('matches')}
-            className={`py-3 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
+            className={`py-2.5 px-3 sm:px-4 text-[10px] leading-[14px] font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'matches'
                 ? 'border-amber-400 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'

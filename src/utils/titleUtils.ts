@@ -422,7 +422,7 @@ export function formatEiseiBadgeLabel(player?: Partial<Player> | null): string |
   if (cleanName === '佐藤康光') return '永世棋聖';
   if (cleanName === '渡辺明') return '永世二冠';
   if (cleanName === '福間香奈' || cleanName === '里見香奈') return 'クイーン六冠';
-  if (cleanName === '西山朋佳') return 'クイーン白玲・永世女王・クイーン王将';
+  if (cleanName === '西山朋佳') return 'クイーン３冠';
   if (cleanName === '清水市代') return 'クイーン四冠';
   if (cleanName === '中井広恵') return 'クイーン名人';
 
