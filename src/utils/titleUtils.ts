@@ -5,7 +5,7 @@ import { Player } from '../types/shogi';
  * 歴代・現役棋士および女流棋士の通算主要タイトル獲得期数完全マスター
  */
 const KNOWN_CAREER_TITLES: Record<string, number> = {
-  // --- 棋士（男性プロ） ---
+  // --- 棋士 ---
   '羽生善治': 99,
   '渡辺明': 31,
   '藤井聡太': 28,
@@ -61,7 +61,7 @@ const KNOWN_CAREER_TITLES: Record<string, number> = {
  */
 const KNOWN_CAREER_TITLES_BY_NUMBER: Record<number, number> = {
   // 棋士
-  1307: 28, // 藤井聡太
+  307: 28, // 藤井聡太
   175: 99,  // 羽生善治
   235: 31,  // 渡辺明
   131: 27,  // 谷川浩司
@@ -140,7 +140,7 @@ export interface EiseiCriterion {
 }
 
 /**
- * 棋士（男性プロ）の永世称号獲得規定（全主要タイトル）
+ * 棋士の永世称号獲得規定（全主要タイトル）
  */
 export const MEN_EISEI_TITLES_CRITERIA: EiseiCriterion[] = [
   {

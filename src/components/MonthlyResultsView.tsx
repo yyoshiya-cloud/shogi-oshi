@@ -999,7 +999,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                 : 'bg-zinc-800/80 text-indigo-300 hover:bg-zinc-700/80'
             }`}
           >
-            棋士 (男性)
+            棋士
           </button>
           <button
             onClick={() => setCategoryFilter('women')}
