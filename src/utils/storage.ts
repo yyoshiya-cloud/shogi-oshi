@@ -4,6 +4,8 @@ import results2026Json from '../data/results2026.json';
 import { initializePlayerRecords } from './yearRecordsGenerator';
 import { filterBulletinNotifications } from './notificationFilter';
 import { getTodayDateString, getTodayInfo } from './dateUtils';
+import { enrichAllResultsWithSupplements } from '../services/matchSupplementService';
+
 
 const STORAGE_KEYS = {
   FOLLOWED: 'shogi_oshi_followed_v2',
@@ -13,7 +15,7 @@ const STORAGE_KEYS = {
   LAST_SYNC: 'shogi_oshi_players_last_sync_v16',
   MATCHES: 'shogi_oshi_all_matches_v1',
   MATCH_LAST_SYNC: 'shogi_oshi_matches_last_sync_v1',
-  RESULTS_2026: 'shogi_oshi_results_2026_v2',
+  RESULTS_2026: 'shogi_oshi_results_2026_v4',
 };
 
 /**
@@ -431,11 +433,10 @@ export function getStoredFiscalResults(): Record<string, ShogiMonthlyResult[]> {
   const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.RESULTS_2026);
-    if (!raw) return base;
-    const parsed = JSON.parse(raw);
-    return { ...base, ...parsed };
+    const data: Record<string, ShogiMonthlyResult[]> = raw ? { ...base, ...JSON.parse(raw) } : base;
+    return enrichAllResultsWithSupplements(data);
   } catch {
-    return base;
+    return enrichAllResultsWithSupplements(base);
   }
 }
 

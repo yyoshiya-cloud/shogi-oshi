@@ -54,6 +54,7 @@ import { MatchDetailModal } from './components/MatchDetailModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
+import { DataAuditModal } from './components/DataAuditModal';
 import {
   Heart,
   Calendar,
@@ -62,7 +63,8 @@ import {
   Sparkles,
   X,
   RefreshCw,
-  Cloud
+  Cloud,
+  ShieldAlert
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -284,6 +286,7 @@ export default function App() {
   });
   const [showGoogleLoginModal, setShowGoogleLoginModal] = useState(false);
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
+  const [showDataAuditModal, setShowDataAuditModal] = useState(false);
 
   const handleLoginGoogle = (user: { name: string; email: string; avatar: string }) => {
     setGoogleUser(user);
@@ -532,12 +535,6 @@ export default function App() {
             setLastSyncTime(cloudPlayers.lastSyncTime);
             saveStoredLastSync(cloudPlayers.lastSyncTime);
           }
-        } else {
-          // Seed Firestore with local players
-          const current = getStoredPlayers();
-          if (current && current.length > 0) {
-            savePlayersToCloud(current, getStoredLastSync() || undefined);
-          }
         }
 
         // 2. Matches from Cloud
@@ -548,25 +545,22 @@ export default function App() {
             setLastMatchSyncTime(cloudMatches.lastSyncTime);
             saveStoredMatchLastSync(cloudMatches.lastSyncTime);
           }
-        } else {
-          // Seed Firestore with local matches
-          const currentMatches = getStoredMatches() || MATCHES_DATA;
-          if (currentMatches && currentMatches.length > 0) {
-            saveMatchesToCloud(currentMatches, getStoredMatchLastSync() || undefined);
-          }
         }
 
         // 3. Fiscal results from Cloud
         if (cloudFiscal && Object.keys(cloudFiscal).length > 0) {
+          for (const m of Object.keys(cloudFiscal)) {
+            if (Array.isArray(cloudFiscal[m])) {
+              cloudFiscal[m].forEach((r) => {
+                if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
+                  r.tournament = 'NHK杯';
+                }
+              });
+            }
+          }
           saveStoredFiscalResults(cloudFiscal);
           updateMatchStatsData(cloudFiscal);
           clearPlayerMatchCache();
-        } else {
-          // Seed Firestore with local fiscal results
-          const currentResults = getStoredFiscalResults();
-          if (currentResults && Object.keys(currentResults).length > 0) {
-            saveFiscalResultsToCloud(currentResults);
-          }
         }
       } catch (err) {
         console.warn('Initial cloud data sync note:', err);
@@ -602,13 +596,7 @@ export default function App() {
 
     const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-    // 1. Initial push local storage items to cloud if any exist
-    const localList = getStoredFollowed(googleUser.email);
-    if (localList && localList.length > 0) {
-      syncLocalListToCloud(cloudUserId, localList);
-    }
-
-    // 2. Attach real-time Firestore listener for multi-device sync
+    // Attach real-time Firestore listener for multi-device sync
     const unsubscribe = subscribeFollowedPlayers(cloudUserId, (remoteList) => {
       setFollowedList(remoteList);
       saveStoredFollowed(remoteList, googleUser.email);
@@ -844,6 +832,16 @@ export default function App() {
             <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">クラウド同期</span>
           </button>
 
+          {/* Data Audit & Supplement Management button */}
+          <button
+            onClick={() => setShowDataAuditModal(true)}
+            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            title="公式対局データの更新漏れ監査・補填・手動登録画面を開く"
+          >
+            <ShieldAlert size={14} className="text-amber-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">データ監査</span>
+          </button>
+
           {/* Quick notification bell */}
           <button
             onClick={() => setShowNotificationModal(true)}
@@ -1074,6 +1072,21 @@ export default function App() {
       {/* App Info & Features Modal */}
       {showAppInfoModal && (
         <AppInfoModal onClose={() => setShowAppInfoModal(false)} />
+      )}
+
+      {/* Data Audit & Supplement Management Modal */}
+      {showDataAuditModal && (
+        <DataAuditModal
+          players={playersList}
+          onClose={() => setShowDataAuditModal(false)}
+          onUpdateResults={(updatedResults) => {
+            handleUpdateFiscalResults(updatedResults);
+          }}
+          onUpdatePlayers={(updatedPlayers) => {
+            setPlayersList(updatedPlayers);
+            saveStoredPlayers(updatedPlayers);
+          }}
+        />
       )}
 
 

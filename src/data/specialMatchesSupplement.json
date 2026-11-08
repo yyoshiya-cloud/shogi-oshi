@@ -1,0 +1,3302 @@
+[
+  {
+    "id": "res-nhk75-2025-03-23-nishiyama-fukuma",
+    "date": "2025-03-23",
+    "month": "202503",
+    "sente": "西山 朋佳",
+    "gote": "福間 香奈",
+    "senteRaw": "西山朋佳 女流三冠",
+    "goteRaw": "福間香奈 女流四冠",
+    "sentePlayerId": "nishiyama-tomoka",
+    "gotePlayerId": "fukuma-kana",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "西山 朋佳",
+    "loser": "福間 香奈",
+    "winnerId": "nishiyama-tomoka",
+    "loserId": "fukuma-kana",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "出場女流棋士決定戦 121手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": true,
+    "category": "女流棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-04-06-吉池 隆真-船江 恒平",
+    "date": "2025-04-06",
+    "month": "202504",
+    "sente": "吉池 隆真",
+    "gote": "船江 恒平",
+    "senteRaw": "吉池隆真四段",
+    "goteRaw": "船江恒平七段",
+    "sentePlayerId": "pro-ryuma_yoshiike",
+    "gotePlayerId": "pro-kouhei_funae",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "吉池 隆真",
+    "loser": "船江 恒平",
+    "winnerId": "pro-ryuma_yoshiike",
+    "loserId": "pro-kouhei_funae",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 1回戦 第1局 103手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-04-13-遠山 雄亮-勝又 清和",
+    "date": "2025-04-13",
+    "month": "202504",
+    "sente": "遠山 雄亮",
+    "gote": "勝又 清和",
+    "senteRaw": "遠山雄亮六段",
+    "goteRaw": "勝又清和七段",
+    "sentePlayerId": "pro-yusuke_toyama",
+    "gotePlayerId": "pro-kiyokazu_katsumata",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "勝又 清和",
+    "loser": "遠山 雄亮",
+    "winnerId": "pro-kiyokazu_katsumata",
+    "loserId": "pro-yusuke_toyama",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 1回戦 第2局 184手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-04-20-宮本 広志-羽生 善治",
+    "date": "2025-04-20",
+    "month": "202504",
+    "sente": "宮本 広志",
+    "gote": "羽生 善治",
+    "senteRaw": "宮本広志六段",
+    "goteRaw": "羽生善治九段",
+    "sentePlayerId": "pro-hiroshi_miyamoto",
+    "gotePlayerId": "habu-yoshiharu",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "羽生 善治",
+    "loser": "宮本 広志",
+    "winnerId": "habu-yoshiharu",
+    "loserId": "pro-hiroshi_miyamoto",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 1回戦 第3局 098手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-04-27-大橋 貴洸-森内 俊之",
+    "date": "2025-04-27",
+    "month": "202504",
+    "sente": "大橋 貴洸",
+    "gote": "森内 俊之",
+    "senteRaw": "大橋貴洸七段",
+    "goteRaw": "森内俊之九段",
+    "sentePlayerId": "pro-takahiro_oohashi",
+    "gotePlayerId": "pro-toshiyuki_moriuchi",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "大橋 貴洸",
+    "loser": "森内 俊之",
+    "winnerId": "pro-takahiro_oohashi",
+    "loserId": "pro-toshiyuki_moriuchi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 1回戦 第4局 083手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-05-04-岡部 怜央-山崎 隆之",
+    "date": "2025-05-04",
+    "month": "202505",
+    "sente": "岡部 怜央",
+    "gote": "山崎 隆之",
+    "senteRaw": "岡部怜央五段",
+    "goteRaw": "山崎隆之九段",
+    "sentePlayerId": "pro-reo_okabe",
+    "gotePlayerId": "pro-takayuki_yamasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "山崎 隆之",
+    "loser": "岡部 怜央",
+    "winnerId": "pro-takayuki_yamasaki",
+    "loserId": "pro-reo_okabe",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第5局 112手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-05-11-藤本 渚-谷合 廣紀",
+    "date": "2025-05-11",
+    "month": "202505",
+    "sente": "藤本 渚",
+    "gote": "谷合 廣紀",
+    "senteRaw": "藤本渚六段",
+    "goteRaw": "谷合廣紀四段",
+    "sentePlayerId": "pro-nagisa_fujimoto",
+    "gotePlayerId": "pro-hiroki_taniai",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤本 渚",
+    "loser": "谷合 廣紀",
+    "winnerId": "pro-nagisa_fujimoto",
+    "loserId": "pro-hiroki_taniai",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第6局 119手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-05-18-広瀬 章人-石川 優太",
+    "date": "2025-05-18",
+    "month": "202505",
+    "sente": "広瀬 章人",
+    "gote": "石川 優太",
+    "senteRaw": "広瀬章人九段",
+    "goteRaw": "石川優太五段",
+    "sentePlayerId": "pro-akihito_hirose",
+    "gotePlayerId": "pro-yuta_ishikawa",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "石川 優太",
+    "loser": "広瀬 章人",
+    "winnerId": "pro-yuta_ishikawa",
+    "loserId": "pro-akihito_hirose",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第7局 134手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-05-25-石井 健太郎-服部 慎一郎",
+    "date": "2025-05-25",
+    "month": "202505",
+    "sente": "石井 健太郎",
+    "gote": "服部 慎一郎",
+    "senteRaw": "石井健太郎七段",
+    "goteRaw": "服部慎一郎七段",
+    "sentePlayerId": "pro-kentaro_ishii",
+    "gotePlayerId": "pro-shinichiro_hattori",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "服部 慎一郎",
+    "loser": "石井 健太郎",
+    "winnerId": "pro-shinichiro_hattori",
+    "loserId": "pro-kentaro_ishii",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第8局 092手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-06-01-西山朋佳三冠-村中 秀史",
+    "date": "2025-06-01",
+    "month": "202506",
+    "sente": "西山 朋佳",
+    "gote": "村中 秀史",
+    "senteRaw": "西山朋佳女流三冠",
+    "goteRaw": "村中秀史七段",
+    "sentePlayerId": "nishiyama-tomoka",
+    "gotePlayerId": "pro-shuji_muranaka",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "村中 秀史",
+    "loser": "西山 朋佳",
+    "winnerId": "pro-shuji_muranaka",
+    "loserId": "nishiyama-tomoka",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第9局 112手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": true,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-06-08-高田 明浩-西尾 明",
+    "date": "2025-06-08",
+    "month": "202506",
+    "sente": "高田 明浩",
+    "gote": "西尾 明",
+    "senteRaw": "高田明浩五段",
+    "goteRaw": "西尾明七段",
+    "sentePlayerId": "pro-akihiro_takada",
+    "gotePlayerId": "pro-akira_nishio",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "高田 明浩",
+    "loser": "西尾 明",
+    "winnerId": "pro-akihiro_takada",
+    "loserId": "pro-akira_nishio",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第10局 119手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-06-15-斎藤 慎太郎-三浦 弘行",
+    "date": "2025-06-15",
+    "month": "202506",
+    "sente": "斎藤 慎太郎",
+    "gote": "三浦 弘行",
+    "senteRaw": "斎藤慎太郎八段",
+    "goteRaw": "三浦弘行九段",
+    "sentePlayerId": "pro-shintaro_saito",
+    "gotePlayerId": "pro-hiroyuki_miura",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "斎藤 慎太郎",
+    "loser": "三浦 弘行",
+    "winnerId": "pro-shintaro_saito",
+    "loserId": "pro-hiroyuki_miura",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第11局 129手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-06-22-高見 泰地-大石 直嗣",
+    "date": "2025-06-22",
+    "month": "202506",
+    "sente": "高見 泰地",
+    "gote": "大石 直嗣",
+    "senteRaw": "高見泰地七段",
+    "goteRaw": "大石直嗣七段",
+    "sentePlayerId": "pro-taichi_takami",
+    "gotePlayerId": "pro-tadashi_ooishi",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "大石 直嗣",
+    "loser": "高見 泰地",
+    "winnerId": "pro-tadashi_ooishi",
+    "loserId": "pro-taichi_takami",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第12局 104手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-06-29-糸谷 哲郎-宮嶋 健太",
+    "date": "2025-06-29",
+    "month": "202506",
+    "sente": "糸谷 哲郎",
+    "gote": "宮嶋 健太",
+    "senteRaw": "糸谷哲郎八段",
+    "goteRaw": "宮嶋健太四段",
+    "sentePlayerId": "pro-tetsuro_itodani",
+    "gotePlayerId": "pro-kenta_miyajima",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "糸谷 哲郎",
+    "loser": "宮嶋 健太",
+    "winnerId": "pro-tetsuro_itodani",
+    "loserId": "pro-kenta_miyajima",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第13局 103手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-07-06-丸山 忠久-上野 裕寿",
+    "date": "2025-07-06",
+    "month": "202507",
+    "sente": "丸山 忠久",
+    "gote": "上野 裕寿",
+    "senteRaw": "丸山忠久九段",
+    "goteRaw": "上野裕寿五段",
+    "sentePlayerId": "pro-tadahisa_maruyama",
+    "gotePlayerId": "pro-hirotoshi_ueno",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "丸山 忠久",
+    "loser": "上野 裕寿",
+    "winnerId": "pro-tadahisa_maruyama",
+    "loserId": "pro-hirotoshi_ueno",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第14局 109手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-07-13-折田 翔吾-千田 翔太",
+    "date": "2025-07-13",
+    "month": "202507",
+    "sente": "折田 翔吾",
+    "gote": "千田 翔太",
+    "senteRaw": "折田翔吾五段",
+    "goteRaw": "千田翔太八段",
+    "sentePlayerId": "pro-shogo_orita",
+    "gotePlayerId": "pro-shota_chida",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "折田 翔吾",
+    "loser": "千田 翔太",
+    "winnerId": "pro-shogo_orita",
+    "loserId": "pro-shota_chida",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第15局 151手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-07-20-佐藤 紳哉-木村 一基",
+    "date": "2025-07-20",
+    "month": "202507",
+    "sente": "佐藤 紳哉",
+    "gote": "木村 一基",
+    "senteRaw": "佐藤紳哉七段",
+    "goteRaw": "木村一基九段",
+    "sentePlayerId": "pro-shinya_satoh",
+    "gotePlayerId": "pro-kazuki_kimura",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "木村 一基",
+    "loser": "佐藤 紳哉",
+    "winnerId": "pro-kazuki_kimura",
+    "loserId": "pro-shinya_satoh",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第16局 102手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-07-27-澤田 真吾-久保 利明",
+    "date": "2025-07-27",
+    "month": "202507",
+    "sente": "澤田 真吾",
+    "gote": "久保 利明",
+    "senteRaw": "澤田真吾七段",
+    "goteRaw": "久保利明九段",
+    "sentePlayerId": "pro-shingo_sawada",
+    "gotePlayerId": "pro-toshiaki_kubo",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "澤田 真吾",
+    "loser": "久保 利明",
+    "winnerId": "pro-shingo_sawada",
+    "loserId": "pro-toshiaki_kubo",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第17局 105手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-08-03-佐々木 大地-佐藤 康光",
+    "date": "2025-08-03",
+    "month": "202508",
+    "sente": "佐々木 大地",
+    "gote": "佐藤 康光",
+    "senteRaw": "佐々木大地七段",
+    "goteRaw": "佐藤康光九段",
+    "sentePlayerId": "pro-daichi_sasaki",
+    "gotePlayerId": "pro-yasumitsu_satoh",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "佐々木 大地",
+    "loser": "佐藤 康光",
+    "winnerId": "pro-daichi_sasaki",
+    "loserId": "pro-yasumitsu_satoh",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第18局 093手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-08-10-折田 翔吾-豊島 将之",
+    "date": "2025-08-10",
+    "month": "202508",
+    "sente": "折田 翔吾",
+    "gote": "豊島 将之",
+    "senteRaw": "折田翔吾五段",
+    "goteRaw": "豊島将之九段",
+    "sentePlayerId": "pro-shogo_orita",
+    "gotePlayerId": "toyoshima-masayuki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "豊島 将之",
+    "loser": "折田 翔吾",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "pro-shogo_orita",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 2回戦 第1局 092手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-08-17-中村 太地-丸山 忠久",
+    "date": "2025-08-17",
+    "month": "202508",
+    "sente": "中村 太地",
+    "gote": "丸山 忠久",
+    "senteRaw": "中村太地八段",
+    "goteRaw": "丸山忠久九段",
+    "sentePlayerId": "pro-taichi_nakamura",
+    "gotePlayerId": "pro-tadahisa_maruyama",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "中村 太地",
+    "loser": "丸山 忠久",
+    "winnerId": "pro-taichi_nakamura",
+    "loserId": "pro-tadahisa_maruyama",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 2回戦 第2局 123手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-08-24-佐々木 勇気-大石 直嗣",
+    "date": "2025-08-24",
+    "month": "202508",
+    "sente": "佐々木 勇気",
+    "gote": "大石 直嗣",
+    "senteRaw": "佐々木勇気八段",
+    "goteRaw": "大石直嗣七段",
+    "sentePlayerId": "pro-yuuki_sasaki",
+    "gotePlayerId": "pro-tadashi_ooishi",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "佐々木 勇気",
+    "loser": "大石 直嗣",
+    "winnerId": "pro-yuuki_sasaki",
+    "loserId": "pro-tadashi_ooishi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 2回戦 第3局 119手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-08-31-大橋 貴洸-近藤 誠也",
+    "date": "2025-08-31",
+    "month": "202508",
+    "sente": "大橋 貴洸",
+    "gote": "近藤 誠也",
+    "senteRaw": "大橋貴洸七段",
+    "goteRaw": "近藤誠也八段",
+    "sentePlayerId": "pro-takahiro_oohashi",
+    "gotePlayerId": "pro-seiya_kondou",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "大橋 貴洸",
+    "loser": "近藤 誠也",
+    "winnerId": "pro-takahiro_oohashi",
+    "loserId": "pro-seiya_kondou",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 2回戦 第4局 115手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-09-07-藤本 渚-村中 秀史",
+    "date": "2025-09-07",
+    "month": "202509",
+    "sente": "藤本 渚",
+    "gote": "村中 秀史",
+    "senteRaw": "藤本渚六段",
+    "goteRaw": "村中秀史七段",
+    "sentePlayerId": "pro-nagisa_fujimoto",
+    "gotePlayerId": "pro-shuji_muranaka",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤本 渚",
+    "loser": "村中 秀史",
+    "winnerId": "pro-nagisa_fujimoto",
+    "loserId": "pro-shuji_muranaka",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第5局 157手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-09-14-山崎 隆之-糸谷 哲郎",
+    "date": "2025-09-14",
+    "month": "202509",
+    "sente": "山崎 隆之",
+    "gote": "糸谷 哲郎",
+    "senteRaw": "山崎隆之九段",
+    "goteRaw": "糸谷哲郎八段",
+    "sentePlayerId": "pro-takayuki_yamasaki",
+    "gotePlayerId": "pro-tetsuro_itodani",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "糸谷 哲郎",
+    "loser": "山崎 隆之",
+    "winnerId": "pro-tetsuro_itodani",
+    "loserId": "pro-takayuki_yamasaki",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第6局 118手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-09-21-吉池 隆真-菅井 竜也",
+    "date": "2025-09-21",
+    "month": "202509",
+    "sente": "吉池 隆真",
+    "gote": "菅井 竜也",
+    "senteRaw": "吉池隆真四段",
+    "goteRaw": "菅井竜也八段",
+    "sentePlayerId": "pro-ryuma_yoshiike",
+    "gotePlayerId": "sugai-tatsuya",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "菅井 竜也",
+    "loser": "吉池 隆真",
+    "winnerId": "sugai-tatsuya",
+    "loserId": "pro-ryuma_yoshiike",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第7局 114手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-09-28-谷川浩司十七世-服部 慎一郎",
+    "date": "2025-09-28",
+    "month": "202509",
+    "sente": "谷川 浩司",
+    "gote": "服部 慎一郎",
+    "senteRaw": "谷川浩司十七世名人",
+    "goteRaw": "服部慎一郎七段",
+    "sentePlayerId": "pro-koji_tanigawa",
+    "gotePlayerId": "pro-shinichiro_hattori",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "谷川 浩司",
+    "loser": "服部 慎一郎",
+    "winnerId": "pro-koji_tanigawa",
+    "loserId": "pro-shinichiro_hattori",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第8局 097手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-10-05-稲葉 陽-木村 一基",
+    "date": "2025-10-05",
+    "month": "202510",
+    "sente": "稲葉 陽",
+    "gote": "木村 一基",
+    "senteRaw": "稲葉陽八段",
+    "goteRaw": "木村一基九段",
+    "sentePlayerId": "pro-akira_inaba",
+    "gotePlayerId": "pro-kazuki_kimura",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "稲葉 陽",
+    "loser": "木村 一基",
+    "winnerId": "pro-akira_inaba",
+    "loserId": "pro-kazuki_kimura",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第9局 125手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-10-12-増田 康宏-勝又 清和",
+    "date": "2025-10-12",
+    "month": "202510",
+    "sente": "増田 康宏",
+    "gote": "勝又 清和",
+    "senteRaw": "増田康宏八段",
+    "goteRaw": "勝又清和七段",
+    "sentePlayerId": "pro-yasuhiro_masuda",
+    "gotePlayerId": "pro-kiyokazu_katsumata",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "増田 康宏",
+    "loser": "勝又 清和",
+    "winnerId": "pro-yasuhiro_masuda",
+    "loserId": "pro-kiyokazu_katsumata",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第10局 065手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-10-26-羽生 善治-藤井 聡太",
+    "date": "2025-10-26",
+    "month": "202510",
+    "sente": "羽生 善治",
+    "gote": "藤井 聡太",
+    "senteRaw": "羽生善治九段",
+    "goteRaw": "藤井聡太NHK杯",
+    "sentePlayerId": "habu-yoshiharu",
+    "gotePlayerId": "fujii-sota",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "藤井 聡太",
+    "loser": "羽生 善治",
+    "winnerId": "fujii-sota",
+    "loserId": "habu-yoshiharu",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第12局 108手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-11-02-佐藤 天彦-斎藤 慎太郎",
+    "date": "2025-11-02",
+    "month": "202511",
+    "sente": "佐藤 天彦",
+    "gote": "斎藤 慎太郎",
+    "senteRaw": "佐藤天彦九段",
+    "goteRaw": "斎藤慎太郎八段",
+    "sentePlayerId": "pro-amahiko_satoh",
+    "gotePlayerId": "pro-shintaro_saito",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "斎藤 慎太郎",
+    "loser": "佐藤 天彦",
+    "winnerId": "pro-shintaro_saito",
+    "loserId": "pro-amahiko_satoh",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第13局 110手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-11-09-永瀬 拓矢-澤田 真吾",
+    "date": "2025-11-09",
+    "month": "202511",
+    "sente": "永瀬 拓矢",
+    "gote": "澤田 真吾",
+    "senteRaw": "永瀬拓矢九段",
+    "goteRaw": "澤田真吾七段",
+    "sentePlayerId": "nagase-takuya",
+    "gotePlayerId": "pro-shingo_sawada",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "永瀬 拓矢",
+    "loser": "澤田 真吾",
+    "winnerId": "nagase-takuya",
+    "loserId": "pro-shingo_sawada",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第14局 119手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-11-16-郷田 真隆-佐々木 大地",
+    "date": "2025-11-16",
+    "month": "202511",
+    "sente": "郷田 真隆",
+    "gote": "佐々木 大地",
+    "senteRaw": "郷田真隆九段",
+    "goteRaw": "佐々木大地七段",
+    "sentePlayerId": "pro-masataka_goda",
+    "gotePlayerId": "pro-daichi_sasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "佐々木 大地",
+    "loser": "郷田 真隆",
+    "winnerId": "pro-daichi_sasaki",
+    "loserId": "pro-masataka_goda",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第15局 140手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-11-23-谷川浩司十七世-増田 康宏",
+    "date": "2025-11-23",
+    "month": "202511",
+    "sente": "谷川 浩司",
+    "gote": "増田 康宏",
+    "senteRaw": "谷川浩司十七世名人",
+    "goteRaw": "増田康宏八段",
+    "sentePlayerId": "pro-koji_tanigawa",
+    "gotePlayerId": "pro-yasuhiro_masuda",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "増田 康宏",
+    "loser": "谷川 浩司",
+    "winnerId": "pro-yasuhiro_masuda",
+    "loserId": "pro-koji_tanigawa",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 3回戦 第1局 94手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-11-30-石川 優太-稲葉 陽",
+    "date": "2025-11-30",
+    "month": "202511",
+    "sente": "石川 優太",
+    "gote": "稲葉 陽",
+    "senteRaw": "石川優太五段",
+    "goteRaw": "稲葉陽八段",
+    "sentePlayerId": "pro-yuta_ishikawa",
+    "gotePlayerId": "pro-akira_inaba",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "石川 優太",
+    "loser": "稲葉 陽",
+    "winnerId": "pro-yuta_ishikawa",
+    "loserId": "pro-akira_inaba",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 3回戦 第2局 113手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-12-07-永瀬 拓矢-豊島 将之",
+    "date": "2025-12-07",
+    "month": "202512",
+    "sente": "永瀬 拓矢",
+    "gote": "豊島 将之",
+    "senteRaw": "永瀬拓矢九段",
+    "goteRaw": "豊島将之九段",
+    "sentePlayerId": "nagase-takuya",
+    "gotePlayerId": "toyoshima-masayuki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "豊島 将之",
+    "loser": "永瀬 拓矢",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "nagase-takuya",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 3回戦 第3局 118手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-12-14-中村 太地-斎藤 慎太郎",
+    "date": "2025-12-14",
+    "month": "202512",
+    "sente": "中村 太地",
+    "gote": "斎藤 慎太郎",
+    "senteRaw": "中村太地八段",
+    "goteRaw": "斎藤慎太郎八段",
+    "sentePlayerId": "pro-taichi_nakamura",
+    "gotePlayerId": "pro-shintaro_saito",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "中村 太地",
+    "loser": "斎藤 慎太郎",
+    "winnerId": "pro-taichi_nakamura",
+    "loserId": "pro-shintaro_saito",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 3回戦 第4局 137手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2025-12-21-藤井 聡太-藤本 渚",
+    "date": "2025-12-21",
+    "month": "202512",
+    "sente": "藤井 聡太",
+    "gote": "藤本 渚",
+    "senteRaw": "藤井聡太NHK杯",
+    "goteRaw": "藤本渚六段",
+    "sentePlayerId": "fujii-sota",
+    "gotePlayerId": "pro-nagisa_fujimoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤井 聡太",
+    "loser": "藤本 渚",
+    "winnerId": "fujii-sota",
+    "loserId": "pro-nagisa_fujimoto",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第5局 77手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-01-04-大橋 貴洸-伊藤匠二冠",
+    "date": "2026-01-04",
+    "month": "202601",
+    "sente": "大橋 貴洸",
+    "gote": "伊藤 匠",
+    "senteRaw": "大橋貴洸七段",
+    "goteRaw": "伊藤匠 二冠(叡王・王座)",
+    "sentePlayerId": "pro-takahiro_oohashi",
+    "gotePlayerId": "ito-takumi",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "伊藤 匠",
+    "loser": "大橋 貴洸",
+    "winnerId": "ito-takumi",
+    "loserId": "pro-takahiro_oohashi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第6局 128手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-01-11-佐々木 大地-糸谷 哲郎",
+    "date": "2026-01-11",
+    "month": "202601",
+    "sente": "佐々木 大地",
+    "gote": "糸谷 哲郎",
+    "senteRaw": "佐々木大地七段",
+    "goteRaw": "糸谷哲郎八段",
+    "sentePlayerId": "pro-daichi_sasaki",
+    "gotePlayerId": "pro-tetsuro_itodani",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "糸谷 哲郎",
+    "loser": "佐々木 大地",
+    "winnerId": "pro-tetsuro_itodani",
+    "loserId": "pro-daichi_sasaki",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第7局 140手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-01-18-佐々木 勇気-菅井 竜也",
+    "date": "2026-01-18",
+    "month": "202601",
+    "sente": "佐々木 勇気",
+    "gote": "菅井 竜也",
+    "senteRaw": "佐々木勇気八段",
+    "goteRaw": "菅井竜也八段",
+    "sentePlayerId": "pro-yuuki_sasaki",
+    "gotePlayerId": "sugai-tatsuya",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "佐々木 勇気",
+    "loser": "菅井 竜也",
+    "winnerId": "pro-yuuki_sasaki",
+    "loserId": "sugai-tatsuya",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第8局 115手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-01-25-石川 優太-藤井 聡太",
+    "date": "2026-01-25",
+    "month": "202601",
+    "sente": "石川 優太",
+    "gote": "藤井 聡太",
+    "senteRaw": "石川優太五段",
+    "goteRaw": "藤井聡太NHK杯",
+    "sentePlayerId": "pro-yuta_ishikawa",
+    "gotePlayerId": "fujii-sota",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "藤井 聡太",
+    "loser": "石川 優太",
+    "winnerId": "fujii-sota",
+    "loserId": "pro-yuta_ishikawa",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 準々決勝 116手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-02-01-豊島 将之-伊藤匠二冠",
+    "date": "2026-02-01",
+    "month": "202602",
+    "sente": "豊島 将之",
+    "gote": "伊藤 匠",
+    "senteRaw": "豊島将之九段",
+    "goteRaw": "伊藤匠 二冠",
+    "sentePlayerId": "toyoshima-masayuki",
+    "gotePlayerId": "ito-takumi",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "豊島 将之",
+    "loser": "伊藤 匠",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "ito-takumi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 決勝トーナメント 第2局 103手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-02-08-糸谷 哲郎-佐々木 勇気",
+    "date": "2026-02-08",
+    "month": "202602",
+    "sente": "糸谷 哲郎",
+    "gote": "佐々木 勇気",
+    "senteRaw": "糸谷哲郎八段",
+    "goteRaw": "佐々木勇気八段",
+    "sentePlayerId": "pro-tetsuro_itodani",
+    "gotePlayerId": "pro-yuuki_sasaki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "糸谷 哲郎",
+    "loser": "佐々木 勇気",
+    "winnerId": "pro-tetsuro_itodani",
+    "loserId": "pro-yuuki_sasaki",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 決勝トーナメント 第3局 111手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-02-15-中村 太地-増田 康宏",
+    "date": "2026-02-15",
+    "month": "202602",
+    "sente": "中村 太地",
+    "gote": "増田 康宏",
+    "senteRaw": "中村太地八段",
+    "goteRaw": "増田康宏八段",
+    "sentePlayerId": "pro-taichi_nakamura",
+    "gotePlayerId": "pro-yasuhiro_masuda",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "増田 康宏",
+    "loser": "中村 太地",
+    "winnerId": "pro-yasuhiro_masuda",
+    "loserId": "pro-taichi_nakamura",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 決勝トーナメント 第4局 186手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-02-22-藤井 聡太-豊島 将之",
+    "date": "2026-02-22",
+    "month": "202602",
+    "sente": "藤井 聡太",
+    "gote": "豊島 将之",
+    "senteRaw": "藤井聡太NHK杯",
+    "goteRaw": "豊島将之九段",
+    "sentePlayerId": "fujii-sota",
+    "gotePlayerId": "toyoshima-masayuki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤井 聡太",
+    "loser": "豊島 将之",
+    "winnerId": "fujii-sota",
+    "loserId": "toyoshima-masayuki",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 準決勝 85手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-03-01-増田 康宏-糸谷 哲郎",
+    "date": "2026-03-01",
+    "month": "202603",
+    "sente": "増田 康宏",
+    "gote": "糸谷 哲郎",
+    "senteRaw": "増田康宏八段",
+    "goteRaw": "糸谷哲郎八段",
+    "sentePlayerId": "pro-yasuhiro_masuda",
+    "gotePlayerId": "pro-tetsuro_itodani",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "増田 康宏",
+    "loser": "糸谷 哲郎",
+    "winnerId": "pro-yasuhiro_masuda",
+    "loserId": "pro-tetsuro_itodani",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 決勝トーナメント 第2局 109手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk75-2026-03-08-増田 康宏-藤井 聡太",
+    "date": "2026-03-08",
+    "month": "202603",
+    "sente": "増田 康宏",
+    "gote": "藤井 聡太",
+    "senteRaw": "増田康宏八段",
+    "goteRaw": "藤井聡太NHK杯",
+    "sentePlayerId": "pro-yasuhiro_masuda",
+    "gotePlayerId": "fujii-sota",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "藤井 聡太",
+    "loser": "増田 康宏",
+    "winnerId": "fujii-sota",
+    "loserId": "pro-yasuhiro_masuda",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 決勝戦 122手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第75回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-03-15-fukuma-nishiyama",
+    "date": "2026-03-15",
+    "month": "202603",
+    "sente": "福間 香奈",
+    "gote": "西山 朋佳",
+    "senteRaw": "福間香奈 女流五冠",
+    "goteRaw": "西山朋佳 女流三冠",
+    "sentePlayerId": "fukuma-kana",
+    "gotePlayerId": "nishiyama-tomoka",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "西山 朋佳",
+    "loser": "福間 香奈",
+    "winnerId": "nishiyama-tomoka",
+    "loserId": "fukuma-kana",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "出場女流棋士決定戦 90手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": true,
+    "category": "女流棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-04-05-上野 裕寿-石井 健太郎",
+    "date": "2026-04-05",
+    "month": "202604",
+    "sente": "上野 裕寿",
+    "gote": "石井 健太郎",
+    "senteRaw": "上野裕寿五段",
+    "goteRaw": "石井健太郎七段",
+    "sentePlayerId": "pro-hirotoshi_ueno",
+    "gotePlayerId": "pro-kentaro_ishii",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "上野 裕寿",
+    "loser": "石井 健太郎",
+    "winnerId": "pro-hirotoshi_ueno",
+    "loserId": "pro-kentaro_ishii",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第1局 91手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-04-12-本田 奎-横山 友紀",
+    "date": "2026-04-12",
+    "month": "202604",
+    "sente": "本田 奎",
+    "gote": "横山 友紀",
+    "senteRaw": "本田奎六段",
+    "goteRaw": "横山友紀四段",
+    "sentePlayerId": "pro-kei_honda",
+    "gotePlayerId": "pro-tomoki_yokoyama",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "横山 友紀",
+    "loser": "本田 奎",
+    "winnerId": "pro-tomoki_yokoyama",
+    "loserId": "pro-kei_honda",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第2局 116手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-04-19-大橋 貴洸-澤田 真吾",
+    "date": "2026-04-19",
+    "month": "202604",
+    "sente": "大橋 貴洸",
+    "gote": "澤田 真吾",
+    "senteRaw": "大橋貴洸七段",
+    "goteRaw": "澤田真吾七段",
+    "sentePlayerId": "pro-takahiro_oohashi",
+    "gotePlayerId": "pro-shingo_sawada",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "大橋 貴洸",
+    "loser": "澤田 真吾",
+    "winnerId": "pro-takahiro_oohashi",
+    "loserId": "pro-shingo_sawada",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第3局 125手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-04-26-佐藤 康光-池永 天志",
+    "date": "2026-04-26",
+    "month": "202604",
+    "sente": "佐藤 康光",
+    "gote": "池永 天志",
+    "senteRaw": "佐藤康光九段",
+    "goteRaw": "池永天志六段",
+    "sentePlayerId": "pro-yasumitsu_satoh",
+    "gotePlayerId": "pro-takashi_ikenaga",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "池永 天志",
+    "loser": "佐藤 康光",
+    "winnerId": "pro-takashi_ikenaga",
+    "loserId": "pro-yasumitsu_satoh",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第4局 150手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-05-03-阪口 悟-山崎 隆之",
+    "date": "2026-05-03",
+    "month": "202605",
+    "sente": "阪口 悟",
+    "gote": "山崎 隆之",
+    "senteRaw": "阪口悟六段",
+    "goteRaw": "山崎隆之九段",
+    "sentePlayerId": "pro-satoru_sakaguchi",
+    "gotePlayerId": "pro-takayuki_yamasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "山崎 隆之",
+    "loser": "阪口 悟",
+    "winnerId": "pro-takayuki_yamasaki",
+    "loserId": "pro-satoru_sakaguchi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第5局 166手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-05-10-広瀬 章人-吉池 隆真",
+    "date": "2026-05-10",
+    "month": "202605",
+    "sente": "広瀬 章人",
+    "gote": "吉池 隆真",
+    "senteRaw": "広瀬章人九段",
+    "goteRaw": "吉池隆真四段",
+    "sentePlayerId": "pro-akihito_hirose",
+    "gotePlayerId": "pro-ryuma_yoshiike",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "吉池 隆真",
+    "loser": "広瀬 章人",
+    "winnerId": "pro-ryuma_yoshiike",
+    "loserId": "pro-akihito_hirose",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第6局 134手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-05-17-久保 利明-戸辺 誠",
+    "date": "2026-05-17",
+    "month": "202605",
+    "sente": "久保 利明",
+    "gote": "戸辺 誠",
+    "senteRaw": "久保利明九段",
+    "goteRaw": "戸辺誠七段",
+    "sentePlayerId": "pro-toshiaki_kubo",
+    "gotePlayerId": "pro-makoto_tobe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "久保 利明",
+    "loser": "戸辺 誠",
+    "winnerId": "pro-toshiaki_kubo",
+    "loserId": "pro-makoto_tobe",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第7局 153手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-05-24-屋敷 伸之-渡辺 大夢",
+    "date": "2026-05-24",
+    "month": "202605",
+    "sente": "屋敷 伸之",
+    "gote": "渡辺 大夢",
+    "senteRaw": "屋敷伸之九段",
+    "goteRaw": "渡辺大夢六段",
+    "sentePlayerId": "pro-nobuyuki_yashiki",
+    "gotePlayerId": "pro-hiromu_watanabe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "屋敷 伸之",
+    "loser": "渡辺 大夢",
+    "winnerId": "pro-nobuyuki_yashiki",
+    "loserId": "pro-hiromu_watanabe",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第8局 131手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-05-31-青嶋 未来-高見 泰地",
+    "date": "2026-05-31",
+    "month": "202605",
+    "sente": "青嶋 未来",
+    "gote": "高見 泰地",
+    "senteRaw": "青嶋未来七段",
+    "goteRaw": "高見泰地七段",
+    "sentePlayerId": "pro-mirai_aoshima",
+    "gotePlayerId": "pro-taichi_takami",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "高見 泰地",
+    "loser": "青嶋 未来",
+    "winnerId": "pro-taichi_takami",
+    "loserId": "pro-mirai_aoshima",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第9局 126手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-06-07-木村 一基-勝又 清和",
+    "date": "2026-06-07",
+    "month": "202606",
+    "sente": "木村 一基",
+    "gote": "勝又 清和",
+    "senteRaw": "木村一基九段",
+    "goteRaw": "勝又清和七段",
+    "sentePlayerId": "pro-kazuki_kimura",
+    "gotePlayerId": "pro-kiyokazu_katsumata",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "勝又 清和",
+    "loser": "木村 一基",
+    "winnerId": "pro-kiyokazu_katsumata",
+    "loserId": "pro-kazuki_kimura",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第10局 192手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-06-14-松本 佳介-服部 慎一郎",
+    "date": "2026-06-14",
+    "month": "202606",
+    "sente": "松本 佳介",
+    "gote": "服部 慎一郎",
+    "senteRaw": "松本佳介七段",
+    "goteRaw": "服部慎一郎七段",
+    "sentePlayerId": "pro-yoshiyuki_matsumoto",
+    "gotePlayerId": "pro-shinichiro_hattori",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "服部 慎一郎",
+    "loser": "松本 佳介",
+    "winnerId": "pro-shinichiro_hattori",
+    "loserId": "pro-yoshiyuki_matsumoto",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第11局 96手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-06-21-冨田 誠也-佐々木 大地",
+    "date": "2026-06-21",
+    "month": "202606",
+    "sente": "冨田 誠也",
+    "gote": "佐々木 大地",
+    "senteRaw": "冨田誠也五段",
+    "goteRaw": "佐々木大地七段",
+    "sentePlayerId": "pro-seiya_tomita",
+    "gotePlayerId": "pro-daichi_sasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "佐々木 大地",
+    "loser": "冨田 誠也",
+    "winnerId": "pro-daichi_sasaki",
+    "loserId": "pro-seiya_tomita",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第12局 146手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-06-28-古賀 悠聖-佐々木 慎",
+    "date": "2026-06-28",
+    "month": "202606",
+    "sente": "古賀 悠聖",
+    "gote": "佐々木 慎",
+    "senteRaw": "古賀悠聖六段",
+    "goteRaw": "佐々木慎七段",
+    "sentePlayerId": "pro-yusei_koga",
+    "gotePlayerId": "pro-makoto_sasaki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "古賀 悠聖",
+    "loser": "佐々木 慎",
+    "winnerId": "pro-yusei_koga",
+    "loserId": "pro-makoto_sasaki",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第13局 147手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-07-05-柵木 幹太-郷田 真隆",
+    "date": "2026-07-05",
+    "month": "202607",
+    "sente": "柵木 幹太",
+    "gote": "郷田 真隆",
+    "senteRaw": "柵木幹太五段",
+    "goteRaw": "郷田真隆九段",
+    "sentePlayerId": "pro-kanta_masegi",
+    "gotePlayerId": "pro-masataka_goda",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "柵木 幹太",
+    "loser": "郷田 真隆",
+    "winnerId": "pro-kanta_masegi",
+    "loserId": "pro-masataka_goda",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第14局 119手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-07-12-大石 直嗣-藤本 渚",
+    "date": "2026-07-12",
+    "month": "202607",
+    "sente": "大石 直嗣",
+    "gote": "藤本 渚",
+    "senteRaw": "大石直嗣七段",
+    "goteRaw": "藤本渚七段",
+    "sentePlayerId": "pro-tadashi_ooishi",
+    "gotePlayerId": "pro-nagisa_fujimoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "大石 直嗣",
+    "loser": "藤本 渚",
+    "winnerId": "pro-tadashi_ooishi",
+    "loserId": "pro-nagisa_fujimoto",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第15局 89手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-07-19-生垣 寛人-斎藤 慎太郎",
+    "date": "2026-07-19",
+    "month": "202607",
+    "sente": "生垣 寛人",
+    "gote": "斎藤 慎太郎",
+    "senteRaw": "生垣寛人四段",
+    "goteRaw": "斎藤慎太郎八段",
+    "sentePlayerId": "pro-hiroto_ikegaki",
+    "gotePlayerId": "pro-shintaro_saito",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "生垣 寛人",
+    "loser": "斎藤 慎太郎",
+    "winnerId": "pro-hiroto_ikegaki",
+    "loserId": "pro-shintaro_saito",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第16局 187手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-08-02-西山朋佳三冠-行方 尚史",
+    "date": "2026-08-02",
+    "month": "202608",
+    "sente": "西山 朋佳",
+    "gote": "行方 尚史",
+    "senteRaw": "西山朋佳女流三冠",
+    "goteRaw": "行方尚史九段",
+    "sentePlayerId": "nishiyama-tomoka",
+    "gotePlayerId": "pro-hisashi_namekata",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "行方 尚史",
+    "loser": "西山 朋佳",
+    "winnerId": "pro-hisashi_namekata",
+    "loserId": "nishiyama-tomoka",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第18局 76手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": true,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-08-09-大橋 貴洸-菅井 竜也",
+    "date": "2026-08-09",
+    "month": "202608",
+    "sente": "大橋 貴洸",
+    "gote": "菅井 竜也",
+    "senteRaw": "大橋貴洸七段",
+    "goteRaw": "菅井竜也八段",
+    "sentePlayerId": "pro-takahiro_oohashi",
+    "gotePlayerId": "sugai-tatsuya",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "大橋 貴洸",
+    "loser": "菅井 竜也",
+    "winnerId": "pro-takahiro_oohashi",
+    "loserId": "sugai-tatsuya",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第1局 109手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-08-16-中村 太地-久保 利明",
+    "date": "2026-08-16",
+    "month": "202608",
+    "sente": "中村 太地",
+    "gote": "久保 利明",
+    "senteRaw": "中村太地八段",
+    "goteRaw": "久保利明九段",
+    "sentePlayerId": "pro-taichi_nakamura",
+    "gotePlayerId": "pro-toshiaki_kubo",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "久保 利明",
+    "loser": "中村 太地",
+    "winnerId": "pro-toshiaki_kubo",
+    "loserId": "pro-taichi_nakamura",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第2局 130手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-08-23-佐藤 天彦-古賀 悠聖",
+    "date": "2026-08-23",
+    "month": "202608",
+    "sente": "佐藤 天彦",
+    "gote": "古賀 悠聖",
+    "senteRaw": "佐藤天彦九段",
+    "goteRaw": "古賀悠聖六段",
+    "sentePlayerId": "pro-amahiko_satoh",
+    "gotePlayerId": "pro-yusei_koga",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "古賀 悠聖",
+    "loser": "佐藤 天彦",
+    "winnerId": "pro-yusei_koga",
+    "loserId": "pro-amahiko_satoh",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第3局 126手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-08-30-千田 翔太-吉池 隆真",
+    "date": "2026-08-30",
+    "month": "202608",
+    "sente": "千田 翔太",
+    "gote": "吉池 隆真",
+    "senteRaw": "千田翔太八段",
+    "goteRaw": "吉池隆真四段",
+    "sentePlayerId": "pro-shota_chida",
+    "gotePlayerId": "pro-ryuma_yoshiike",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "吉池 隆真",
+    "loser": "千田 翔太",
+    "winnerId": "pro-ryuma_yoshiike",
+    "loserId": "pro-shota_chida",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第4局 168手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-09-06-横山 友紀-近藤 誠也",
+    "date": "2026-09-06",
+    "month": "202609",
+    "sente": "横山 友紀",
+    "gote": "近藤 誠也",
+    "senteRaw": "横山友紀四段",
+    "goteRaw": "近藤誠也八段",
+    "sentePlayerId": "pro-tomoki_yokoyama",
+    "gotePlayerId": "pro-seiya_kondou",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "近藤 誠也",
+    "loser": "横山 友紀",
+    "winnerId": "pro-seiya_kondou",
+    "loserId": "pro-tomoki_yokoyama",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第5局 70手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-09-13-勝又 清和-藤井 聡太",
+    "date": "2026-09-13",
+    "month": "202609",
+    "sente": "勝又 清和",
+    "gote": "藤井 聡太",
+    "senteRaw": "勝又清和七段",
+    "goteRaw": "藤井聡太NHK杯",
+    "sentePlayerId": "pro-kiyokazu_katsumata",
+    "gotePlayerId": "fujii-sota",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "藤井 聡太",
+    "loser": "勝又 清和",
+    "winnerId": "fujii-sota",
+    "loserId": "pro-kiyokazu_katsumata",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第6局 110手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-09-20-増田 康宏-生垣 寛人",
+    "date": "2026-09-20",
+    "month": "202609",
+    "sente": "増田 康宏",
+    "gote": "生垣 寛人",
+    "senteRaw": "増田康宏八段",
+    "goteRaw": "生垣寛人四段",
+    "sentePlayerId": "pro-yasuhiro_masuda",
+    "gotePlayerId": "pro-hiroto_ikegaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "生垣 寛人",
+    "loser": "増田 康宏",
+    "winnerId": "pro-hiroto_ikegaki",
+    "loserId": "pro-yasuhiro_masuda",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第7局 100手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-09-27-大石 直嗣-稲葉 陽",
+    "date": "2026-09-27",
+    "month": "202609",
+    "sente": "大石 直嗣",
+    "gote": "稲葉 陽",
+    "senteRaw": "大石直嗣七段",
+    "goteRaw": "稲葉陽八段",
+    "sentePlayerId": "pro-tadashi_ooishi",
+    "gotePlayerId": "pro-akira_inaba",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "稲葉 陽",
+    "loser": "大石 直嗣",
+    "winnerId": "pro-akira_inaba",
+    "loserId": "pro-tadashi_ooishi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第8局 104手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-10-04-屋敷 伸之-高見 泰地",
+    "date": "2026-10-04",
+    "month": "202610",
+    "sente": "屋敷 伸之",
+    "gote": "高見 泰地",
+    "senteRaw": "屋敷伸之九段",
+    "goteRaw": "高見泰地七段",
+    "sentePlayerId": "pro-nobuyuki_yashiki",
+    "gotePlayerId": "pro-taichi_takami",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "屋敷 伸之",
+    "loser": "高見 泰地",
+    "winnerId": "pro-nobuyuki_yashiki",
+    "loserId": "pro-taichi_takami",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第9局 129手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-10-11-羽生 善治-渡辺 明",
+    "date": "2026-10-11",
+    "month": "202610",
+    "sente": "羽生 善治",
+    "gote": "渡辺 明",
+    "senteRaw": "羽生善治 九段",
+    "goteRaw": "渡辺明九段",
+    "sentePlayerId": "habu-yoshiharu",
+    "gotePlayerId": "watanabe-akira",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "渡辺 明",
+    "loser": "羽生 善治",
+    "winnerId": "watanabe-akira",
+    "loserId": "habu-yoshiharu",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第10局 76手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-10-18-池永 天志-佐々木 勇気",
+    "date": "2026-10-18",
+    "month": "202610",
+    "sente": "池永 天志",
+    "gote": "佐々木 勇気",
+    "senteRaw": "池永天志六段",
+    "goteRaw": "佐々木勇気八段",
+    "sentePlayerId": "pro-takashi_ikenaga",
+    "gotePlayerId": "pro-yuuki_sasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "佐々木 勇気",
+    "loser": "池永 天志",
+    "winnerId": "pro-yuuki_sasaki",
+    "loserId": "pro-takashi_ikenaga",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第11局 84手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-10-25-伊藤匠二冠-佐々木 大地",
+    "date": "2026-10-25",
+    "month": "202610",
+    "sente": "伊藤 匠",
+    "gote": "佐々木 大地",
+    "senteRaw": "伊藤匠二冠",
+    "goteRaw": "佐々木大地七段",
+    "sentePlayerId": "ito-takumi",
+    "gotePlayerId": "pro-daichi_sasaki",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "佐々木 大地",
+    "loser": "伊藤 匠",
+    "winnerId": "pro-daichi_sasaki",
+    "loserId": "ito-takumi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第12局 136手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-nhk76-2026-11-01-柵木 幹太-糸谷 哲郎",
+    "date": "2026-11-01",
+    "month": "202611",
+    "sente": "柵木 幹太",
+    "gote": "糸谷 哲郎",
+    "senteRaw": "柵木幹太五段",
+    "goteRaw": "糸谷哲郎九段",
+    "sentePlayerId": "pro-kanta_masegi",
+    "gotePlayerId": "pro-tetsuro_itodani",
+    "senteMark": "●",
+    "goteMark": "○",
+    "winner": "糸谷 哲郎",
+    "loser": "柵木 幹太",
+    "winnerId": "pro-tetsuro_itodani",
+    "loserId": "pro-kanta_masegi",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 第13局 94手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  },
+  {
+    "id": "res-ginga33-2025-11-06-増田 康宏-高崎 一生",
+    "date": "2025-11-06",
+    "month": "202511",
+    "sente": "増田 康宏",
+    "gote": "高崎 一生",
+    "senteRaw": "増田康宏 八段",
+    "goteRaw": "髙﨑一生 七段",
+    "sentePlayerId": "pro-yasuhiro_masuda",
+    "gotePlayerId": "pro-issei_takazaki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "増田 康宏",
+    "loser": "高崎 一生",
+    "winnerId": "pro-yasuhiro_masuda",
+    "loserId": "pro-issei_takazaki",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 1回戦 99手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-11-永瀬 拓矢-冨田 誠也",
+    "date": "2025-11-11",
+    "month": "202511",
+    "sente": "永瀬 拓矢",
+    "gote": "冨田 誠也",
+    "senteRaw": "永瀬拓矢 九段",
+    "goteRaw": "冨田誠也 五段",
+    "sentePlayerId": "nagase-takuya",
+    "gotePlayerId": "pro-seiya_tomita",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "永瀬 拓矢",
+    "loser": "冨田 誠也",
+    "winnerId": "nagase-takuya",
+    "loserId": "pro-seiya_tomita",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 102手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-13-服部 慎一郎-羽生 善治",
+    "date": "2025-11-13",
+    "month": "202511",
+    "sente": "服部 慎一郎",
+    "gote": "羽生 善治",
+    "senteRaw": "服部慎一郎 七段",
+    "goteRaw": "羽生善治九段",
+    "sentePlayerId": "pro-shinichiro_hattori",
+    "gotePlayerId": "habu-yoshiharu",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "服部 慎一郎",
+    "loser": "羽生 善治",
+    "winnerId": "pro-shinichiro_hattori",
+    "loserId": "habu-yoshiharu",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 125手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-18-千田 翔太-佐々木 大地",
+    "date": "2025-11-18",
+    "month": "202511",
+    "sente": "千田 翔太",
+    "gote": "佐々木 大地",
+    "senteRaw": "千田翔太 八段",
+    "goteRaw": "佐々木大地 七段",
+    "sentePlayerId": "pro-shota_chida",
+    "gotePlayerId": "pro-daichi_sasaki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "千田 翔太",
+    "loser": "佐々木 大地",
+    "winnerId": "pro-shota_chida",
+    "loserId": "pro-daichi_sasaki",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 146手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-20-渡辺 明-飯塚 祐紀",
+    "date": "2025-11-20",
+    "month": "202511",
+    "sente": "渡辺 明",
+    "gote": "飯塚 祐紀",
+    "senteRaw": "渡辺明 九段",
+    "goteRaw": "飯塚祐紀 八段",
+    "sentePlayerId": "watanabe-akira",
+    "gotePlayerId": "pro-hiroki_iizuka",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "渡辺 明",
+    "loser": "飯塚 祐紀",
+    "winnerId": "watanabe-akira",
+    "loserId": "pro-hiroki_iizuka",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 116手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-25-豊島 将之-渡辺 和史",
+    "date": "2025-11-25",
+    "month": "202511",
+    "sente": "豊島 将之",
+    "gote": "渡辺 和史",
+    "senteRaw": "豊島将之 九段",
+    "goteRaw": "渡辺和史 七段",
+    "sentePlayerId": "toyoshima-masayuki",
+    "gotePlayerId": "pro-kazushi_watanabe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "豊島 将之",
+    "loser": "渡辺 和史",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "pro-kazushi_watanabe",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 87手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-11-27-藤井聡太��王-岡部 怜央",
+    "date": "2025-11-27",
+    "month": "202511",
+    "sente": "藤井聡太��王",
+    "gote": "岡部 怜央",
+    "senteRaw": "藤井聡太 ��王名人",
+    "goteRaw": "岡部怜央 五段",
+    "sentePlayerId": "player-藤井聡太��王",
+    "gotePlayerId": "pro-reo_okabe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤井聡太��王",
+    "loser": "岡部 怜央",
+    "winnerId": "player-藤井聡太��王",
+    "loserId": "pro-reo_okabe",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 117手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-02-佐々木 勇気-藤本 渚",
+    "date": "2025-12-02",
+    "month": "202512",
+    "sente": "佐々木 勇気",
+    "gote": "藤本 渚",
+    "senteRaw": "佐々木勇気 八段",
+    "goteRaw": "藤本渚 六段",
+    "sentePlayerId": "pro-yuuki_sasaki",
+    "gotePlayerId": "pro-nagisa_fujimoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "佐々木 勇気",
+    "loser": "藤本 渚",
+    "winnerId": "pro-yuuki_sasaki",
+    "loserId": "pro-nagisa_fujimoto",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 105手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-04-永瀬 拓矢-増田 康宏",
+    "date": "2025-12-04",
+    "month": "202512",
+    "sente": "永瀬 拓矢",
+    "gote": "増田 康宏",
+    "senteRaw": "永瀬拓矢 九段",
+    "goteRaw": "増田康宏 八段",
+    "sentePlayerId": "nagase-takuya",
+    "gotePlayerId": "pro-yasuhiro_masuda",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "永瀬 拓矢",
+    "loser": "増田 康宏",
+    "winnerId": "nagase-takuya",
+    "loserId": "pro-yasuhiro_masuda",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 2回戦 132手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-09-佐々木 勇気-千田 翔太",
+    "date": "2025-12-09",
+    "month": "202512",
+    "sente": "佐々木 勇気",
+    "gote": "千田 翔太",
+    "senteRaw": "佐々木勇気 八段",
+    "goteRaw": "千田翔太 八段",
+    "sentePlayerId": "pro-yuuki_sasaki",
+    "gotePlayerId": "pro-shota_chida",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "佐々木 勇気",
+    "loser": "千田 翔太",
+    "winnerId": "pro-yuuki_sasaki",
+    "loserId": "pro-shota_chida",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 89手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-11-藤井 聡太-服部 慎一郎",
+    "date": "2025-12-11",
+    "month": "202512",
+    "sente": "藤井 聡太",
+    "gote": "服部 慎一郎",
+    "senteRaw": "藤井聡太 竜王名人",
+    "goteRaw": "服部慎一郎 七段",
+    "sentePlayerId": "fujii-sota",
+    "gotePlayerId": "pro-shinichiro_hattori",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤井 聡太",
+    "loser": "服部 慎一郎",
+    "winnerId": "fujii-sota",
+    "loserId": "pro-shinichiro_hattori",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 109手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-16-渡辺 明-豊島 将之",
+    "date": "2025-12-16",
+    "month": "202512",
+    "sente": "渡辺 明",
+    "gote": "豊島 将之",
+    "senteRaw": "渡辺明 九段",
+    "goteRaw": "豊島将之 九段",
+    "sentePlayerId": "watanabe-akira",
+    "gotePlayerId": "toyoshima-masayuki",
+    "senteMark": "■",
+    "goteMark": "□",
+    "winner": "豊島 将之",
+    "loser": "渡辺 明",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "watanabe-akira",
+    "resultType": "fusen",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-18-豊島 将之-佐々木 勇気",
+    "date": "2025-12-18",
+    "month": "202512",
+    "sente": "豊島 将之",
+    "gote": "佐々木 勇気",
+    "senteRaw": "豊島将之 九段",
+    "goteRaw": "佐々木勇気 八段",
+    "sentePlayerId": "toyoshima-masayuki",
+    "gotePlayerId": "pro-yuuki_sasaki",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "豊島 将之",
+    "loser": "佐々木 勇気",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "pro-yuuki_sasaki",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 準決勝 109手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-23-藤井 聡太-永瀬 拓矢",
+    "date": "2025-12-23",
+    "month": "202512",
+    "sente": "藤井 聡太",
+    "gote": "永瀬 拓矢",
+    "senteRaw": "藤井聡太 竜王名人",
+    "goteRaw": "永瀬拓矢 九段",
+    "sentePlayerId": "fujii-sota",
+    "gotePlayerId": "nagase-takuya",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤井 聡太",
+    "loser": "永瀬 拓矢",
+    "winnerId": "fujii-sota",
+    "loserId": "nagase-takuya",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝トーナメント 150手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-12-30-豊島 将之-藤井 聡太",
+    "date": "2025-12-30",
+    "month": "202512",
+    "sente": "豊島 将之",
+    "gote": "藤井 聡太",
+    "senteRaw": "豊島将之 九段",
+    "goteRaw": "藤井聡太 竜王名人",
+    "sentePlayerId": "toyoshima-masayuki",
+    "gotePlayerId": "fujii-sota",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "豊島 将之",
+    "loser": "藤井 聡太",
+    "winnerId": "toyoshima-masayuki",
+    "loserId": "fujii-sota",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "決勝トーナメント 決勝 119手",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-16-柵木 幹太-長谷部 浩平",
+    "date": "2025-01-16",
+    "month": "202501",
+    "sente": "柵木 幹太",
+    "gote": "長谷部 浩平",
+    "senteRaw": "柵木幹太 四段",
+    "goteRaw": "長谷部浩平 五段",
+    "sentePlayerId": "pro-kanta_masegi",
+    "gotePlayerId": "pro-kohei_hasebe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "柵木 幹太",
+    "loser": "長谷部 浩平",
+    "winnerId": "pro-kanta_masegi",
+    "loserId": "pro-kohei_hasebe",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Eブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-13-長谷部 浩平-牧野 光則",
+    "date": "2025-02-13",
+    "month": "202502",
+    "sente": "長谷部 浩平",
+    "gote": "牧野 光則",
+    "senteRaw": "長谷部浩平 五段",
+    "goteRaw": "牧野光則 六段",
+    "sentePlayerId": "pro-kohei_hasebe",
+    "gotePlayerId": "pro-mitsunori_makino",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "長谷部 浩平",
+    "loser": "牧野 光則",
+    "winnerId": "pro-kohei_hasebe",
+    "loserId": "pro-mitsunori_makino",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Eブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-23-相川浩治アマ-阿部 光瑠",
+    "date": "2025-01-23",
+    "month": "202501",
+    "sente": "相川浩治",
+    "gote": "阿部 光瑠",
+    "senteRaw": "相川浩治 アマ",
+    "goteRaw": "阿部光瑠 七段",
+    "sentePlayerId": "player-相川浩治",
+    "gotePlayerId": "pro-kouru_abe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "相川浩治",
+    "loser": "阿部 光瑠",
+    "winnerId": "player-相川浩治",
+    "loserId": "pro-kouru_abe",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Gブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-20-阿部 光瑠-横山 友紀",
+    "date": "2025-02-20",
+    "month": "202502",
+    "sente": "阿部 光瑠",
+    "gote": "横山 友紀",
+    "senteRaw": "阿部光瑠 七段",
+    "goteRaw": "横山友紀 四段",
+    "sentePlayerId": "pro-kouru_abe",
+    "gotePlayerId": "pro-tomoki_yokoyama",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "阿部 光瑠",
+    "loser": "横山 友紀",
+    "winnerId": "pro-kouru_abe",
+    "loserId": "pro-tomoki_yokoyama",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Gブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-28-村田 智弘-遠山 雄亮",
+    "date": "2025-01-28",
+    "month": "202501",
+    "sente": "村田 智弘",
+    "gote": "遠山 雄亮",
+    "senteRaw": "村田智弘 七段",
+    "goteRaw": "遠山雄亮 六段",
+    "sentePlayerId": "pro-tomohiro_murata",
+    "gotePlayerId": "pro-yusuke_toyama",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "村田 智弘",
+    "loser": "遠山 雄亮",
+    "winnerId": "pro-tomohiro_murata",
+    "loserId": "pro-yusuke_toyama",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Hブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-07-渡辺誠アマ-藤森 哲也",
+    "date": "2025-01-07",
+    "month": "202501",
+    "sente": "渡辺誠",
+    "gote": "藤森 哲也",
+    "senteRaw": "渡辺誠 アマ",
+    "goteRaw": "藤森哲也 五段",
+    "sentePlayerId": "player-渡辺誠",
+    "gotePlayerId": "pro-tetsuya_fujimori",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "渡辺誠",
+    "loser": "藤森 哲也",
+    "winnerId": "player-渡辺誠",
+    "loserId": "pro-tetsuya_fujimori",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Bブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-04-藤森 哲也-森本 才跳",
+    "date": "2025-02-04",
+    "month": "202502",
+    "sente": "藤森 哲也",
+    "gote": "森本 才跳",
+    "senteRaw": "藤森哲也 五段",
+    "goteRaw": "森本才跳 四段",
+    "sentePlayerId": "pro-tetsuya_fujimori",
+    "gotePlayerId": "pro-saito_morimoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "藤森 哲也",
+    "loser": "森本 才跳",
+    "winnerId": "pro-tetsuya_fujimori",
+    "loserId": "pro-saito_morimoto",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Bブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-09-西山朋佳三冠-長岡 裕也",
+    "date": "2025-01-09",
+    "month": "202501",
+    "sente": "西山 朋佳",
+    "gote": "長岡 裕也",
+    "senteRaw": "西山朋佳 女流三冠",
+    "goteRaw": "長岡裕也 六段",
+    "sentePlayerId": "nishiyama-tomoka",
+    "gotePlayerId": "pro-yuya_nagaoka",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "西山 朋佳",
+    "loser": "長岡 裕也",
+    "winnerId": "nishiyama-tomoka",
+    "loserId": "pro-yuya_nagaoka",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Cブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": true,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-06-西山朋佳三冠-山本 博志",
+    "date": "2025-02-06",
+    "month": "202502",
+    "sente": "西山 朋佳",
+    "gote": "山本 博志",
+    "senteRaw": "西山朋佳 女流三冠",
+    "goteRaw": "山本博志 五段",
+    "sentePlayerId": "nishiyama-tomoka",
+    "gotePlayerId": "pro-hiroshi_yamamoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "西山 朋佳",
+    "loser": "山本 博志",
+    "winnerId": "nishiyama-tomoka",
+    "loserId": "pro-hiroshi_yamamoto",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Cブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": true,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-14-小山 怜央-小林 裕士",
+    "date": "2025-01-14",
+    "month": "202501",
+    "sente": "小山 怜央",
+    "gote": "小林 裕士",
+    "senteRaw": "小山怜央 四段",
+    "goteRaw": "小林裕士 八段",
+    "sentePlayerId": "pro-reo_koyama",
+    "gotePlayerId": "pro-hiroshi_kobayashi-223",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "小山 怜央",
+    "loser": "小林 裕士",
+    "winnerId": "pro-reo_koyama",
+    "loserId": "pro-hiroshi_kobayashi-223",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Dブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-11-小林 裕士-渡辺 大夢",
+    "date": "2025-02-11",
+    "month": "202502",
+    "sente": "小林 裕士",
+    "gote": "渡辺 大夢",
+    "senteRaw": "小林裕士 八段",
+    "goteRaw": "渡辺大夢 六段",
+    "sentePlayerId": "pro-hiroshi_kobayashi-223",
+    "gotePlayerId": "pro-hiromu_watanabe",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "小林 裕士",
+    "loser": "渡辺 大夢",
+    "winnerId": "pro-hiroshi_kobayashi-223",
+    "loserId": "pro-hiromu_watanabe",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Dブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-02-竹内 雄悟-平藤 眞吾",
+    "date": "2025-01-02",
+    "month": "202501",
+    "sente": "竹内 雄悟",
+    "gote": "平藤 眞吾",
+    "senteRaw": "竹内雄悟 五段",
+    "goteRaw": "平藤眞吾 七段",
+    "sentePlayerId": "pro-yugo_takeuchi",
+    "gotePlayerId": "pro-shingo_hirafuji",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "竹内 雄悟",
+    "loser": "平藤 眞吾",
+    "winnerId": "pro-yugo_takeuchi",
+    "loserId": "pro-shingo_hirafuji",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Aブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-30-平藤 眞吾-杉本 和陽",
+    "date": "2025-01-30",
+    "month": "202501",
+    "sente": "平藤 眞吾",
+    "gote": "杉本 和陽",
+    "senteRaw": "平藤眞吾 七段",
+    "goteRaw": "杉本和陽 五段",
+    "sentePlayerId": "pro-shingo_hirafuji",
+    "gotePlayerId": "pro-kazuo_sugimoto",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "平藤 眞吾",
+    "loser": "杉本 和陽",
+    "winnerId": "pro-shingo_hirafuji",
+    "loserId": "pro-kazuo_sugimoto",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Aブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-01-21-加藤 桃子-山川 泰熙",
+    "date": "2025-01-21",
+    "month": "202501",
+    "sente": "加藤 桃子",
+    "gote": "山川 泰熙",
+    "senteRaw": "加藤桃子 女流四段",
+    "goteRaw": "山川泰熙 四段",
+    "sentePlayerId": "kato-momoko",
+    "gotePlayerId": "pro-taiki_yamakawa",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "加藤 桃子",
+    "loser": "山川 泰熙",
+    "winnerId": "kato-momoko",
+    "loserId": "pro-taiki_yamakawa",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Fブロック 1回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-ginga33-2025-02-18-山川 泰熙-森下 卓",
+    "date": "2025-02-18",
+    "month": "202502",
+    "sente": "山川 泰熙",
+    "gote": "森下 卓",
+    "senteRaw": "山川泰熙 四段",
+    "goteRaw": "森下卓 九段",
+    "sentePlayerId": "pro-taiki_yamakawa",
+    "gotePlayerId": "pro-taku_morishita",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "山川 泰熙",
+    "loser": "森下 卓",
+    "winnerId": "pro-taiki_yamakawa",
+    "loserId": "pro-taku_morishita",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦 Fブロック 2回戦",
+    "venue": "東京・囲碁将棋チャンネル",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第33期銀河戦"
+  },
+  {
+    "id": "res-nhk76-2026-07-26-habu-yokoyama",
+    "date": "2026-07-26",
+    "month": "202607",
+    "sente": "羽生 善治",
+    "gote": "横山 泰明",
+    "senteRaw": "羽生善治 九段",
+    "goteRaw": "横山泰明 七段",
+    "sentePlayerId": "habu-yoshiharu",
+    "gotePlayerId": "pro-hiroaki_yokoyama",
+    "senteMark": "○",
+    "goteMark": "●",
+    "winner": "羽生 善治",
+    "loser": "横山 泰明",
+    "winnerId": "habu-yoshiharu",
+    "loserId": "pro-hiroaki_yokoyama",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 1回戦 第17局 101手",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://ja.wikipedia.org/wiki/第76回NHK杯テレビ将棋トーナメント"
+  }
+]

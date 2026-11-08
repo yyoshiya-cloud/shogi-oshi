@@ -15,6 +15,7 @@ import {
   onSnapshot,
   getDocFromServer,
   writeBatch,
+  disableNetwork,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import {
@@ -24,6 +25,8 @@ import {
   ShogiMonthlyResult,
   PushNotificationItem,
 } from '../types/shogi';
+import { enrichAllResultsWithSupplements } from './matchSupplementService';
+
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -51,9 +54,26 @@ export interface FirestoreErrorInfo {
   };
 }
 
+let isQuotaExceeded = false;
+
+export function isFirestoreQuotaExceeded(): boolean {
+  return isQuotaExceeded;
+}
+
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
+  if (errMsg.includes('Quota exceeded') || errMsg.includes('resource-exhausted')) {
+    isQuotaExceeded = true;
+    disableNetwork(db).catch(() => {});
+    console.warn(
+      'Firestore Quota Exceeded. Daily free tier write limit reached for database ai-studio-cdee4899-3822-455d-a0cc-3caae5b1b9c8.\n' +
+        'Quota will reset tomorrow. Detailed database quota status:\n' +
+        'https://console.firebase.google.com/project/jumping-impact-cjf39/firestore/databases/ai-studio-cdee4899-3822-455d-a0cc-3caae5b1b9c8/data?openUpgradeDialog=true'
+    );
+  }
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -70,12 +90,15 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
  * Validate Connection to Firestore on boot (as required by Firestore Integration guidelines).
  */
 export async function testConnection(): Promise<boolean> {
+  if (isQuotaExceeded) return false;
   try {
     await getDocFromServer(doc(db, 'app_data', 'connection_test'));
     return true;
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.warn('Firestore offline notice: Please check your Firebase configuration or internet connection.');
+    } else {
+      handleFirestoreError(error, OperationType.GET, 'app_data/connection_test');
     }
     return false;
   }
@@ -110,6 +133,7 @@ export function subscribeFollowedPlayers(
   userId: string,
   onUpdate: (followed: FollowedPlayerConfig[]) => void
 ) {
+  if (isQuotaExceeded) return () => {};
   try {
     const path = `users/${userId}/followed`;
     const colRef = collection(db, path);
@@ -141,6 +165,7 @@ export function subscribeFollowedPlayers(
  * Save or update a single followed player in Firestore.
  */
 export async function saveFollowedPlayerCloud(userId: string, config: FollowedPlayerConfig) {
+  if (isQuotaExceeded) return;
   const path = `users/${userId}/followed/${config.playerId}`;
   try {
     const docRef = doc(db, 'users', userId, 'followed', config.playerId);
@@ -158,6 +183,7 @@ export async function saveFollowedPlayerCloud(userId: string, config: FollowedPl
  * Remove a followed player in Firestore.
  */
 export async function removeFollowedPlayerCloud(userId: string, playerId: string) {
+  if (isQuotaExceeded) return;
   const path = `users/${userId}/followed/${playerId}`;
   try {
     const docRef = doc(db, 'users', userId, 'followed', playerId);
@@ -181,6 +207,7 @@ export async function syncLocalListToCloud(userId: string, localList: FollowedPl
  * Fetch all active players (pro & women) from Firestore app_data/players.
  */
 export async function fetchPlayersFromCloud(): Promise<{ players: Player[]; lastSyncTime: string } | null> {
+  if (isQuotaExceeded) return null;
   const path = 'app_data/players';
   try {
     const snap = await getDoc(doc(db, 'app_data', 'players'));
@@ -204,6 +231,7 @@ export async function fetchPlayersFromCloud(): Promise<{ players: Player[]; last
  * Save all players to Firestore app_data/players.
  */
 export async function savePlayersToCloud(players: Player[], lastSyncTime?: string): Promise<boolean> {
+  if (isQuotaExceeded) return false;
   const path = 'app_data/players';
   try {
     const cleanPlayers = JSON.parse(JSON.stringify(players));
@@ -224,6 +252,7 @@ export async function savePlayersToCloud(players: Player[], lastSyncTime?: strin
  * Fetch all official match schedules from Firestore app_data/matches.
  */
 export async function fetchMatchesFromCloud(): Promise<{ matches: Match[]; lastSyncTime: string } | null> {
+  if (isQuotaExceeded) return null;
   const path = 'app_data/matches';
   try {
     const snap = await getDoc(doc(db, 'app_data', 'matches'));
@@ -247,6 +276,7 @@ export async function fetchMatchesFromCloud(): Promise<{ matches: Match[]; lastS
  * Save official match schedules to Firestore app_data/matches.
  */
 export async function saveMatchesToCloud(matches: Match[], lastSyncTime?: string): Promise<boolean> {
+  if (isQuotaExceeded) return false;
   const path = 'app_data/matches';
   try {
     const cleanMatches = JSON.parse(JSON.stringify(matches));
@@ -267,6 +297,7 @@ export async function saveMatchesToCloud(matches: Match[], lastSyncTime?: string
  * Fetch 2025 and 2026 fiscal year match results from Firestore (partitioned by month in fiscal_results).
  */
 export async function fetchFiscalResultsFromCloud(): Promise<Record<string, ShogiMonthlyResult[]> | null> {
+  if (isQuotaExceeded) return null;
   const path = 'fiscal_results';
   try {
     const colSnap = await getDocs(collection(db, 'fiscal_results'));
@@ -278,10 +309,16 @@ export async function fetchFiscalResultsFromCloud(): Promise<Record<string, Shog
       const month = docSnap.id;
       const data = docSnap.data();
       if (Array.isArray(data.results)) {
-        combined[month] = data.results as ShogiMonthlyResult[];
+        const list = data.results as ShogiMonthlyResult[];
+        list.forEach((r) => {
+          if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
+            r.tournament = 'NHK杯';
+          }
+        });
+        combined[month] = list;
       }
     });
-    return Object.keys(combined).length > 0 ? combined : null;
+    return Object.keys(combined).length > 0 ? enrichAllResultsWithSupplements(combined) : null;
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return null;
@@ -294,6 +331,7 @@ export async function fetchFiscalResultsFromCloud(): Promise<Record<string, Shog
 export async function saveFiscalResultsToCloud(
   results: Record<string, ShogiMonthlyResult[]>
 ): Promise<boolean> {
+  if (isQuotaExceeded) return false;
   const path = 'fiscal_results';
   try {
     const months = Object.keys(results);
@@ -304,6 +342,11 @@ export async function saveFiscalResultsToCloud(
       const monthResults = results[month];
       if (Array.isArray(monthResults) && monthResults.length > 0) {
         const cleanResults = JSON.parse(JSON.stringify(monthResults));
+        cleanResults.forEach((r: any) => {
+          if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
+            r.tournament = 'NHK杯';
+          }
+        });
         await setDoc(doc(db, 'fiscal_results', month), {
           month,
           results: cleanResults,
@@ -346,6 +389,7 @@ export async function saveUserNotificationsToCloud(
   userId: string,
   notifications: PushNotificationItem[]
 ): Promise<boolean> {
+  if (isQuotaExceeded) return false;
   const path = `users/${userId}/metadata/notifications`;
   try {
     const clean = JSON.parse(JSON.stringify(notifications));

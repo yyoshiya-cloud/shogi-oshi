@@ -10,6 +10,7 @@ import {
   MapPin,
   ExternalLink,
   Trophy,
+  Crown,
   Swords,
   ChevronDown,
   ChevronUp
@@ -198,23 +199,34 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               onClick={() => {
                 if (onSelectPlayer) onSelectPlayer(player1);
               }}
-              className={`p-4 rounded-2xl border transition cursor-pointer hover:border-amber-400 group ${
+              className={`p-4 rounded-2xl border transition cursor-pointer hover:border-amber-400 group relative ${
                 winner?.id === player1.id
-                  ? 'bg-amber-950/20 border-amber-500/60 shadow-lg'
+                  ? 'bg-gradient-to-br from-amber-950/40 via-amber-900/25 to-zinc-900 border-amber-400/80 ring-1 ring-amber-400/50 shadow-xl shadow-amber-500/10'
+                  : isFinished
+                  ? 'bg-zinc-900/40 border-zinc-800/80 opacity-85'
                   : 'bg-zinc-900/60 border-zinc-800/80'
               }`}
               title="クリックして棋士情報を表示"
             >
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center justify-between gap-1 mb-2">
                 <span className="text-xs font-bold text-amber-400">☗ 先手</span>
-                {winner?.id === player1.id && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500 text-stone-950 flex items-center gap-1">
-                    <Trophy size={11} /> 勝利
+                {winner?.id === player1.id ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200">
+                    <Crown size={13} className="fill-zinc-950 text-zinc-950 shrink-0" />
+                    <span>○ 勝者</span>
                   </span>
-                )}
+                ) : isFinished ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                    ● 敗退
+                  </span>
+                ) : null}
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition">
-                {player1.name} ↗
+              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition flex items-center gap-1.5">
+                <span>{player1.name}</span>
+                {winner?.id === player1.id && (
+                  <Crown size={18} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                )}
+                <span className="text-zinc-500 text-xs">↗</span>
               </h3>
               <p className="text-xs text-amber-300/80 font-medium">{player1.rank}</p>
               <p className="text-[11px] text-zinc-400 mt-1">{player1.style}</p>
@@ -225,23 +237,34 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               onClick={() => {
                 if (onSelectPlayer) onSelectPlayer(player2);
               }}
-              className={`p-4 rounded-2xl border text-right transition cursor-pointer hover:border-amber-400 group ${
+              className={`p-4 rounded-2xl border text-right transition cursor-pointer hover:border-amber-400 group relative ${
                 winner?.id === player2.id
-                  ? 'bg-amber-950/20 border-amber-500/60 shadow-lg'
+                  ? 'bg-gradient-to-bl from-amber-950/40 via-amber-900/25 to-zinc-900 border-amber-400/80 ring-1 ring-amber-400/50 shadow-xl shadow-amber-500/10'
+                  : isFinished
+                  ? 'bg-zinc-900/40 border-zinc-800/80 opacity-85'
                   : 'bg-zinc-900/60 border-zinc-800/80'
               }`}
               title="クリックして棋士情報を表示"
             >
               <div className="flex items-center justify-end gap-2 mb-2">
-                {winner?.id === player2.id && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500 text-stone-950 flex items-center gap-1">
-                    <Trophy size={11} /> 勝利
+                {winner?.id === player2.id ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200">
+                    <Crown size={13} className="fill-zinc-950 text-zinc-950 shrink-0" />
+                    <span>○ 勝者</span>
                   </span>
-                )}
+                ) : isFinished ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                    ● 敗退
+                  </span>
+                ) : null}
                 <span className="text-xs font-bold text-sky-400">☖ 後手</span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition">
-                ↗ {player2.name}
+              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition flex items-center justify-end gap-1.5">
+                <span className="text-zinc-500 text-xs">↗</span>
+                {winner?.id === player2.id && (
+                  <Crown size={18} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                )}
+                <span>{player2.name}</span>
               </h3>
               <p className="text-xs text-amber-300/80 font-medium">{player2.rank}</p>
               <p className="text-[11px] text-zinc-400 mt-1">{player2.style}</p>

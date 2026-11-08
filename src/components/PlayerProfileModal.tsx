@@ -1081,11 +1081,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           {/* Win/Loss Badge */}
                           <div className="shrink-0">
                             {r.isPlayerWinner ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
+                                <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
                                 <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
                               </span>
                             )}

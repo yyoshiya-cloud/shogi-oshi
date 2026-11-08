@@ -5,6 +5,11 @@ import { scrapeAllActivePlayers } from './playerSyncService';
 import { getTodayDateString } from '../utils/dateUtils';
 import { getTimeControlForTournament } from '../utils/timeControlUtils';
 import results2026Json from '../data/results2026.json';
+import {
+  enrichMonthlyResultsWithSupplements,
+  enrichAllResultsWithSupplements,
+} from './matchSupplementService';
+
 
 
 export interface MatchSyncResult {
@@ -42,6 +47,16 @@ async function fetchWithTimeout(url: string, timeoutMs = 18000): Promise<string>
   } finally {
     clearTimeout(id);
   }
+}
+
+export function cleanTournamentName(rawName?: string): string {
+  if (!rawName) return '公式戦';
+  let t = rawName.trim();
+  // Normalize "N H K杯", "ＮＨＫ杯", "N  H  K杯" to "NHK杯"
+  if (/N\s*H\s*K杯/i.test(t) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(t)) {
+    t = t.replace(/N\s*H\s*K杯/gi, 'NHK杯').replace(/Ｎ\s*Ｈ\s*Ｋ杯/g, 'NHK杯');
+  }
+  return t;
 }
 
 /**
@@ -152,7 +167,7 @@ export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
       if (cells.length >= 5) {
         const p1Raw = cells[1];
         const p2Raw = cells[2];
-        const tournament = cells[4] || '公式戦';
+        const tournament = cleanTournamentName(cells[4]);
         const note = cells[5] || '';
         const venue = cells[6] || '東京・将棋会館';
 
@@ -326,7 +341,7 @@ export async function scrapeMonthlyResults(
         const p1Raw = cells[1];
         const p2Raw = cells[2];
         const mark2 = cells[3];
-        const tournament = cells[4] || '公式戦';
+        const tournament = cleanTournamentName(cells[4]);
         const note = cells[5] || '';
         const venue = cells[6] || '';
 
@@ -448,13 +463,14 @@ export async function scrapeMonthlyResults(
 
   // If live scraping yielded results, update cache
   if (results.length > 0) {
-    results.sort((a, b) => b.date.localeCompare(a.date));
-    monthlyCache.set(normalizedMonth, { timestamp: now, data: results });
+    const enrichedResults = enrichMonthlyResultsWithSupplements(normalizedMonth, results);
+    enrichedResults.sort((a, b) => b.date.localeCompare(a.date));
+    monthlyCache.set(normalizedMonth, { timestamp: now, data: enrichedResults });
     return {
       success: true,
       month: normalizedMonth,
-      count: results.length,
-      results,
+      count: enrichedResults.length,
+      results: enrichedResults,
       source: url,
     };
   }
@@ -462,8 +478,9 @@ export async function scrapeMonthlyResults(
   // Fallback to bundled JSON data if upstream is unreachable or empty
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>)[normalizedMonth];
   if (bundled && bundled.length > 0) {
-    const enriched = bundled
-      .map((b) => {
+    const enriched = enrichMonthlyResultsWithSupplements(
+      normalizedMonth,
+      bundled.map((b) => {
         const p1Obj = playerMap.get(b.sente.replace(/\s+/g, '')) || playerMap.get(b.sente);
         const p2Obj = playerMap.get(b.gote.replace(/\s+/g, '')) || playerMap.get(b.gote);
         return {
@@ -474,7 +491,7 @@ export async function scrapeMonthlyResults(
           loserId: b.loser === b.sente ? p1Obj?.id : p2Obj?.id,
         };
       })
-      .sort((a, b) => b.date.localeCompare(a.date));
+    ).sort((a, b) => b.date.localeCompare(a.date));
     monthlyCache.set(normalizedMonth, { timestamp: now, data: enriched });
     return {
       success: true,
@@ -482,6 +499,19 @@ export async function scrapeMonthlyResults(
       count: enriched.length,
       results: enriched,
       source: `bundled:${url}`,
+    };
+  }
+
+  // Even if both live scraping and bundled are empty, check if we have special tournament supplements
+  const suppOnly = enrichMonthlyResultsWithSupplements(normalizedMonth, []);
+  if (suppOnly.length > 0) {
+    monthlyCache.set(normalizedMonth, { timestamp: now, data: suppOnly });
+    return {
+      success: true,
+      month: normalizedMonth,
+      count: suppOnly.length,
+      results: suppOnly,
+      source: 'supplement:special_tournaments',
     };
   }
 
@@ -527,7 +557,7 @@ async function getAllMultiYearResults(years = [2025, 2026], force = false): Prom
       }
     }
   }
-  return res;
+  return enrichAllResultsWithSupplements(res);
 }
 
 /**
