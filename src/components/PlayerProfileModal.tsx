@@ -362,19 +362,20 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       >
         {/* Top Header Banner with Player Color */}
         <div
-          className="relative px-4 sm:px-6 pt-3 pb-2.5 text-white flex-shrink-0"
+          className="relative px-4 sm:px-6 pt-3 pb-3 text-white flex-shrink-0"
           style={{ background: activePlayer.avatarBg || 'linear-gradient(135deg, #1c1917 0%, #292524 100%)' }}
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-2.5 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-zinc-300 hover:text-white transition z-10"
+            className="absolute top-3 right-3 sm:top-3.5 sm:right-4 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-zinc-300 hover:text-white transition z-20 cursor-pointer shadow-md"
+            title="閉じる (Esc)"
           >
             <X size={18} />
           </button>
 
-          {/* Top badges row (above photo and name) */}
-          <div className="flex items-center gap-1.5 flex-wrap pr-10 mb-2">
+          {/* Top badges row (above photo and name) - with pr-12 right margin to guarantee zero overlap with top-right X button */}
+          <div className="flex items-center gap-2 flex-wrap pr-12 mb-2.5">
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-black/40 text-amber-200 border border-white/10 shadow-sm">
               {activePlayer.type === 'women' ? '女流棋士' : '棋士'} No.{activePlayer.playerNumber}
             </span>
@@ -400,7 +401,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </span>
             )}
             {followedConfig && (
-              <OshiBadgeTag badge={followedConfig.badge} size="sm" />
+              <div className="mr-2">
+                <OshiBadgeTag badge={followedConfig.badge} size="sm" />
+              </div>
             )}
             {loadingDetails && (
               <span className="text-[10px] text-amber-300 flex items-center gap-1 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
@@ -410,9 +413,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             )}
           </div>
 
-          {/* Photo + Name row with Action Buttons on the right (shifted upward to avoid overlapping text) */}
-          <div className="flex items-start justify-between gap-2.5">
-            <div className="flex items-start gap-3 min-w-0 flex-1">
+          {/* Photo + Name row with Action Buttons on the right */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-serif-jp shadow-2xl border-2 border-white/20 overflow-hidden bg-zinc-900 flex-shrink-0"
                 style={{ backgroundColor: activePlayer.type === 'women' ? '#ec4899' : '#3b82f6' }}
@@ -431,7 +434,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   activePlayer.name[0]
                 )}
               </div>
-              <div className="min-w-0 flex-1 pt-0.5">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider leading-tight">
                     {formatPlayerName(activePlayer.name)}
@@ -445,17 +448,17 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </div>
             </div>
 
-            {/* Action buttons shifted upward */}
-            <div className="flex items-center gap-1.5 shrink-0 -mt-2 sm:-mt-2.5">
+            {/* Action buttons (positioned cleanly with clear margins and no overlap with top-right X button) */}
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-center mt-1 sm:mt-0">
               {followedConfig ? (
                 <>
                   <button
                     type="button"
                     onClick={() => setIsConfigModalOpen(true)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/50 hover:bg-black/70 text-amber-300 font-bold text-[11px] sm:text-xs border border-amber-500/40 shadow-sm transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/80 text-amber-300 font-bold text-xs border border-amber-500/40 shadow-sm transition cursor-pointer active:scale-95"
                     title="推し設定（バッジ・推しカラー・応援メモ）を変更"
                   >
-                    <Settings2 size={12} />
+                    <Settings2 size={13} />
                     <span>設定変更</span>
                   </button>
                   <button
@@ -464,7 +467,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       onRemoveFollow(activePlayer.id);
                       onClose();
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/50 hover:bg-rose-950/70 text-zinc-300 hover:text-rose-300 font-bold text-[11px] sm:text-xs border border-white/20 shadow-sm transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-rose-950/80 text-zinc-300 hover:text-rose-300 font-bold text-xs border border-white/20 shadow-sm transition cursor-pointer active:scale-95"
                     title="推し解除"
                   >
                     <span>推し解除</span>
@@ -474,9 +477,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsConfigModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs shadow-md transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs shadow-md transition cursor-pointer active:scale-95"
                 >
-                  <Heart size={13} className="fill-stone-950" />
+                  <Heart size={14} className="fill-stone-950" />
                   <span>推し登録する</span>
                 </button>
               )}

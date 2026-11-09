@@ -656,7 +656,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                             >
                               <td className="py-2 px-3 text-center font-bold">
                                 <span className="inline-flex items-center gap-1">
-                                  {r.year}年度
+                                  {r.year}
                                   {r.year === 2026 && (
                                     <span
                                       className="px-1 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-300 font-normal border border-emerald-500/30"
@@ -679,21 +679,21 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                 {isPreDebut ? (
                                   <span className="text-zinc-500">－</span>
                                 ) : (
-                                  `${total}局`
+                                  total
                                 )}
                               </td>
                               <td className="py-2 px-3 text-center font-bold">
                                 {isPreDebut ? (
                                   <span className="text-zinc-600 font-normal">－</span>
                                 ) : (
-                                  <span className="text-emerald-400">{r.wins}勝</span>
+                                  <span className="text-emerald-400">{r.wins}</span>
                                 )}
                               </td>
                               <td className="py-2 px-3 text-center font-bold">
                                 {isPreDebut ? (
                                   <span className="text-zinc-600 font-normal">－</span>
                                 ) : (
-                                  <span className="text-rose-400">{r.losses}敗</span>
+                                  <span className="text-rose-400">{r.losses}</span>
                                 )}
                               </td>
                               <td className="py-2 px-3 text-center font-mono font-bold">

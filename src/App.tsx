@@ -805,21 +805,19 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Bulk Sync All Data button - Smart pill design */}
+          {/* Bulk Sync All Data button - Icon-only mark design */}
           <button
             onClick={() => handleSyncAllData(true)}
             disabled={isSyncingAll}
-            className={`h-9 px-2.5 sm:px-3 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
+            aria-label="一括更新"
+            className={`h-9 w-9 rounded-xl border transition flex items-center justify-center cursor-pointer shadow-sm active:scale-95 ${
               isSyncingAll
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse'
-                : 'bg-zinc-900 hover:bg-zinc-850 text-amber-300 hover:text-amber-200 border-amber-500/30 hover:border-amber-500/60'
+                : 'bg-zinc-900 hover:bg-zinc-850 text-amber-400 hover:text-amber-300 border-amber-500/30 hover:border-amber-500/60'
             }`}
             title="公式対局予定・対局結果・全棋士プロフィールを最新データに一括更新"
           >
-            <RefreshCw size={13} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
-            <span className="text-[11px] sm:text-xs font-bold tracking-tight">
-              {isSyncingAll ? '更新中...' : '一括更新'}
-            </span>
+            <RefreshCw size={16} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
           </button>
 
           {/* Cloud Sync Status button - Opens Firebase synchronization modal */}

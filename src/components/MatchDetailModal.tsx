@@ -201,35 +201,43 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               }}
               className={`p-4 rounded-2xl border transition cursor-pointer hover:border-amber-400 group relative ${
                 winner?.id === player1.id
-                  ? 'bg-gradient-to-br from-amber-950/40 via-amber-900/25 to-zinc-900 border-amber-400/80 ring-1 ring-amber-400/50 shadow-xl shadow-amber-500/10'
+                  ? 'bg-gradient-to-br from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
                   : isFinished
-                  ? 'bg-zinc-900/40 border-zinc-800/80 opacity-85'
-                  : 'bg-zinc-900/60 border-zinc-800/80'
+                  ? 'bg-zinc-900/50 border-zinc-800/80'
+                  : 'bg-zinc-900/70 border-zinc-800/80'
               }`}
               title="クリックして棋士情報を表示"
             >
-              <div className="flex items-center justify-between gap-1 mb-2">
-                <span className="text-xs font-bold text-amber-400">☗ 先手</span>
+              <div className="flex items-center justify-between gap-1.5 mb-2.5">
+                <span className="text-xs font-extrabold text-amber-400 tracking-wide">☗ 先手</span>
                 {winner?.id === player1.id ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200">
-                    <Crown size={13} className="fill-zinc-950 text-zinc-950 shrink-0" />
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
+                    <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
                     ● 敗退
                   </span>
                 ) : null}
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition flex items-center gap-1.5">
-                <span>{player1.name}</span>
+              <h3 className="flex items-center gap-1.5 min-w-0 mb-1">
+                <span
+                  className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
+                    winner?.id === player1.id
+                      ? 'text-amber-200 font-black drop-shadow-[0_1px_3px_rgba(245,158,11,0.3)] group-hover:text-amber-100'
+                      : 'text-zinc-100 font-bold group-hover:text-amber-300'
+                  }`}
+                >
+                  {player1.name}
+                </span>
                 {winner?.id === player1.id && (
-                  <Crown size={18} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                  <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
                 )}
-                <span className="text-zinc-500 text-xs">↗</span>
+                <span className="text-zinc-500 text-xs shrink-0">↗</span>
               </h3>
-              <p className="text-xs text-amber-300/80 font-medium">{player1.rank}</p>
-              <p className="text-[11px] text-zinc-400 mt-1">{player1.style}</p>
+              <p className="text-xs text-amber-300/90 font-semibold">{player1.rank}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{player1.style}</p>
             </div>
 
             {/* Player 2 Card */}
@@ -239,35 +247,43 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               }}
               className={`p-4 rounded-2xl border text-right transition cursor-pointer hover:border-amber-400 group relative ${
                 winner?.id === player2.id
-                  ? 'bg-gradient-to-bl from-amber-950/40 via-amber-900/25 to-zinc-900 border-amber-400/80 ring-1 ring-amber-400/50 shadow-xl shadow-amber-500/10'
+                  ? 'bg-gradient-to-bl from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
                   : isFinished
-                  ? 'bg-zinc-900/40 border-zinc-800/80 opacity-85'
-                  : 'bg-zinc-900/60 border-zinc-800/80'
+                  ? 'bg-zinc-900/50 border-zinc-800/80'
+                  : 'bg-zinc-900/70 border-zinc-800/80'
               }`}
               title="クリックして棋士情報を表示"
             >
-              <div className="flex items-center justify-end gap-2 mb-2">
+              <div className="flex items-center justify-end gap-1.5 mb-2.5">
                 {winner?.id === player2.id ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200">
-                    <Crown size={13} className="fill-zinc-950 text-zinc-950 shrink-0" />
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
+                    <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
                     ● 敗退
                   </span>
                 ) : null}
-                <span className="text-xs font-bold text-sky-400">☖ 後手</span>
+                <span className="text-xs font-extrabold text-sky-400 tracking-wide">☖ 後手</span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 font-serif-jp group-hover:text-amber-300 transition flex items-center justify-end gap-1.5">
-                <span className="text-zinc-500 text-xs">↗</span>
+              <h3 className="flex items-center justify-end gap-1.5 min-w-0 mb-1">
+                <span className="text-zinc-500 text-xs shrink-0">↗</span>
                 {winner?.id === player2.id && (
-                  <Crown size={18} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                  <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
                 )}
-                <span>{player2.name}</span>
+                <span
+                  className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
+                    winner?.id === player2.id
+                      ? 'text-amber-200 font-black drop-shadow-[0_1px_3px_rgba(245,158,11,0.3)] group-hover:text-amber-100'
+                      : 'text-zinc-100 font-bold group-hover:text-amber-300'
+                  }`}
+                >
+                  {player2.name}
+                </span>
               </h3>
-              <p className="text-xs text-amber-300/80 font-medium">{player2.rank}</p>
-              <p className="text-[11px] text-zinc-400 mt-1">{player2.style}</p>
+              <p className="text-xs text-amber-300/90 font-semibold">{player2.rank}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{player2.style}</p>
             </div>
           </div>
 

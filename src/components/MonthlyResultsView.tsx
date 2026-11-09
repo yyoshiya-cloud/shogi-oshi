@@ -1167,22 +1167,22 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                         {/* Sente Player (Left) */}
                         <div
                           onClick={() => handlePlayerClick(result.sente)}
-                          className={`flex flex-col justify-center cursor-pointer p-1.5 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
-                            isSenteWinner ? 'bg-amber-500/10 border border-amber-500/30' : ''
+                          className={`flex flex-col justify-center cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
+                            isSenteWinner ? 'bg-amber-500/15 border border-amber-500/40 shadow-sm' : ''
                           }`}
                         >
                           {/* Badges Row */}
                           <div className="flex items-center gap-1 mb-1 flex-wrap">
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
+                            <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
                               ☗先手
                             </span>
                             {isSenteWinner ? (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono">
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
                                 <Crown size={10} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>○勝者</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-zinc-400 bg-zinc-800/80 px-1.5 py-0.2 rounded-full">
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
                                 ●敗者
                               </span>
                             )}
@@ -1196,14 +1196,14 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           {/* Player Name Row */}
                           <div className="flex items-center gap-1 min-w-0">
                             <span
-                              className={`text-xs sm:text-sm font-bold font-serif-jp leading-tight whitespace-nowrap ${
-                                isSenteWinner ? 'text-amber-300 font-extrabold' : 'text-zinc-200'
+                              className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
+                                isSenteWinner ? 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' : 'text-zinc-100 font-bold'
                               }`}
                             >
                               {result.sente}
                             </span>
                             {isSenteWinner && (
-                              <Crown size={14} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                              <Crown size={15} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_3px_rgba(251,191,36,0.6)]" />
                             )}
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
@@ -1231,8 +1231,8 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                         {/* Gote Player (Right) */}
                         <div
                           onClick={() => handlePlayerClick(result.gote)}
-                          className={`flex flex-col justify-center items-end text-right cursor-pointer p-1.5 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
-                            isGoteWinner ? 'bg-amber-500/10 border border-amber-500/30' : ''
+                          className={`flex flex-col justify-center items-end text-right cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
+                            isGoteWinner ? 'bg-amber-500/15 border border-amber-500/40 shadow-sm' : ''
                           }`}
                         >
                           {/* Badges Row */}
@@ -1243,16 +1243,16 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                               </span>
                             )}
                             {isGoteWinner ? (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono">
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
                                 <Crown size={10} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>○勝者</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-zinc-400 bg-zinc-800/80 px-1.5 py-0.2 rounded-full">
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
                                 ●敗者
                               </span>
                             )}
-                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                            <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-zinc-800 text-sky-400 border border-zinc-700">
                               ☖後手
                             </span>
                           </div>
@@ -1260,11 +1260,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           {/* Player Name Row */}
                           <div className="flex items-center justify-end gap-1 min-w-0">
                             {isGoteWinner && (
-                              <Crown size={14} className="text-amber-400 fill-amber-400 shrink-0 drop-shadow" />
+                              <Crown size={15} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_3px_rgba(251,191,36,0.6)]" />
                             )}
                             <span
-                              className={`text-xs sm:text-sm font-bold font-serif-jp leading-tight whitespace-nowrap ${
-                                isGoteWinner ? 'text-amber-300 font-extrabold' : 'text-zinc-200'
+                              className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
+                                isGoteWinner ? 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' : 'text-zinc-100 font-bold'
                               }`}
                             >
                               {result.gote}
