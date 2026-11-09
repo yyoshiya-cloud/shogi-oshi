@@ -1,7 +1,3 @@
-/**
- * Utility functions for formatting player names, birthdates, and calculating ages.
- */
-
 const KNOWN_NO_SPACE_NAMES: Record<string, string> = {
   // Active / notable players whose names on official sites lack spaces
   '岩村凛太朗': '岩村 凛太朗',
@@ -392,6 +388,126 @@ export function formatPlayerDanOnly(player?: { rank?: string; danRank?: string; 
   if (match) return match[1];
 
   return rank || dan || (player.type === 'women' ? '女流棋士' : '棋士');
+}
+
+/**
+ * Normalizes shogi player name for fuzzy matching across scraped records,
+ * taking into account variant kanji (e.g. 﨑 vs 崎, 齊/齋 vs 斉, 髙 vs 高, 德 vs 徳, 廣 vs 広).
+ */
+export function normalizeShogiPlayerNameForMatch(name: string): string {
+  if (!name) return '';
+  return name
+    .replace(/^pro-|^lady-|^player-/, '')
+    .replace(/[※＊\*\+\(\)（）\d段級]/g, '')
+    .replace(/[\s\u3000_]+/g, '')
+    .replace(/﨑/g, '崎')
+    .replace(/[齊齋]/g, '斉')
+    .replace(/髙/g, '高')
+    .replace(/德/g, '徳')
+    .replace(/廣/g, '広')
+    .replace(/嶋/g, '島')
+    .replace(/煕/g, '熙')
+    .trim();
+}
+
+/**
+ * Creates a safe fallback player object for unregistered players, amateurs,
+ * or provisional tournament slots (e.g. '勝者', '〇〇戦の勝者', '〇〇アマ').
+ */
+export function createFallbackPlayer(rawIdOrName: string): Player {
+  const cleanName = (rawIdOrName || '未定')
+    .replace(/^pro-|^lady-|^player-/, '')
+    .replace(/_/g, ' ')
+    .trim();
+
+  const isSumisaki = cleanName.includes('炭崎') || cleanName.includes('炭﨑');
+  const danMatch = cleanName.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級|アマ)/);
+  const detectedDan = isSumisaki
+    ? '四段'
+    : danMatch
+    ? danMatch[1]
+    : cleanName.includes('アマ')
+    ? 'アマ'
+    : cleanName.includes('勝者')
+    ? '進出枠'
+    : '公式戦対局者';
+
+  return {
+    id: rawIdOrName,
+    name: formatPlayerName(cleanName),
+    type: cleanName.includes('女流') ? 'women' : 'pro',
+    affiliation: cleanName.includes('LPSA') ? 'LPSA' : isSumisaki ? '日本将棋連盟' : '無所属',
+    rank: detectedDan,
+    playerNumber: isSumisaki ? 346 : 0,
+    birthDate: isSumisaki ? '2008年06月02日\n（18歳）' : '',
+    birthPlace: isSumisaki ? '兵庫県姫路市' : '',
+    master: isSumisaki ? '井上慶太九段' : '',
+    style: '居飛車',
+    ryuoClass: isSumisaki ? '第40期より' : '-',
+    junisenClass: isSumisaki ? 'C級2組' : '-',
+    heldTitles: [],
+    totalTitles: 0,
+    titleHistory: '',
+    careerWins: 0,
+    careerLosses: 0,
+    careerWinRate: 0,
+    currentYearWins: 0,
+    currentYearLosses: 0,
+    currentYearWinRate: 0,
+    currentYearStreak: 0,
+    rankingInFederation: {},
+    colorAccent: '#6366f1',
+    avatarBg: 'linear-gradient(135deg, #18181b 0%, #6366f133 100%)',
+    shortBio: `${cleanName}（公式戦対局）`,
+    highlights: [],
+    yearRecords: [],
+    senteWinRate: 0.5,
+    goteWinRate: 0.5,
+    openingStats: [],
+    headToHead: [],
+    externalLinks: {
+      officialProfile: isSumisaki ? 'https://www.shogi.or.jp/player/pro/346.html' : 'https://www.shogi.or.jp/',
+      kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
+    },
+  };
+}
+
+/**
+ * Resolves a player by ID or name against the players database.
+ * If not found (e.g. amateur, provisional '勝者', student, etc.),
+ * returns a safe, fully-typed Player object so modals and displays never crash or fail to open.
+ */
+export function resolvePlayer(id: string | undefined, players: Player[]): Player {
+  const targetId = (id || '未定').trim();
+
+  // 1. Direct ID match
+  const byId = players.find((p) => p.id === targetId);
+  if (byId) return byId;
+
+  // 2. Direct name match (ignoring whitespace)
+  const clean = targetId.replace(/^pro-|^lady-|^player-/, '').replace(/_/g, ' ').replace(/\s+/g, '');
+  const byCleanName = players.find((p) => p.name.replace(/\s+/g, '') === clean);
+  if (byCleanName) return byCleanName;
+
+  // 3. Normalized name match (fuzzy handling kanji variants like 﨑/崎, 齊/斉, 髙/高)
+  const normTarget = normalizeShogiPlayerNameForMatch(targetId);
+  if (normTarget) {
+    const byNorm = players.find((p) => {
+      const pNorm = normalizeShogiPlayerNameForMatch(p.name);
+      const idNorm = normalizeShogiPlayerNameForMatch(p.id);
+      return pNorm === normTarget || idNorm === normTarget;
+    });
+    if (byNorm) return byNorm;
+  }
+
+  // 4. Specific known names (e.g. 炭崎俊毅 <-> 炭﨑俊毅)
+  if (normTarget.includes('炭崎俊毅')) {
+    const sumisaki = players.find((p) => p.name.includes('炭') && p.name.includes('俊毅'));
+    if (sumisaki) return sumisaki;
+  }
+
+  // 5. Fallback safe Player object
+  return createFallbackPlayer(targetId);
 }
 
 

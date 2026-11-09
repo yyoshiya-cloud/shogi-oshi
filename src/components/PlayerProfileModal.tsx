@@ -916,7 +916,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     <span className="text-lg font-bold text-amber-300 font-mono">
                       {playerFiscalStats.rate}
                     </span>
-                    <span className="text-xs text-zinc-400">({playerFiscalStats.ratePercent}%)</span>
                   </div>
                 </div>
 

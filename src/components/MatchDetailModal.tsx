@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Match, Player } from '../types/shogi';
 import { getTodayDateString } from '../utils/dateUtils';
 import { getDirectHeadToHead } from '../utils/headToHeadUtils';
-import { formatPlayerRankAndDan } from '../utils/playerUtils';
+import { formatPlayerRankAndDan, resolvePlayer, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import {
   X,
   Calendar,
@@ -57,8 +57,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     };
   }, []);
 
-  const player1 = match ? players.find((p) => p.id === match.player1Id) : null;
-  const player2 = match ? players.find((p) => p.id === match.player2Id) : null;
+  const player1 = match ? resolvePlayer(match.player1Id, players) : null;
+  const player2 = match ? resolvePlayer(match.player2Id, players) : null;
 
   // Calculate direct head-to-head record from past match database (Must run before any early return)
   const h2h = useMemo(() => {
@@ -78,6 +78,13 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   }, [player1, player2]);
 
   if (!match || !player1 || !player2) return null;
+
+  const isP1RealPlayer =
+    players.some((p) => p.id === player1.id || normalizeShogiPlayerNameForMatch(p.name) === normalizeShogiPlayerNameForMatch(player1.name)) ||
+    (player1.playerNumber ?? 0) > 0;
+  const isP2RealPlayer =
+    players.some((p) => p.id === player2.id || normalizeShogiPlayerNameForMatch(p.name) === normalizeShogiPlayerNameForMatch(player2.name)) ||
+    (player2.playerNumber ?? 0) > 0;
 
   const winner = match.winnerId ? players.find((p) => p.id === match.winnerId) : null;
   const isFinished = match.status === 'finished';
@@ -198,19 +205,21 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             {/* Player 1 Card */}
             <div
               onClick={() => {
-                if (onSelectPlayer) onSelectPlayer(player1);
+                if (onSelectPlayer && isP1RealPlayer) onSelectPlayer(player1);
               }}
-              className={`p-4 rounded-2xl border transition cursor-pointer hover:border-amber-400 group relative ${
+              className={`p-4 rounded-2xl border transition group relative ${
+                isP1RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
+              } ${
                 winner?.id === player1.id
                   ? 'bg-gradient-to-br from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
                   : isFinished
                   ? 'bg-zinc-900/50 border-zinc-800/80'
                   : 'bg-zinc-900/70 border-zinc-800/80'
               }`}
-              title="クリックして棋士情報を表示"
+              title={isP1RealPlayer ? 'クリックして棋士情報を表示' : undefined}
             >
               <div className="flex items-center justify-between gap-1.5 mb-2.5">
-                <span className="text-xs font-extrabold text-amber-400 tracking-wide">☗ 先手</span>
+                <span className="text-xs font-black text-amber-400 tracking-wide">☗</span>
                 {winner?.id === player1.id ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
                     <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
@@ -235,25 +244,27 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 {winner?.id === player1.id && (
                   <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
                 )}
-                <span className="text-zinc-500 text-xs shrink-0">↗</span>
+                {isP1RealPlayer && <span className="text-zinc-500 text-xs shrink-0">↗</span>}
               </h3>
               <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player1)}</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">{player1.style}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{player1.style || player1.affiliation}</p>
             </div>
 
             {/* Player 2 Card */}
             <div
               onClick={() => {
-                if (onSelectPlayer) onSelectPlayer(player2);
+                if (onSelectPlayer && isP2RealPlayer) onSelectPlayer(player2);
               }}
-              className={`p-4 rounded-2xl border text-right transition cursor-pointer hover:border-amber-400 group relative ${
+              className={`p-4 rounded-2xl border text-right transition group relative ${
+                isP2RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
+              } ${
                 winner?.id === player2.id
                   ? 'bg-gradient-to-bl from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
                   : isFinished
                   ? 'bg-zinc-900/50 border-zinc-800/80'
                   : 'bg-zinc-900/70 border-zinc-800/80'
               }`}
-              title="クリックして棋士情報を表示"
+              title={isP2RealPlayer ? 'クリックして棋士情報を表示' : undefined}
             >
               <div className="flex items-center justify-end gap-1.5 mb-2.5">
                 {winner?.id === player2.id ? (
@@ -266,10 +277,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     ● 敗退
                   </span>
                 ) : null}
-                <span className="text-xs font-extrabold text-sky-400 tracking-wide">☖ 後手</span>
+                <span className="text-xs font-black text-sky-400 tracking-wide">⛉</span>
               </div>
               <h3 className="flex items-center justify-end gap-1.5 min-w-0 mb-1">
-                <span className="text-zinc-500 text-xs shrink-0">↗</span>
+                {isP2RealPlayer && <span className="text-zinc-500 text-xs shrink-0">↗</span>}
                 {winner?.id === player2.id && (
                   <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
                 )}
@@ -284,7 +295,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 </span>
               </h3>
               <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player2)}</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">{player2.style}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{player2.style || player2.affiliation}</p>
             </div>
           </div>
 

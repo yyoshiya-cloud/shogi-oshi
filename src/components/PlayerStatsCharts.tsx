@@ -367,7 +367,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
             <span className="text-xs text-zinc-400 ml-0.5">敗</span>
           </div>
           <div className="text-xs text-amber-400 font-bold mt-2 font-mono">
-            通算勝率 {formatWinRate(player.careerWinRate)} ({( (player.careerWinRate || 0) * 100).toFixed(1)}%)
+            通算勝率 {formatWinRate(player.careerWinRate)}
           </div>
         </div>
 
@@ -397,7 +397,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
           <div className={`text-xs font-bold mt-2 font-mono ${onLeave ? 'text-amber-400/90' : 'text-emerald-400'}`}>
             {onLeave
               ? '公式戦休場届提出中'
-              : `勝率 ${formatWinRate(player.currentYearWinRate)} (${((player.currentYearWinRate || 0) * 100).toFixed(1)}%)`}
+              : `勝率 ${formatWinRate(player.currentYearWinRate)}`}
           </div>
         </div>
       </div>
@@ -505,38 +505,34 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
                         {isPreDebut ? (
                           <span className="px-2.5 py-1 rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                             奨励会・研修会等在籍期間
                           </span>
                         ) : isZeroGames ? (
-                          <>
-                            <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 font-medium text-xs">
-                              0勝 0敗
-                            </span>
-                            <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 font-medium text-xs">
-                              勝率: －
-                            </span>
-                          </>
+                          <div className="px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-400 font-medium text-xs">
+                            0勝 0敗 勝率: －
+                          </div>
                         ) : (
-                          <>
-                            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1">
-                              <span>○ 勝数:</span>
-                              <strong className="text-sm text-emerald-400">{activeRecord.wins}</strong>
+                          <div className="px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-2.5 text-xs font-bold whitespace-nowrap shadow-inner">
+                            <span className="text-emerald-400 flex items-center gap-1">
+                              <span>◯ 勝数:</span>
+                              <strong className="text-sm font-mono text-emerald-300">{activeRecord.wins}</strong>
                             </span>
-                            <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-1">
+                            <span className="text-zinc-700">|</span>
+                            <span className="text-rose-400 flex items-center gap-1">
                               <span>● 敗数:</span>
-                              <strong className="text-sm text-rose-400">{activeRecord.losses}</strong>
+                              <strong className="text-sm font-mono text-rose-300">{activeRecord.losses}</strong>
                             </span>
-                            <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1">
+                            <span className="text-zinc-700">|</span>
+                            <span className="text-amber-300 flex items-center gap-1">
                               <span>勝率:</span>
                               <strong className="text-sm font-mono text-amber-200">
                                 {formatWinRate(activeRecord.rate)}
                               </strong>
-                              <span className="text-[11px] text-zinc-400">({(activeRecord.rate * 100).toFixed(1)}%)</span>
                             </span>
-                          </>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -708,7 +704,6 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                 ) : (
                                   <>
                                     <span className="text-amber-300 font-mono font-bold">{formatWinRate(r.rate)}</span>
-                                    <span className="text-zinc-400 text-xs ml-1 font-normal">({(r.rate * 100).toFixed(1)}%)</span>
                                   </>
                                 )}
                               </td>
@@ -1041,42 +1036,38 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
             {isPreDebut ? (
               <span className="px-3 py-1.5 rounded-xl bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                 奨励会・研修会等在籍期間
               </span>
             ) : isZeroGames ? (
-              <>
-                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-zinc-800 text-zinc-400 font-medium text-xs">
-                  0勝 0敗
-                </div>
-                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-zinc-800 text-zinc-500 font-medium text-xs">
-                  勝率: －
-                </div>
-              </>
+              <div className="bg-zinc-950/80 px-3.5 py-1.5 rounded-xl border border-zinc-800 text-zinc-400 font-medium text-xs">
+                0勝 0敗 勝率: －
+              </div>
             ) : (
-              <>
-                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5">
-                  <span>○ 勝数:</span>
-                  <strong className="text-base text-emerald-400">
+              <div className="bg-zinc-950/90 px-3.5 py-1.5 rounded-xl border border-amber-500/30 flex items-center gap-3 text-xs font-bold shadow-inner whitespace-nowrap">
+                <span className="text-emerald-400 flex items-center gap-1.5">
+                  <span>◯ 勝数:</span>
+                  <strong className="text-base font-mono text-emerald-300">
                     {activeRecord?.wins ?? 0}
                   </strong>
-                </div>
-                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-1.5">
+                </span>
+                <span className="text-zinc-700">|</span>
+                <span className="text-rose-400 flex items-center gap-1.5">
                   <span>● 敗数:</span>
-                  <strong className="text-base text-rose-400">
+                  <strong className="text-base font-mono text-rose-300">
                     {activeRecord?.losses ?? 0}
                   </strong>
-                </div>
-                <div className="bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5">
+                </span>
+                <span className="text-zinc-700">|</span>
+                <span className="text-amber-300 flex items-center gap-1.5">
                   <span>勝率:</span>
                   <strong className="text-base font-mono text-amber-200">
                     {formatWinRate(activeRecord?.rate)}
                   </strong>
-                  <span className="text-xs text-zinc-400">({((activeRecord?.rate ?? 0) * 100).toFixed(1)}%)</span>
-                </div>
-              </>
+                </span>
+              </div>
             )}
           </div>
         </div>
