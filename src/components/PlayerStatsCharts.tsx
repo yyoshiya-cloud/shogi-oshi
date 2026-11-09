@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Player, YearRecord } from '../types/shogi';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
-import { isPlayerOnLeave, formatWinRate } from '../utils/playerUtils';
+import { isPlayerOnLeave, formatWinRate, formatPlayerRankAndDan } from '../utils/playerUtils';
 import {
   Trophy,
   TrendingUp,
@@ -972,7 +972,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
                   全画面拡大表示
                 </span>
                 <h3 className="text-base sm:text-lg font-bold text-white font-serif-jp">
-                  {player.name}（{player.danRank || player.rank}）年度別戦績推移グラフ
+                  {player.name}（{formatPlayerRankAndDan(player)}）年度別戦績推移グラフ
                 </h3>
               </div>
               <p className="text-xs text-zinc-400 mt-0.5">

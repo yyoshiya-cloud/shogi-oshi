@@ -1,7 +1,7 @@
 import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
-import { formatPlayerName } from '../utils/playerUtils';
+import { formatPlayerName, formatPlayerRankAndDan } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
@@ -320,9 +320,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                           {formatPlayerName(player.name)}
                         </h4>
                         <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp">
-                          {player.danRank && !player.rank.includes(player.danRank)
-                            ? `${player.rank} (${player.danRank})`
-                            : player.rank}
+                          {formatPlayerRankAndDan(player)}
                         </span>
                       </div>
 

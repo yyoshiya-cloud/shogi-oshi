@@ -3,7 +3,7 @@ import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../t
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, isPlayerRetired } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, isPlayerRetired, formatPlayerRankAndDan } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -251,9 +251,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               {formatPlayerName(player.name)}
             </h3>
             <span className="text-xs sm:text-sm font-bold text-amber-400 font-serif-jp ml-1">
-              {player.danRank && !player.rank.includes(player.danRank)
-                ? `${player.rank} (${player.danRank})`
-                : player.rank}
+              {formatPlayerRankAndDan(player)}
             </span>
           </div>
 

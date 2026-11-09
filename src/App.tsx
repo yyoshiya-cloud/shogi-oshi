@@ -138,6 +138,8 @@ export default function App() {
         needsClassUpdate ||
         stored.some(
           (p) =>
+            (p.danRank && (p.danRank.includes('現役') || p.danRank === '棋士' || p.danRank === '女流棋士')) ||
+            (p.rank && p.rank.includes('現役棋士')) ||
             (p.name && !p.name.includes(' ') && !p.name.includes('\u3000') && p.name.length >= 3) ||
             (p.rank && p.rank.length > 25) ||
             (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
@@ -147,16 +149,34 @@ export default function App() {
       if (needsCleanup) {
         const cleaned = [...stored, ...missingStatic].map((p) => {
           let name = p.name ? formatPlayerName(p.name) : p.name;
-          let rank = p.rank || '現役棋士';
+          let rank = p.rank || (p.type === 'women' ? '女流棋士' : '棋士');
+          rank = rank.replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
           rank = rank.replace(/１/g, '1').replace(/２/g, '2');
           if (rank.length > 25) {
             const m = rank.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級|竜王|名人)/);
-            rank = m ? m[1].replace(/１/g, '1').replace(/２/g, '2') : '現役棋士';
+            rank = m ? m[1].replace(/１/g, '1').replace(/２/g, '2') : (p.type === 'women' ? '女流棋士' : '棋士');
+          }
+          if (rank === '現役棋士') {
+            rank = p.type === 'women' ? '女流棋士' : '棋士';
           }
           const validHeldTitles = (p.heldTitles || []).filter(
             (t) => !t.includes('段') && !t.includes('級')
           );
           let danRank = p.danRank;
+          if (danRank) {
+            danRank = danRank.replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
+            if (danRank === '現役棋士' || danRank === '女流棋士' || danRank === '棋士') {
+              danRank = undefined;
+            }
+          }
+          if (p.id === 'habu-yoshiharu' || p.name.includes('羽生 善治')) {
+            rank = '九段';
+            danRank = '九段';
+          }
+          if (p.id === 'pro-toshiyuki_moriuchi' || p.name.includes('森内 俊之')) {
+            rank = '九段(永世称号有資格者)';
+            danRank = '九段';
+          }
           if (!danRank) {
             if (p.id === 'fujii-sota' || p.name.includes('藤井 聡太')) danRank = '九段';
             else if (p.id === 'ito-takumi' || p.name.includes('伊藤 匠')) danRank = '九段';
@@ -467,7 +487,14 @@ export default function App() {
           // Keep custom added players
           const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
           const merged = [...data.players, ...customPlayers].map((p) => {
-            const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
+            const cleanRank = (p.rank || '').replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
+            const cleanDan = (p.danRank === '現役棋士' || p.danRank === '女流棋士' || p.danRank === '棋士') ? undefined : p.danRank;
+            const withTitles = {
+              ...p,
+              rank: cleanRank || (p.type === 'women' ? '女流棋士' : '棋士'),
+              danRank: cleanDan,
+              totalTitles: (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? 4 : p.totalTitles,
+            };
             return initializePlayerRecords(withTitles);
           });
           saveStoredPlayers(merged);

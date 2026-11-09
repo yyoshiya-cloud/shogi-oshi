@@ -187,13 +187,15 @@ function normalizeName(name: string): string {
 
 function sanitizeRank(rank: string): string {
   let clean = rank.trim().replace(/１/g, '1').replace(/２/g, '2');
+  clean = clean.replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
+  if (clean === '現役棋士' || clean === '女流棋士' || clean === '棋士') return '';
   // If rank was corrupted with multiple names concatenated, truncate or clean
   if (clean.length > 25) {
     const m = clean.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級|竜王|名人)/);
     if (m) return m[1].replace(/１/g, '1').replace(/２/g, '2');
-    return '現役棋士';
+    return '';
   }
-  return clean || '現役棋士';
+  return clean;
 }
 
 function extractHeldTitles(titleText: string, type: 'pro' | 'women'): string[] {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Match, Player } from '../types/shogi';
 import { getTodayDateString } from '../utils/dateUtils';
 import { getDirectHeadToHead } from '../utils/headToHeadUtils';
+import { formatPlayerRankAndDan } from '../utils/playerUtils';
 import {
   X,
   Calendar,
@@ -236,7 +237,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 )}
                 <span className="text-zinc-500 text-xs shrink-0">↗</span>
               </h3>
-              <p className="text-xs text-amber-300/90 font-semibold">{player1.rank}</p>
+              <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player1)}</p>
               <p className="text-[11px] text-zinc-400 mt-0.5">{player1.style}</p>
             </div>
 
@@ -282,7 +283,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                   {player2.name}
                 </span>
               </h3>
-              <p className="text-xs text-amber-300/90 font-semibold">{player2.rank}</p>
+              <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player2)}</p>
               <p className="text-[11px] text-zinc-400 mt-0.5">{player2.style}</p>
             </div>
           </div>

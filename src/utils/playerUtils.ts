@@ -316,4 +316,82 @@ export function formatWinRate(rate?: number | null): string {
   return num.toFixed(3);
 }
 
+/**
+ * 棋士・女流棋士の肩書・段位を整形表示する。
+ * 「現役棋士」「女流棋士」などの不要なシステム分類語句を除去し、
+ * タイトル保持者であれば「竜王・名人 (九段)」のようにタイトルと段位を併記、
+ * タイトル保持者でなければ純粋な段位・称号（例: 「九段」「九段(永世称号有資格者)」「女流三段」）のみを表示する。
+ */
+export function formatPlayerRankAndDan(player?: { rank?: string; danRank?: string; type?: string } | null): string {
+  if (!player) return '';
+  let rank = (player.rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+  let dan = (player.danRank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+
+  // 「現役棋士」「女流棋士」「棋士」などの不要語句およびカッコ表記を除去
+  rank = rank
+    .replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '')
+    .replace(/^(?:現役棋士|女流棋士|棋士)$/g, '')
+    .trim();
+  dan = dan
+    .replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '')
+    .replace(/^(?:現役棋士|女流棋士|棋士)$/g, '')
+    .trim();
+
+  if (!rank && !dan) {
+    return player.type === 'women' ? '女流棋士' : '棋士';
+  }
+  if (!rank) return dan;
+  if (!dan) return rank;
+
+  // danがrankに既に含まれている場合（例: rank="九段", dan="九段" や rank="九段(永世称号有資格者)", dan="九段"）
+  if (rank.includes(dan)) {
+    return rank;
+  }
+
+  // rankがタイトル（竜王、名人、王位、叡王、白玲、女王など）でdanが有効な段位（九段、女流五段など）の場合のみ「タイトル (段位)」と併記
+  const isTitleRank =
+    rank.includes('竜王') ||
+    rank.includes('名人') ||
+    rank.includes('王') ||
+    rank.includes('棋') ||
+    rank.includes('白玲') ||
+    rank.includes('清麗') ||
+    rank.includes('女王') ||
+    rank.includes('倉敷藤花');
+
+  const isValidDan = /([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級)/.test(dan);
+
+  if (isTitleRank && isValidDan) {
+    return `${rank} (${dan})`;
+  }
+
+  return rank;
+}
+
+/**
+ * 段位のみを抽出して整形表示する（プロフィール表の「段位」行用）
+ */
+export function formatPlayerDanOnly(player?: { rank?: string; danRank?: string; type?: string } | null): string {
+  if (!player) return '';
+  let dan = (player.danRank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+  dan = dan
+    .replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '')
+    .replace(/^(?:現役棋士|女流棋士|棋士)$/g, '')
+    .trim();
+
+  let rank = (player.rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+  rank = rank
+    .replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '')
+    .replace(/^(?:現役棋士|女流棋士|棋士)$/g, '')
+    .trim();
+
+  if (dan && /([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級)/.test(dan)) {
+    return dan;
+  }
+  const match = rank.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級)/);
+  if (match) return match[1];
+
+  return rank || dan || (player.type === 'women' ? '女流棋士' : '棋士');
+}
+
 

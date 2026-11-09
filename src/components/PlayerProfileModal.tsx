@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
@@ -440,9 +440,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     {formatPlayerName(activePlayer.name)}
                   </h2>
                   <span className="text-xs sm:text-sm font-bold text-amber-300 font-serif-jp leading-tight">
-                    {activePlayer.danRank && !activePlayer.rank.includes(activePlayer.danRank)
-                      ? `${activePlayer.rank} (${activePlayer.danRank})`
-                      : activePlayer.rank}
+                    {formatPlayerRankAndDan(activePlayer)}
                   </span>
                 </div>
               </div>
@@ -630,7 +628,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   <div>
                     <span className="text-zinc-500 block">段位</span>
                     <span className="font-semibold text-amber-300">
-                      {activePlayer.danRank || activePlayer.rank}
+                      {formatPlayerDanOnly(activePlayer)}
                     </span>
                   </div>
                   <div>
@@ -1106,7 +1104,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                               </span>
                               {opponent && (
                                 <span className="text-xs text-amber-300 font-medium shrink-0">
-                                  {opponent.danRank || opponent.rank}
+                                  {formatPlayerDanOnly(opponent)}
                                 </span>
                               )}
                             </div>
