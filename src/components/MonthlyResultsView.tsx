@@ -1217,7 +1217,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             </span>
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
-                            {result.goteRaw.includes('※') ? 'LPSA / 女流' : '日本将棋連盟'}
+                            {result.goteRaw.includes('※') ? 'LPSA' : '日本将棋連盟'}
                           </span>
                         </div>
                       </div>

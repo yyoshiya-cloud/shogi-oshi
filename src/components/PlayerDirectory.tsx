@@ -3,7 +3,7 @@ import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../t
 import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, isPlayerRetired, formatPlayerRankAndDan } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, isPlayerRetired, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -433,11 +433,13 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
 
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
-          const nameMatch = p.name.toLowerCase().includes(q);
+          const normQ = normalizeShogiPlayerNameForMatch(q);
+          const normName = normalizeShogiPlayerNameForMatch(p.name);
+          const nameMatch = p.name.toLowerCase().includes(q) || (normQ !== '' && normName.includes(normQ));
           const numMatch = p.playerNumber?.toString().includes(q);
-          const titleMatch = p.heldTitles.some((t) => t.toLowerCase().includes(q));
-          const masterMatch = p.master && p.master.toLowerCase().includes(q);
-          const birthMatch = p.birthPlace && p.birthPlace.toLowerCase().includes(q);
+          const titleMatch = p.heldTitles.some((t) => t.toLowerCase().includes(q) || (normQ !== '' && normalizeShogiPlayerNameForMatch(t).includes(normQ)));
+          const masterMatch = p.master && (p.master.toLowerCase().includes(q) || (normQ !== '' && normalizeShogiPlayerNameForMatch(p.master).includes(normQ)));
+          const birthMatch = p.birthPlace && (p.birthPlace.toLowerCase().includes(q) || (normQ !== '' && normalizeShogiPlayerNameForMatch(p.birthPlace).includes(normQ)));
           if (!nameMatch && !numMatch && !titleMatch && !masterMatch && !birthMatch) return false;
         }
 
