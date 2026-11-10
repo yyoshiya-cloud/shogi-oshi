@@ -13428,6 +13428,7 @@
     "type": "pro",
     "affiliation": "日本将棋連盟",
     "rank": "四段",
+    "danRank": "四段",
     "playerNumber": 346,
     "photoUrl": "https://www.shogi.or.jp/images/pro/346.jpg",
     "birthDate": "2008年06月02日\n（18歳）",
@@ -13449,7 +13450,7 @@
     "rankingInFederation": {},
     "colorAccent": "#3b82f6",
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #3b82f633 100%)",
-    "shortBio": "",
+    "shortBio": "兵庫県姫路市出身。井上慶太九段門下。2024年に四段昇段（棋士番号346）。",
     "highlights": [
       "日本将棋連盟所属 四段"
     ],

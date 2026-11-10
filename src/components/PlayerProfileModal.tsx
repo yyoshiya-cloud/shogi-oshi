@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
@@ -106,8 +106,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   }, []);
 
   useEffect(() => {
-    const latest = allPlayers?.find((p) => p.id === player.id);
-    if (latest) {
+    if (!player) return;
+    const latest = allPlayers && allPlayers.length > 0 ? resolvePlayer(player.id || player.name, allPlayers) : player;
+    if (latest && latest.playerNumber !== 0) {
       setActivePlayer(latest);
     } else {
       setActivePlayer(player);

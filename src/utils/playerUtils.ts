@@ -420,7 +420,11 @@ export function createFallbackPlayer(rawIdOrName: string): Player {
     .replace(/_/g, ' ')
     .trim();
 
-  const isSumisaki = cleanName.includes('炭崎') || cleanName.includes('炭﨑');
+  const isSumisaki =
+    cleanName.includes('炭崎') ||
+    cleanName.includes('炭﨑') ||
+    rawIdOrName.includes('sumisaki') ||
+    rawIdOrName.includes('346');
   const danMatch = cleanName.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級|アマ)/);
   const detectedDan = isSumisaki
     ? '四段'
@@ -433,12 +437,14 @@ export function createFallbackPlayer(rawIdOrName: string): Player {
     : '公式戦対局者';
 
   return {
-    id: rawIdOrName,
-    name: formatPlayerName(cleanName),
+    id: isSumisaki ? 'pro-toshiki_sumisaki' : rawIdOrName,
+    name: isSumisaki ? '炭﨑 俊毅' : formatPlayerName(cleanName),
     type: cleanName.includes('女流') ? 'women' : 'pro',
-    affiliation: cleanName.includes('LPSA') ? 'LPSA' : isSumisaki ? '日本将棋連盟' : '無所属',
+    affiliation: cleanName.includes('LPSA') ? 'LPSA' : '日本将棋連盟',
     rank: detectedDan,
+    danRank: detectedDan,
     playerNumber: isSumisaki ? 346 : 0,
+    photoUrl: isSumisaki ? 'https://www.shogi.or.jp/images/pro/346.jpg' : undefined,
     birthDate: isSumisaki ? '2008年06月02日\n（18歳）' : '',
     birthPlace: isSumisaki ? '兵庫県姫路市' : '',
     master: isSumisaki ? '井上慶太九段' : '',
@@ -448,26 +454,32 @@ export function createFallbackPlayer(rawIdOrName: string): Player {
     heldTitles: [],
     totalTitles: 0,
     titleHistory: '',
-    careerWins: 0,
-    careerLosses: 0,
-    careerWinRate: 0,
-    currentYearWins: 0,
-    currentYearLosses: 0,
-    currentYearWinRate: 0,
+    careerWins: isSumisaki ? 13 : 0,
+    careerLosses: isSumisaki ? 7 : 0,
+    careerWinRate: isSumisaki ? 0.65 : 0,
+    currentYearWins: isSumisaki ? 12 : 0,
+    currentYearLosses: isSumisaki ? 7 : 0,
+    currentYearWinRate: isSumisaki ? 0.6316 : 0,
     currentYearStreak: 0,
     rankingInFederation: {},
-    colorAccent: '#6366f1',
-    avatarBg: 'linear-gradient(135deg, #18181b 0%, #6366f133 100%)',
-    shortBio: `${cleanName}（公式戦対局）`,
-    highlights: [],
-    yearRecords: [],
+    colorAccent: '#3b82f6',
+    avatarBg: 'linear-gradient(135deg, #18181b 0%, #3b82f633 100%)',
+    shortBio: isSumisaki
+      ? '兵庫県姫路市出身。井上慶太九段門下。2024年に四段昇段（棋士番号346）。'
+      : `${cleanName}（公式戦対局）`,
+    highlights: isSumisaki ? ['日本将棋連盟所属 四段'] : [],
+    yearRecords: isSumisaki ? [{ year: 2026, wins: 12, losses: 7, rate: 0.6316 }] : [],
     senteWinRate: 0.5,
     goteWinRate: 0.5,
     openingStats: [],
     headToHead: [],
     externalLinks: {
-      officialProfile: isSumisaki ? 'https://www.shogi.or.jp/player/pro/346.html' : 'https://www.shogi.or.jp/',
-      kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(cleanName)}`,
+      officialProfile: isSumisaki
+        ? 'https://www.shogi.or.jp/player/pro/346.html'
+        : 'https://www.shogi.or.jp/',
+      kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(
+        isSumisaki ? '炭崎俊毅' : cleanName
+      )}`,
     },
   };
 }
@@ -489,21 +501,30 @@ export function resolvePlayer(id: string | undefined, players: Player[]): Player
   const byCleanName = players.find((p) => p.name.replace(/\s+/g, '') === clean);
   if (byCleanName) return byCleanName;
 
-  // 3. Normalized name match (fuzzy handling kanji variants like 﨑/崎, 齊/斉, 髙/高)
-  const normTarget = normalizeShogiPlayerNameForMatch(targetId);
+  // 3. Special check for Toshiki Sumizaki (pro-346 / sumisaki)
+  if (
+    targetId.includes('炭崎') ||
+    targetId.includes('炭﨑') ||
+    targetId.includes('sumisaki') ||
+    targetId.includes('346')
+  ) {
+    const sumisaki = players.find(
+      (p) =>
+        p.playerNumber === 346 ||
+        p.id === 'pro-toshiki_sumisaki' ||
+        (p.name.includes('炭') && p.name.includes('俊毅'))
+    );
+    if (sumisaki) return sumisaki;
+  }
+
+  // 4. Normalized name match (fuzzy handling kanji variants like 﨑/崎, 齊/斉, 髙/高)
+  const normTarget = normalizeShogiPlayerNameForMatch(clean);
   if (normTarget) {
     const byNorm = players.find((p) => {
       const pNorm = normalizeShogiPlayerNameForMatch(p.name);
-      const idNorm = normalizeShogiPlayerNameForMatch(p.id);
-      return pNorm === normTarget || idNorm === normTarget;
+      return pNorm === normTarget;
     });
     if (byNorm) return byNorm;
-  }
-
-  // 4. Specific known names (e.g. 炭崎俊毅 <-> 炭﨑俊毅)
-  if (normTarget.includes('炭崎俊毅')) {
-    const sumisaki = players.find((p) => p.name.includes('炭') && p.name.includes('俊毅'));
-    if (sumisaki) return sumisaki;
   }
 
   // 5. Fallback safe Player object

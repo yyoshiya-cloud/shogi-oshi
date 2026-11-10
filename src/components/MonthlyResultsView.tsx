@@ -21,6 +21,7 @@ import {
   BookOpen,
   ShieldAlert
 } from 'lucide-react';
+import { formatPlayerName, resolvePlayer, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import { DataAuditModal } from './DataAuditModal';
 
 import { getTodayInfo } from '../utils/dateUtils';
@@ -460,60 +461,14 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
   const handlePlayerClick = (playerName: string) => {
     const clean = playerName.replace(/[※\*＊]/g, '').trim();
-    const p = playerMap.get(clean.replace(/\s+/g, '')) || playerMap.get(clean);
-    if (p) {
-      onSelectPlayer(p);
-    } else {
-      // Create quick pro player view
-      const isWomen = playerName.includes('※') || playerName.includes('女流');
-      const tempPlayer: Player = {
-        id: `player-${clean.replace(/\s+/g, '')}`,
-        name: clean,
-        type: isWomen ? 'women' : 'pro',
-        affiliation: playerName.includes('※') ? 'LPSA' : '日本将棋連盟',
-        rank: isWomen ? '女流棋士' : '現役棋士',
-        playerNumber: 0,
-        birthDate: '',
-        birthPlace: '',
-        master: '',
-        style: '居飛車',
-        ryuoClass: '-',
-        junisenClass: '-',
-        heldTitles: [],
-        totalTitles: 0,
-        titleHistory: '',
-        careerWins: 0,
-        careerLosses: 0,
-        careerWinRate: 0,
-        currentYearWins: 0,
-        currentYearLosses: 0,
-        currentYearWinRate: 0,
-        currentYearStreak: 0,
-        rankingInFederation: {},
-        colorAccent: isWomen ? '#ec4899' : '#6366f1',
-        avatarBg: `linear-gradient(135deg, #18181b 0%, ${isWomen ? '#ec489933' : '#6366f133'} 100%)`,
-        shortBio: `${clean}（${isWomen ? '女流棋士' : '棋士'}）。2026年公式対局登録棋士。`,
-        highlights: ['日本将棋連盟公式対局出場'],
-        yearRecords: [],
-        senteWinRate: 0.5,
-        goteWinRate: 0.5,
-        openingStats: [],
-        headToHead: [],
-        externalLinks: {
-          officialProfile: playerName.includes('※')
-            ? 'https://joshi-shogi.com/'
-            : `https://www.shogi.or.jp/player/pro/`,
-          kifuDatabase: `https://shogidb2.com/search?q=${encodeURIComponent(clean)}`,
-        },
-      };
-      onSelectPlayer(tempPlayer);
-    }
+    const p = resolvePlayer(clean, players);
+    onSelectPlayer(p);
   };
 
   const handleResultToMatchModal = (r: ShogiMonthlyResult) => {
     if (!onSelectMatch) return;
-    const p1 = playerMap.get(r.sente.replace(/\s+/g, '')) || playerMap.get(r.sente);
-    const p2 = playerMap.get(r.gote.replace(/\s+/g, '')) || playerMap.get(r.gote);
+    const p1 = resolvePlayer(r.sente, players);
+    const p2 = resolvePlayer(r.gote, players);
 
     const m: Match = {
       id: r.id,
@@ -522,15 +477,15 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       round: r.note || '本戦',
       date: r.date,
       time: '10:00',
-      player1Id: p1?.id || `p1-${r.sente}`,
-      player2Id: p2?.id || `p2-${r.gote}`,
-      sentePlayerId: p1?.id || `p1-${r.sente}`,
-      gotePlayerId: p2?.id || `p2-${r.gote}`,
+      player1Id: p1.id,
+      player2Id: p2.id,
+      sentePlayerId: p1.id,
+      gotePlayerId: p2.id,
       status: 'finished',
       venue: r.venue || '東京・将棋会館',
       timeControl: '公式持ち時間',
       broadcast: ['日本将棋連盟モバイル中継'],
-      winnerId: r.winner === r.sente ? (p1?.id || r.sente) : (p2?.id || r.gote),
+      winnerId: r.winner === r.sente ? p1.id : p2.id,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
       highlights: `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${r.winner}。`,
@@ -1202,7 +1157,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             </span>
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
-                            {result.senteRaw.includes('※') ? 'LPSA / 女流' : '日本将棋連盟'}
+                            {result.senteRaw.includes('※') ? 'LPSA' : '日本将棋連盟'}
                           </span>
                         </div>
 
