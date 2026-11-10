@@ -19,8 +19,7 @@ import {
   CheckCircle2,
   ArrowUpDown,
   BookOpen,
-  ShieldAlert,
-  Crown
+  ShieldAlert
 } from 'lucide-react';
 import { DataAuditModal } from './DataAuditModal';
 
@@ -1178,7 +1177,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             </span>
                             {isSenteWinner ? (
                               <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
-                                <Crown size={10} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>○勝者</span>
                               </span>
                             ) : (
@@ -1202,9 +1200,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             >
                               {result.sente}
                             </span>
-                            {isSenteWinner && (
-                              <Crown size={15} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_3px_rgba(251,191,36,0.6)]" />
-                            )}
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
                             {result.senteRaw.includes('※') ? 'LPSA / 女流' : '日本将棋連盟'}
@@ -1244,7 +1239,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             )}
                             {isGoteWinner ? (
                               <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
-                                <Crown size={10} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>○勝者</span>
                               </span>
                             ) : (
@@ -1259,9 +1253,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
                           {/* Player Name Row */}
                           <div className="flex items-center justify-end gap-1 min-w-0">
-                            {isGoteWinner && (
-                              <Crown size={15} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_3px_rgba(251,191,36,0.6)]" />
-                            )}
                             <span
                               className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
                                 isGoteWinner ? 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' : 'text-zinc-100 font-bold'

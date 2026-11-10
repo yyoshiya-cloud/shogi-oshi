@@ -10,7 +10,6 @@ import {
   Search,
   Heart,
   Trophy,
-  Crown,
   SlidersHorizontal,
   Check,
   UserCheck,
@@ -274,7 +273,6 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
               <div className="flex flex-wrap items-center gap-1 mt-1">
                 {eiseiBadge && (
                   <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-gradient-to-r from-amber-500/30 to-yellow-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-0.5 shadow-sm">
-                    <Crown size={9} className="text-amber-400 fill-amber-400/50" />
                     {eiseiBadge}
                   </span>
                 )}

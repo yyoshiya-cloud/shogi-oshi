@@ -11,7 +11,6 @@ import {
   MapPin,
   ExternalLink,
   Trophy,
-  Crown,
   Swords,
   ChevronDown,
   ChevronUp
@@ -222,7 +221,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 <span className="text-xs font-black text-amber-400 tracking-wide">☗</span>
                 {winner?.id === player1.id ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
-                    <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
@@ -241,9 +239,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 >
                   {player1.name}
                 </span>
-                {winner?.id === player1.id && (
-                  <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
-                )}
                 {isP1RealPlayer && <span className="text-zinc-500 text-xs shrink-0">↗</span>}
               </h3>
               <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player1)}</p>
@@ -269,7 +264,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <div className="flex items-center justify-end gap-1.5 mb-2.5">
                 {winner?.id === player2.id ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
-                    <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
@@ -281,9 +275,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               </div>
               <h3 className="flex items-center justify-end gap-1.5 min-w-0 mb-1">
                 {isP2RealPlayer && <span className="text-zinc-500 text-xs shrink-0">↗</span>}
-                {winner?.id === player2.id && (
-                  <Crown size={20} className="text-amber-400 fill-amber-400 shrink-0 filter drop-shadow-[0_1px_4px_rgba(251,191,36,0.6)]" />
-                )}
                 <span
                   className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
                     winner?.id === player2.id

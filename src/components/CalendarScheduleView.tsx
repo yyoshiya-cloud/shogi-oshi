@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Match, Player, FollowedPlayerConfig, ShogiMonthlyResult } from '../types/shogi';
-import { getGoogleCalendarUrl, downloadICSFile } from '../utils/calendarExport';
+import { getGoogleCalendarUrl, downloadICSFile, downloadMultipleICSFile, MatchExportItem } from '../utils/calendarExport';
 import { getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
 import { formatPlayerName, formatPlayerRankAndDan, resolvePlayer } from '../utils/playerUtils';
 import {
@@ -16,7 +16,13 @@ import {
   Grid,
   RefreshCw,
   ExternalLink,
-  Trophy
+  Trophy,
+  Bookmark,
+  BookmarkCheck,
+  CheckSquare,
+  Square,
+  Check,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MonthlyResultsView } from './MonthlyResultsView';
@@ -72,11 +78,119 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   };
 
 
+  const [selectedGoogleIds, setSelectedGoogleIds] = useState<Set<string>>(new Set());
+  const [selectedIcsIds, setSelectedIcsIds] = useState<Set<string>>(new Set());
+
+  const toggleGoogleReservation = (matchId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedGoogleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(matchId)) {
+        next.delete(matchId);
+      } else {
+        next.add(matchId);
+      }
+      return next;
+    });
+  };
+
+  const toggleIcsReservation = (matchId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedIcsIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(matchId)) {
+        next.delete(matchId);
+      } else {
+        next.add(matchId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllBoth = () => {
+    const allIds = new Set(filteredMatches.map((m) => m.id));
+    setSelectedGoogleIds(allIds);
+    setSelectedIcsIds(allIds);
+  };
+
+  const handleSelectOshiBoth = () => {
+    const oshiIds = new Set(
+      filteredMatches
+        .filter((m) => followedPlayerIds.has(m.player1Id) || followedPlayerIds.has(m.player2Id))
+        .map((m) => m.id)
+    );
+    setSelectedGoogleIds(oshiIds);
+    setSelectedIcsIds(oshiIds);
+  };
+
+  const handleClearAllReservations = () => {
+    setSelectedGoogleIds(new Set());
+    setSelectedIcsIds(new Set());
+  };
+
   const followedPlayerIds = new Set(followedList.map((f) => f.playerId));
   const playerMap = new Map(players.map((p) => [p.id, p]));
 
   const getPlayer = (id: string): Player => {
     return resolvePlayer(id, players);
+  };
+
+  // Selected Google Calendar export items
+  const googleExportItems = useMemo<MatchExportItem[]>(() => {
+    if (selectedGoogleIds.size === 0) return [];
+    const items: MatchExportItem[] = [];
+    matches.forEach((m) => {
+      if (selectedGoogleIds.has(m.id)) {
+        items.push({
+          match: m,
+          p1: getPlayer(m.player1Id),
+          p2: getPlayer(m.player2Id),
+        });
+      }
+    });
+    return items;
+  }, [selectedGoogleIds, matches, players]);
+
+  // Selected ICS export items
+  const icsExportItems = useMemo<MatchExportItem[]>(() => {
+    if (selectedIcsIds.size === 0) return [];
+    const items: MatchExportItem[] = [];
+    matches.forEach((m) => {
+      if (selectedIcsIds.has(m.id)) {
+        items.push({
+          match: m,
+          p1: getPlayer(m.player1Id),
+          p2: getPlayer(m.player2Id),
+        });
+      }
+    });
+    return items;
+  }, [selectedIcsIds, matches, players]);
+
+  const handleBulkGoogleCalendar = () => {
+    if (googleExportItems.length === 0) return;
+    googleExportItems.forEach((item, idx) => {
+      const url = getGoogleCalendarUrl(item.match, item.p1, item.p2);
+      setTimeout(() => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }, idx * 250);
+    });
+
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.8 },
+    });
+  };
+
+  const handleBulkICSDownload = () => {
+    if (icsExportItems.length === 0) return;
+    downloadMultipleICSFile(icsExportItems, `shogi_selected_matches_${todayDate}.ics`);
+    confetti({
+      particleCount: 40,
+      spread: 50,
+      origin: { y: 0.8 },
+    });
   };
 
   // Filter matches (対局結果・対局一覧は年月日で降順に整列)
@@ -187,8 +301,8 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
     });
   }
 
-  // 2-week horizontal date strip calculation (Idea 1)
-  const twoWeeksDays = useMemo(() => {
+  // 1-week horizontal date strip calculation
+  const weekStripDays = useMemo(() => {
     const list: {
       dateStr: string;
       year: number;
@@ -205,7 +319,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
     // Base date starts from today (system date) + offset
     const baseDate = new Date(todayInfo.year, todayInfo.month, todayInfo.day + stripOffsetDays);
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + i);
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
@@ -392,6 +506,38 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
               終局
             </button>
           </div>
+
+          {/* Quick Bulk Selection Buttons */}
+          <div className="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs flex-wrap sm:flex-nowrap">
+            <span className="text-zinc-400 font-bold px-1 flex items-center gap-1 text-[11px] shrink-0">
+              <Bookmark size={12} className="text-amber-400" />
+              <span>一括予約:</span>
+            </span>
+            <button
+              onClick={handleSelectAllBoth}
+              className="px-2 py-0.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition text-[11px] font-medium shrink-0"
+              title="表示中の対局をすべてGoogleおよび.ics一括予約に追加します"
+            >
+              表示全選択 ({filteredMatches.length})
+            </button>
+            <button
+              onClick={handleSelectOshiBoth}
+              className="px-2 py-0.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/40 transition text-[11px] font-medium flex items-center gap-0.5 shrink-0"
+              title="推し対局のみを一括予約に追加します"
+            >
+              <Heart size={10} className="fill-rose-400" />
+              <span>推し全選択</span>
+            </button>
+            {(selectedGoogleIds.size > 0 || selectedIcsIds.size > 0) && (
+              <button
+                onClick={handleClearAllReservations}
+                className="px-2 py-0.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition text-[11px] shrink-0"
+                title="すべての予約選択を解除します"
+              >
+                解除
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -447,7 +593,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
       {/* Calendar Mode */}
       {viewMode === 'calendar' && (
         <div className="space-y-4">
-          {/* Idea 1: 2-Week Horizontal Date Strip */}
+          {/* 1-Week Horizontal Date Strip */}
           <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-3.5 sm:p-4 shadow-xl space-y-3">
             {/* Strip Header */}
             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -457,9 +603,9 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-xs sm:text-sm font-black text-zinc-100 font-serif-jp flex items-center gap-1.5">
-                    <span>直近2週間の対局日程</span>
+                    <span>直近1週間の対局日程</span>
                     <span className="text-[11px] text-zinc-400 font-normal">
-                      ({twoWeeksDays[0]?.month}月{twoWeeksDays[0]?.day}日〜{twoWeeksDays[twoWeeksDays.length - 1]?.month}月{twoWeeksDays[twoWeeksDays.length - 1]?.day}日)
+                      ({weekStripDays[0]?.month}月{weekStripDays[0]?.day}日〜{weekStripDays[weekStripDays.length - 1]?.month}月{weekStripDays[weekStripDays.length - 1]?.day}日)
                     </span>
                   </h3>
                 </div>
@@ -499,7 +645,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 <button
                   onClick={() => setCalendarDisplayMode((m) => (m === 'strip' ? 'month' : 'strip'))}
                   className="ml-1 text-[11px] px-2.5 py-1 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60 transition flex items-center gap-1"
-                  title={calendarDisplayMode === 'strip' ? '月間グリッドカレンダーを展開' : '直近2週間バーのみに折りたたむ'}
+                  title={calendarDisplayMode === 'strip' ? '月間グリッドカレンダーを展開' : '直近1週間バーのみに折りたたむ'}
                 >
                   {calendarDisplayMode === 'strip' ? (
                     <>
@@ -509,7 +655,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                   ) : (
                     <>
                       <CalendarIcon size={13} className="text-amber-400" />
-                      <span className="hidden sm:inline">2週間バーに縮小</span>
+                      <span className="hidden sm:inline">1週間バーに縮小</span>
                     </>
                   )}
                 </button>
@@ -518,7 +664,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
 
             {/* Horizontal Scrollable Date Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
-              {twoWeeksDays.map((d) => {
+              {weekStripDays.map((d) => {
                 const isSelected = d.dateStr === selectedDate;
                 const isSun = d.dayOfWeekIdx === 0;
                 const isSat = d.dayOfWeekIdx === 6;
@@ -786,21 +932,51 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                           {match.tournament}
                           {match.round && ` ${match.round}`}
                         </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                            match.status === 'live'
-                              ? 'bg-amber-500/20 text-amber-300'
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              match.status === 'live'
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : match.status === 'finished'
+                                ? 'bg-zinc-800 text-zinc-300'
+                                : 'bg-amber-500/20 text-amber-300'
+                            }`}
+                          >
+                            {match.status === 'live'
+                              ? '対局中'
                               : match.status === 'finished'
-                              ? 'bg-zinc-800 text-zinc-300'
-                              : 'bg-amber-500/20 text-amber-300'
-                          }`}
-                        >
-                          {match.status === 'live'
-                            ? '対局中'
-                            : match.status === 'finished'
-                            ? '終局'
-                            : '予定'}
-                        </span>
+                              ? '終局'
+                              : '予定'}
+                          </span>
+
+                          {/* Separate Google Reservation Button */}
+                          <button
+                            onClick={(e) => toggleGoogleReservation(match.id, e)}
+                            className={`p-1.5 rounded-xl transition flex items-center justify-center ${
+                              selectedGoogleIds.has(match.id)
+                                ? 'bg-blue-600 text-white border border-blue-400 shadow-sm'
+                                : 'bg-zinc-800/80 hover:bg-blue-950/60 text-blue-400 hover:text-blue-300 border border-zinc-700/60'
+                            }`}
+                            title="Googleカレンダー登録予約：この対局をGoogle一括登録の対象に追加します（画面下部の一括登録バーで登録実行）"
+                            aria-label="Googleカレンダー登録予約"
+                          >
+                            <CalendarPlus size={13} className={selectedGoogleIds.has(match.id) ? 'fill-blue-200' : ''} />
+                          </button>
+
+                          {/* Separate ICS Download Reservation Button */}
+                          <button
+                            onClick={(e) => toggleIcsReservation(match.id, e)}
+                            className={`p-1.5 rounded-xl transition flex items-center justify-center ${
+                              selectedIcsIds.has(match.id)
+                                ? 'bg-amber-500 text-zinc-950 border border-amber-400 shadow-sm'
+                                : 'bg-zinc-800/80 hover:bg-amber-950/60 text-amber-400 hover:text-amber-300 border border-zinc-700/60'
+                            }`}
+                            title=".ics保存予約：この対局を.icsファイル一括保存の対象に追加します（画面下部の一括登録バーで保存実行）"
+                            aria-label=".ics保存予約"
+                          >
+                            <Download size={13} className={selectedIcsIds.has(match.id) ? 'stroke-[2.5]' : ''} />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Versus */}
@@ -832,30 +1008,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                             中継: {match.broadcast.join(', ')}
                           </span>
                         )}
-                      </div>
-
-                      {/* Calendar export buttons inside card */}
-                      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-zinc-800/60">
-                        <a
-                          href={getGoogleCalendarUrl(match, p1, p2)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-[11px] font-medium transition"
-                        >
-                          <CalendarPlus size={12} />
-                          <span>Google登録</span>
-                        </a>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadICSFile(match, p1, p2);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] font-medium transition"
-                        >
-                          <Download size={12} />
-                          <span>.ics保存</span>
-                        </button>
                       </div>
                     </div>
                   );
@@ -968,7 +1120,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                   </div>
                 </div>
 
-                {/* Compact Footer: Broadcast & Export */}
+                {/* Compact Footer: Broadcast & Reservation Buttons */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/40 text-[11px] text-zinc-400">
                   <div className="flex items-center gap-2 truncate">
                     <span className="truncate text-zinc-400">
@@ -981,34 +1133,75 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href={getGoogleCalendarUrl(match, p1, p2)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition"
-                      title="Googleカレンダーに登録"
-                    >
-                      <CalendarPlus size={11} />
-                      <span>Googleカレンダー</span>
-                    </a>
+
+                  {/* Two separate reservation buttons */}
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadICSFile(match, p1, p2);
-                      }}
-                      className="inline-flex items-center gap-1 text-[11px] text-zinc-300 hover:text-white transition"
-                      title=".icsファイルをダウンロード"
+                      onClick={(e) => toggleGoogleReservation(match.id, e)}
+                      className={`p-1.5 rounded-lg transition flex items-center justify-center ${
+                        selectedGoogleIds.has(match.id)
+                          ? 'bg-blue-600 text-white border border-blue-400 shadow-sm'
+                          : 'bg-zinc-800/90 hover:bg-blue-950/60 text-blue-400 hover:text-blue-300 border border-zinc-700/60'
+                      }`}
+                      title="Googleカレンダー登録予約：この対局をGoogle一括登録の対象に追加します（画面下部の一括登録バーで登録実行）"
+                      aria-label="Googleカレンダー登録予約"
                     >
-                      <Download size={11} />
-                      <span>.ics</span>
+                      <CalendarPlus size={12} className={selectedGoogleIds.has(match.id) ? 'fill-blue-200' : ''} />
+                    </button>
+
+                    <button
+                      onClick={(e) => toggleIcsReservation(match.id, e)}
+                      className={`p-1.5 rounded-lg transition flex items-center justify-center ${
+                        selectedIcsIds.has(match.id)
+                          ? 'bg-amber-500 text-zinc-950 border border-amber-400 shadow-sm'
+                          : 'bg-zinc-800/90 hover:bg-amber-950/60 text-amber-400 hover:text-amber-300 border border-zinc-700/60'
+                      }`}
+                      title=".ics保存予約：この対局を.icsファイル一括保存の対象に追加します（画面下部の一括登録バーで保存実行）"
+                      aria-label=".ics保存予約"
+                    >
+                      <Download size={12} className={selectedIcsIds.has(match.id) ? 'stroke-[2.5]' : ''} />
                     </button>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Slim, Responsive, Overflow-Proof Floating Bulk Action Bar */}
+      {(selectedGoogleIds.size > 0 || selectedIcsIds.size > 0) && (
+        <div className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 bg-zinc-950/95 backdrop-blur-md border border-amber-500/50 p-2 sm:p-2.5 rounded-2xl shadow-2xl shadow-amber-950/70 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          {selectedGoogleIds.size > 0 && (
+            <button
+              onClick={handleBulkGoogleCalendar}
+              className="px-3 sm:px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-md shadow-blue-900/40 shrink-0 whitespace-nowrap"
+              title="予約中の対局をGoogleカレンダーに一括追加登録します"
+            >
+              <CalendarPlus size={14} />
+              <span>Google一括追加 ({selectedGoogleIds.size})</span>
+            </button>
+          )}
+
+          {selectedIcsIds.size > 0 && (
+            <button
+              onClick={handleBulkICSDownload}
+              className="px-3 sm:px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-md shadow-amber-950/40 shrink-0 whitespace-nowrap"
+              title="予約中の対局を1つの.icsファイルにまとめて一括保存ダウンロードします"
+            >
+              <Download size={14} />
+              <span>一括.ics保存 ({selectedIcsIds.size})</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleClearAllReservations}
+            className="p-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white transition shrink-0"
+            title="すべての予約登録をクリアして解除します"
+            aria-label="予約全解除"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
         </>

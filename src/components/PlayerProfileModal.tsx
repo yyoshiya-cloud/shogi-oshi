@@ -13,7 +13,6 @@ import {
   X,
   Heart,
   Trophy,
-  Crown,
   ExternalLink,
   Loader2,
   Filter,
@@ -519,12 +518,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             return (
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-amber-500/20 text-xs">
                 <span className="text-amber-300 flex items-center gap-1 mr-1 font-bold">
-                  <Crown size={14} className="text-amber-400 fill-amber-400/40" />
                   永世資格・名誉称号:
                 </span>
                 {badgeLabel && (
                   <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-gradient-to-r from-amber-500/30 to-yellow-500/20 text-amber-200 border border-amber-400/50 shadow-sm flex items-center gap-1">
-                    👑 {badgeLabel}
+                    {badgeLabel}
                   </span>
                 )}
                 {eiseiList.filter(e => e !== badgeLabel).map((eisei) => (
@@ -755,7 +753,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     {activePlayer.eiseiTitles && activePlayer.eiseiTitles.length > 0 && isEiseiPlayer(activePlayer) && (
                       <div className="mb-2.5 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-400/40 text-amber-200 shadow-sm">
                         <div className="flex items-center gap-1.5 font-bold mb-1 text-amber-300">
-                          <Crown size={13} className="text-amber-400 fill-amber-400/40" />
                           <span>連盟公認 永世資格・称号:</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1">
@@ -799,7 +796,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                               </div>
                               {hasEisei && (
                                 <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-300 border border-amber-400/50 flex items-center gap-1 shrink-0 self-start sm:self-center">
-                                  <Crown size={10} className="text-amber-400 fill-amber-400/40" />
                                   永世資格
                                 </span>
                               )}
@@ -1082,7 +1078,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           <div className="shrink-0">
                             {r.isPlayerWinner ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
-                                <Crown size={12} className="fill-zinc-950 text-zinc-950 shrink-0" />
                                 <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
                               </span>
                             ) : (

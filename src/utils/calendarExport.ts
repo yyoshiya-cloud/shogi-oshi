@@ -85,3 +85,76 @@ export function downloadICSFile(match: Match, p1: Player, p2: Player): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export interface MatchExportItem {
+  match: Match;
+  p1: Player;
+  p2: Player;
+}
+
+/**
+ * Generate and download a single iCalendar (.ics) file containing multiple events for bulk export
+ */
+export function downloadMultipleICSFile(items: MatchExportItem[], filename: string = 'shogi_selected_matches.ics'): void {
+  if (!items || items.length === 0) return;
+
+  const formatUtc = (d: Date) => {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  const nowUtc = formatUtc(new Date());
+  const eventsLines: string[] = [];
+
+  items.forEach(({ match, p1, p2 }, idx) => {
+    const timeStr = match.time || '09:00';
+    const startDateTime = new Date(`${match.date}T${timeStr}:00`);
+    const endDateTime = new Date(startDateTime.getTime() + 8 * 60 * 60 * 1000);
+
+    const desc = [
+      `【棋戦】${match.tournament}${match.round ? ` (${match.round})` : ''}`,
+      `【対局】${p1.name} (${p1.rank}) vs ${p2.name} (${p2.rank})`,
+      match.venue ? `【会場】${match.venue}` : '',
+      match.timeControl ? `【持ち時間】${match.timeControl}` : '',
+      match.broadcast && match.broadcast.length > 0 ? `【中継】${match.broadcast.join(', ')}` : '',
+      '将棋推し活アプリより一括登録'
+    ].filter(Boolean).join('\\n');
+
+    eventsLines.push(
+      'BEGIN:VEVENT',
+      `UID:shogi-match-${match.id}-${idx}-${Date.now()}@shogi-fan.app`,
+      `DTSTAMP:${nowUtc}`,
+      `DTSTART:${formatUtc(startDateTime)}`,
+      `DTEND:${formatUtc(endDateTime)}`,
+      `SUMMARY:【将棋】${match.tournament} ${p1.name} vs ${p2.name}`,
+      `DESCRIPTION:${desc}`,
+      `LOCATION:${match.venue || '未定'}`,
+      'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT30M',
+      'DESCRIPTION:対局30分前リマインダー',
+      'ACTION:DISPLAY',
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  });
+
+  const icsLines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Shogi Fan App//JP//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    ...eventsLines,
+    'END:VCALENDAR'
+  ];
+
+  const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
