@@ -56,6 +56,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
 import { DataAuditModal } from './components/DataAuditModal';
+import { verifyAndRestoreDataIntegrity, saveBackupSnapshot } from './services/dataIntegrityMiddleware';
 import {
   Heart,
   Calendar,
@@ -372,12 +373,13 @@ export default function App() {
         let freshMatchesSaved: Match[] = [];
         if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
           const freshMatches: Match[] = data.matches.matches;
-          matchesCount = freshMatches.length;
           freshMatchesSaved = freshMatches;
-          setMatchesList(() => {
-            saveStoredMatches(freshMatches);
-            return freshMatches;
+          setMatchesList((prev) => {
+            const merged = deduplicateMatches([...prev, ...freshMatches]);
+            saveStoredMatches(merged);
+            return merged;
           });
+          matchesCount = freshMatches.length;
         }
 
         if (data.results2026) {
@@ -426,10 +428,11 @@ export default function App() {
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.matches) && data.matches.length > 0) {
-        setMatchesList(() => {
+        setMatchesList((prev) => {
           const officialMatches: Match[] = data.matches;
-          saveStoredMatches(officialMatches);
-          return officialMatches;
+          const merged = deduplicateMatches([...prev, ...officialMatches]);
+          saveStoredMatches(merged);
+          return merged;
         });
 
         if (Array.isArray(data.discoveredPlayers) && data.discoveredPlayers.length > 0) {
@@ -525,6 +528,27 @@ export default function App() {
 
   // Load persisted state on mount & automatically trigger player auto-scraping
   useEffect(() => {
+    // 1. Verify dataset integrity on startup. Automatically restore from backup if corrupted/empty data detected.
+    const integrityReport = verifyAndRestoreDataIntegrity();
+    if (integrityReport.isRestored) {
+      const restoredPlayers = getStoredPlayers();
+      const restoredMatches = getStoredMatches();
+      const restoredFiscal = getStoredFiscalResults();
+      if (restoredPlayers && restoredPlayers.length > 0) {
+        setPlayersList(restoredPlayers);
+      }
+      if (restoredMatches && restoredMatches.length > 0) {
+        setMatchesList(restoredMatches);
+      }
+      if (restoredFiscal) {
+        updateMatchStatsData(restoredFiscal);
+      }
+      setSyncToast(
+        `【データ自動復旧】不審な空データを検知したためバックアップより自動復元しました（対局予定: ${integrityReport.matchesCount}件、対局結果: ${integrityReport.resultsCount}件）`
+      );
+      setTimeout(() => setSyncToast(null), 7000);
+    }
+
     const followed = getStoredFollowed(googleUser?.email);
     setFollowedList(followed);
 

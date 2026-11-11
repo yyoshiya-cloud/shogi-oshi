@@ -1196,17 +1196,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                   const isGoteWinner = result.winner === result.gote;
 
                   // Category badge styling
-                  const isTitle =
-                    result.category === 'タイトル戦' ||
-                    result.tournament.includes('竜王') ||
-                    result.tournament.includes('名人') ||
-                    result.tournament.includes('王位') ||
-                    result.tournament.includes('王座') ||
-                    result.tournament.includes('棋王') ||
-                    result.tournament.includes('王将') ||
-                    result.tournament.includes('棋聖') ||
-                    result.tournament.includes('叡王');
-
                   const isLadyTitle =
                     result.category === '女流タイトル戦' ||
                     result.tournament.includes('白玲') ||
@@ -1218,15 +1207,37 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                     result.tournament.includes('女流王将') ||
                     result.tournament.includes('倉敷藤花');
 
-                  const badgeClass = isTitle
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : isLadyTitle
+                  const isTitle =
+                    !isLadyTitle &&
+                    !result.tournament.includes('女流') &&
+                    !result.isWomen &&
+                    result.category !== '女流棋戦' &&
+                    (result.category === 'タイトル戦' ||
+                      result.tournament.includes('竜王') ||
+                      result.tournament.includes('名人') ||
+                      result.tournament.includes('王位') ||
+                      result.tournament.includes('王座') ||
+                      result.tournament.includes('棋王') ||
+                      result.tournament.includes('王将') ||
+                      result.tournament.includes('棋聖') ||
+                      result.tournament.includes('叡王'));
+
+                  const badgeClass = isLadyTitle
                     ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
-                    : result.isWomen
+                    : isTitle
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : result.isWomen || result.category === '女流棋戦' || result.tournament.includes('女流')
                     ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
                     : result.category === '順位戦'
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
                     : 'bg-zinc-800 text-zinc-300 border-zinc-700';
+
+                  const isWomenMatch =
+                    result.isWomen ||
+                    result.category === '女流タイトル戦' ||
+                    result.category === '女流棋戦' ||
+                    isLadyTitle ||
+                    result.tournament.includes('女流');
 
                   return (
                     <div
@@ -1265,7 +1276,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                         <div
                           onClick={() => handlePlayerClick(result.sente)}
                           className={`flex flex-col justify-center cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
-                            isSenteWinner ? 'bg-amber-500/15 border border-amber-500/40 shadow-sm' : ''
+                            isSenteWinner
+                              ? isWomenMatch
+                                ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
+                                : 'bg-amber-500/15 border border-amber-500/40 shadow-sm'
+                              : ''
                           }`}
                         >
                           {/* Badges Row */}
@@ -1274,7 +1289,13 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                               ☗先手
                             </span>
                             {isSenteWinner ? (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
+                                  isWomenMatch
+                                    ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
+                                    : 'bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200'
+                                }`}
+                              >
                                 <span>○勝者</span>
                               </span>
                             ) : (
@@ -1293,7 +1314,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           <div className="flex items-center gap-1 min-w-0">
                             <span
                               className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
-                                isSenteWinner ? 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' : 'text-zinc-100 font-bold'
+                                isSenteWinner
+                                  ? isWomenMatch
+                                    ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
+                                    : 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]'
+                                  : 'text-zinc-100 font-bold'
                               }`}
                             >
                               {result.sente}
@@ -1325,7 +1350,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                         <div
                           onClick={() => handlePlayerClick(result.gote)}
                           className={`flex flex-col justify-center items-end text-right cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
-                            isGoteWinner ? 'bg-amber-500/15 border border-amber-500/40 shadow-sm' : ''
+                            isGoteWinner
+                              ? isWomenMatch
+                                ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
+                                : 'bg-amber-500/15 border border-amber-500/40 shadow-sm'
+                              : ''
                           }`}
                         >
                           {/* Badges Row */}
@@ -1336,7 +1365,13 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                               </span>
                             )}
                             {isGoteWinner ? (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black text-zinc-950 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 border border-amber-200 px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
+                                  isWomenMatch
+                                    ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
+                                    : 'bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200'
+                                }`}
+                              >
                                 <span>○勝者</span>
                               </span>
                             ) : (
@@ -1353,7 +1388,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           <div className="flex items-center justify-end gap-1 min-w-0">
                             <span
                               className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
-                                isGoteWinner ? 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]' : 'text-zinc-100 font-bold'
+                                isGoteWinner
+                                  ? isWomenMatch
+                                    ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
+                                    : 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]'
+                                  : 'text-zinc-100 font-bold'
                               }`}
                             >
                               {result.gote}

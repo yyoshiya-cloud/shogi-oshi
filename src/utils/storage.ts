@@ -42,6 +42,9 @@ function pruneOldStorage(): void {
       if (k.startsWith('shogi_oshi_notifications_') && k !== STORAGE_KEYS.NOTIFICATIONS) {
         keysToRemove.push(k);
       }
+      if (k === 'shogi_oshi_backup_snapshot_v1') {
+        keysToRemove.push(k);
+      }
     }
     for (const k of keysToRemove) {
       localStorage.removeItem(k);
@@ -174,7 +177,7 @@ export function saveStoredFollowed(data: FollowedPlayerConfig[], userEmail?: str
       localStorage.setItem(`${STORAGE_KEYS.FOLLOWED}_${userEmail}`, JSON.stringify(data));
     }
   } catch (e) {
-    console.error('Failed to save followed players', e);
+    console.warn('Failed to save followed players:', e);
   }
 }
 
@@ -316,10 +319,11 @@ export function getStoredMatches(): Match[] | null {
 
 export function saveStoredMatches(data: Match[]): void {
   try {
+    pruneOldStorage();
     const clean = deduplicateMatches(data);
     localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(clean));
   } catch (e) {
-    console.error('Failed to save matches', e);
+    console.warn('Failed to save matches:', e);
   }
 }
 
@@ -456,8 +460,15 @@ export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[
     const mergedDelta: Record<string, ShogiMonthlyResult[]> = { ...existingDelta };
     for (const key of Object.keys(data)) {
       if (data[key] && Array.isArray(data[key])) {
-        // Save whenever data exists for the month
-        mergedDelta[key] = data[key];
+        const existingList = mergedDelta[key] || base[key] || [];
+        const map = new Map<string, ShogiMonthlyResult>();
+        for (const item of existingList) {
+          if (item && item.id) map.set(item.id, item);
+        }
+        for (const item of data[key]) {
+          if (item && item.id) map.set(item.id, item);
+        }
+        mergedDelta[key] = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
       }
     }
 
