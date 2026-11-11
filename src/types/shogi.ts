@@ -113,7 +113,8 @@ export interface Match {
   status: MatchStatus;
   venue: string; // e.g. "東京・将棋会館", "関西将棋会館", "名古屋対局場"
   timeControl: string; // e.g. "各8時間 (2日制)", "各6時間", "早指し 1手30秒"
-  broadcast: string[]; // ["ABEMA 将棋チャンネル", "連盟モバイル中継", "囲碁将棋プレミアム"]
+  broadcast: string[]; // ["将棋連盟YouTube"]
+  youtubeUrl?: string; // URL for 将棋連盟YouTube link
   winnerId?: string;
   movesCount?: number; // 手数 (e.g. 112手)
   endCondition?: string; // e.g. "投了", "千日手", "反則", "持将棋"

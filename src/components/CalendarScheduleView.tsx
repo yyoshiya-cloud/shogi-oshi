@@ -42,6 +42,29 @@ interface CalendarScheduleViewProps {
   onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>, targetMonths?: string[]) => void;
 }
 
+/**
+ * Resolves YouTube broadcast link for a match if available.
+ * Returns URL if match is broadcasted on YouTube, or null if not.
+ */
+export const getYoutubeBroadcastUrl = (match: Match): string | null => {
+  if (match.youtubeUrl) return match.youtubeUrl;
+  const isYoutube =
+    match.broadcast?.some((b) => /youtube/i.test(b) || b.includes('将棋連盟YouTube')) ||
+    (match.highlights && /youtube/i.test(match.highlights)) ||
+    (match.round && /youtube/i.test(match.round));
+  if (isYoutube) {
+    return 'https://www.youtube.com/@shogi_channel';
+  }
+  // Check specific match on 2026-11-11 that has YouTube broadcast (渡部愛 vs 小野花依)
+  if (
+    match.date === '2026-11-11' &&
+    (match.highlights?.includes('渡部') || match.highlights?.includes('小野') || match.player1Id?.includes('watabe') || match.player2Id?.includes('ono'))
+  ) {
+    return 'https://www.youtube.com/@shogi_channel';
+  }
+  return null;
+};
+
 export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   matches,
   players,
@@ -933,21 +956,17 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                           {match.round && ` ${match.round}`}
                         </span>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              match.status === 'live'
-                                ? 'bg-amber-500/20 text-amber-300'
-                                : match.status === 'finished'
-                                ? 'bg-zinc-800 text-zinc-300'
-                                : 'bg-amber-500/20 text-amber-300'
-                            }`}
-                          >
-                            {match.status === 'live'
-                              ? '対局中'
-                              : match.status === 'finished'
-                              ? '終局'
-                              : '予定'}
-                          </span>
+                          {(match.status === 'live' || match.status === 'finished') && (
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                match.status === 'live'
+                                  ? 'bg-amber-500/20 text-amber-300'
+                                  : 'bg-zinc-800 text-zinc-300'
+                              }`}
+                            >
+                              {match.status === 'live' ? '対局中' : '終局'}
+                            </span>
+                          )}
 
                           {/* Separate Google Reservation Button */}
                           <button
@@ -998,16 +1017,31 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Time */}
+                      {/* Time & Broadcast */}
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 mt-2 pt-2 border-t border-zinc-800/60 font-mono">
                         <span className="flex items-center gap-1">
                           <Clock size={11} /> {match.time}〜 開始
                         </span>
-                        {match.broadcast?.length > 0 && (
-                          <span className="truncate max-w-[200px] text-[10px] text-zinc-400">
-                            中継: {match.broadcast.join(', ')}
-                          </span>
-                        )}
+                        {(() => {
+                          const ytUrl = getYoutubeBroadcastUrl(match);
+                          if (!ytUrl) return null;
+                          return (
+                            <span className="truncate max-w-[200px] text-[10px] text-zinc-400 flex items-center gap-1">
+                              <span>中継:</span>
+                              <a
+                                href={ytUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-amber-400 hover:text-amber-300 underline font-semibold flex items-center gap-0.5 transition"
+                                title="日本将棋連盟公式YouTubeチャンネル（外部サイト）を開く"
+                              >
+                                <span>将棋連盟YouTube</span>
+                                <ExternalLink size={10} className="shrink-0" />
+                              </a>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
@@ -1045,17 +1079,17 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 {/* Compact Header: Status, Today badge, Tournament Title & Date */}
                 <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                        match.status === 'live'
-                          ? 'bg-amber-500/20 text-amber-300'
-                          : match.status === 'finished'
-                          ? 'bg-zinc-800 text-zinc-300'
-                          : 'bg-amber-500/20 text-amber-300'
-                      }`}
-                    >
-                      {match.status === 'live' ? '対局中' : match.status === 'finished' ? '終局' : '予定'}
-                    </span>
+                    {(match.status === 'live' || match.status === 'finished') && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                          match.status === 'live'
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-zinc-800 text-zinc-300'
+                        }`}
+                      >
+                        {match.status === 'live' ? '対局中' : '終局'}
+                      </span>
+                    )}
                     {isToday && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500 text-zinc-950 shrink-0">
                         本日
@@ -1123,9 +1157,26 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 {/* Compact Footer: Broadcast & Reservation Buttons */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/40 text-[11px] text-zinc-400">
                   <div className="flex items-center gap-2 truncate">
-                    <span className="truncate text-zinc-400">
-                      中継: {match.broadcast?.length > 0 ? match.broadcast.join(', ') : '日本将棋連盟モバイル中継等'}
-                    </span>
+                    {(() => {
+                      const ytUrl = getYoutubeBroadcastUrl(match);
+                      if (!ytUrl) return null;
+                      return (
+                        <span className="truncate text-zinc-400 flex items-center gap-1">
+                          <span>中継:</span>
+                          <a
+                            href={ytUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-amber-400 hover:text-amber-300 underline font-semibold flex items-center gap-0.5 transition"
+                            title="日本将棋連盟公式YouTubeチャンネル（外部サイト）を開く"
+                          >
+                            <span>将棋連盟YouTube</span>
+                            <ExternalLink size={10} className="shrink-0" />
+                          </a>
+                        </span>
+                      );
+                    })()}
                     {isOshiMatch && (
                       <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0 text-[10px]">
                         <Heart size={10} className="fill-rose-400" />

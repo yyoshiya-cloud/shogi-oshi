@@ -213,9 +213,33 @@ export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
             time = '09:00';
           }
 
-          const broadcastList: string[] = ['日本将棋連盟モバイル中継'];
-          if (note.includes('ABEMA') || note.includes('アベマ')) broadcastList.push('ABEMA 将棋チャンネル');
-          if (note.includes('囲碁将棋プラス')) broadcastList.push('囲碁将棋プラス');
+          let youtubeUrl: string | undefined = undefined;
+          $tr.find('a').each((_, a) => {
+            const aText = $(a).text().trim();
+            const href = $(a).attr('href');
+            if (
+              /youtube/i.test(aText) ||
+              aText.includes('将棋連盟') ||
+              (href && /youtube\.com|youtu\.be/i.test(href))
+            ) {
+              youtubeUrl = href?.startsWith('http') ? href : href ? `https://www.shogi.or.jp${href}` : undefined;
+            }
+          });
+
+          // Check if note mentions YouTube
+          const hasYoutube =
+            /youtube/i.test(note) ||
+            note.includes('YouTube') ||
+            note.includes('ユーチューブ') ||
+            Boolean(youtubeUrl);
+
+          const broadcastList: string[] = [];
+          if (hasYoutube) {
+            broadcastList.push('将棋連盟YouTube');
+            if (!youtubeUrl) {
+              youtubeUrl = 'https://www.youtube.com/@shogi_channel';
+            }
+          }
 
           parsedMatches.push({
             id: matchId,
@@ -232,6 +256,7 @@ export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
             venue: venue || '東京・将棋会館',
             timeControl: getTimeControlForTournament(tournament),
             broadcast: broadcastList,
+            youtubeUrl,
             kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${p1.name} ${p2.name}`)}`,
             kifuMoves: [],
             highlights: `${p1.name} 対 ${p2.name} の公式戦（${tournament} ${note}）。`,
@@ -400,15 +425,45 @@ export async function scrapeMonthlyResults(
         if (isResultRow && p1Raw && p2Raw && p1Raw !== '先手' && p2Raw !== '後手') {
           const links: { title: string; url: string }[] = [];
           $tr.find('a').each((_, a) => {
-            const title = $(a).text().trim();
+            const rawTitle = $(a).text().trim();
             const href = $(a).attr('href');
-            if (href && title) {
-              links.push({
-                title,
-                url: href.startsWith('http') ? href : `https://www.shogi.or.jp${href}`,
-              });
+            if (href && rawTitle) {
+              // Exclude 携帯中継 and 中継 links
+              if (rawTitle === '携帯中継' || rawTitle === '中継' || rawTitle.includes('携帯中継')) {
+                return;
+              }
+              let title = rawTitle;
+              if (
+                /youtube/i.test(rawTitle) ||
+                rawTitle.includes('将棋連盟') ||
+                (href && /youtube\.com|youtu\.be/i.test(href))
+              ) {
+                title = '将棋連盟YouTube';
+              }
+              const fullUrl = href.startsWith('http') ? href : `https://www.shogi.or.jp${href}`;
+              if (!links.some((l) => l.title === title || l.url === fullUrl)) {
+                links.push({ title, url: fullUrl });
+              }
             }
           });
+
+          // Check if note mentions YouTube
+          if (
+            (note.includes('YouTube') || note.includes('youtube') || note.includes('将棋連盟YouTube')) &&
+            !links.some((l) => l.title === '将棋連盟YouTube')
+          ) {
+            links.push({
+              title: '将棋連盟YouTube',
+              url: 'https://www.youtube.com/@shogi_channel',
+            });
+          }
+
+          const cleanNote = note
+            .replace(/・?携帯中継/g, '')
+            .replace(/・?中継/g, '')
+            .replace(/将棋連盟YouTube/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
 
           const p1Clean = p1Raw.replace(/[※\*＊]/g, '').trim();
           const p2Clean = p2Raw.replace(/[※\*＊]/g, '').trim();
@@ -497,7 +552,7 @@ export async function scrapeMonthlyResults(
             loserId: loserObj?.id,
             resultType,
             tournament,
-            note,
+            note: cleanNote,
             venue,
             isWomen,
             category,

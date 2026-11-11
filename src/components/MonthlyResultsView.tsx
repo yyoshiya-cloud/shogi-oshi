@@ -45,6 +45,58 @@ interface MonthlyResultsViewProps {
   onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>, targetMonths?: string[]) => void;
 }
 
+export function cleanResultNote(note?: string): string {
+  if (!note) return '';
+  return note
+    .replace(/・?携帯中継/g, '')
+    .replace(/・?中継/g, '')
+    .replace(/将棋連盟YouTube/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function getDisplayLinks(result: ShogiMonthlyResult): { title: string; url: string }[] {
+  const links: { title: string; url: string }[] = [];
+
+  if (result.links && result.links.length > 0) {
+    for (const link of result.links) {
+      if (
+        link.title === '携帯中継' ||
+        link.title === '中継' ||
+        link.title === '中継・携帯中継' ||
+        link.title.includes('携帯中継')
+      ) {
+        continue;
+      }
+      let title = link.title;
+      if (
+        /youtube/i.test(link.title) ||
+        link.title.includes('将棋連盟') ||
+        (link.url && /youtube\.com|youtu\.be/i.test(link.url))
+      ) {
+        title = '将棋連盟YouTube';
+      }
+      if (!links.some((l) => l.title === title || l.url === link.url)) {
+        links.push({ title, url: link.url });
+      }
+    }
+  }
+
+  // Check if note mentions YouTube or 将棋連盟YouTube
+  const rawNote = result.note || '';
+  if (
+    (/youtube/i.test(rawNote) || rawNote.includes('将棋連盟')) &&
+    !links.some((l) => l.title === '将棋連盟YouTube')
+  ) {
+    links.push({
+      title: '将棋連盟YouTube',
+      url: 'https://www.youtube.com/@shogi_channel',
+    });
+  }
+
+  return links;
+}
+
 export function getFiscalYearsList(): { year: number; label: string; short: string }[] {
   const now = new Date();
   const currentFY = (now.getMonth() + 1) >= 4 ? now.getFullYear() : now.getFullYear() - 1;
@@ -565,7 +617,8 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       status: 'finished',
       venue: r.venue || '東京・将棋会館',
       timeControl: '公式持ち時間',
-      broadcast: ['日本将棋連盟モバイル中継'],
+      broadcast: r.note?.includes('YouTube') ? ['将棋連盟YouTube'] : [],
+      youtubeUrl: r.note?.includes('YouTube') ? 'https://www.youtube.com/@shogi_channel' : undefined,
       winnerId: r.winner === r.sente ? p1.id : p2.id,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
@@ -1192,9 +1245,9 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           >
                             {result.tournament}
                           </span>
-                          {result.note && (
+                          {cleanResultNote(result.note) && (
                             <span className="text-[11px] text-zinc-400 font-medium truncate">
-                              {result.note}
+                              {cleanResultNote(result.note)}
                             </span>
                           )}
                         </div>
@@ -1315,22 +1368,32 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                       {/* Bottom Action Links & Kifu */}
                       <div className="mt-2.5 pt-2 border-t border-zinc-800/60 flex items-center justify-between flex-wrap gap-1.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {result.links && result.links.length > 0 ? (
-                            result.links.map((link, idx) => (
-                              <a
-                                key={idx}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/20 transition"
-                              >
-                                <ExternalLink size={11} />
-                                {link.title}
-                              </a>
-                            ))
-                          ) : (
-                            <span className="text-[10px] text-zinc-400">公式戦終局</span>
-                          )}
+                          {(() => {
+                            const displayLinks = getDisplayLinks(result);
+                            if (displayLinks.length === 0) {
+                              return <span className="text-[10px] text-zinc-400">公式戦終局</span>;
+                            }
+                            return displayLinks.map((link, idx) => {
+                              const isYoutube = link.title === '将棋連盟YouTube' || /youtube/i.test(link.title);
+                              return (
+                                <a
+                                  key={idx}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded border transition ${
+                                    isYoutube
+                                      ? 'text-amber-300 hover:text-amber-100 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/35 font-bold shadow-sm'
+                                      : 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20'
+                                  }`}
+                                  title={`${link.title}（外部サイト）を開く`}
+                                >
+                                  <ExternalLink size={11} className={isYoutube ? 'text-amber-300' : 'text-amber-400'} />
+                                  <span>{link.title}</span>
+                                </a>
+                              );
+                            });
+                          })()}
                         </div>
 
 
