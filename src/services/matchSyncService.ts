@@ -278,23 +278,71 @@ const MONTHLY_CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes cache
  * Scrape official match results for a given month (e.g. "202610")
  * from https://www.shogi.or.jp/game/?month=YYYYMM
  */
+export interface MonthlyScrapeResult {
+  success: boolean;
+  month: string;
+  count: number;
+  results: ShogiMonthlyResult[];
+  source: string;
+  latestDate?: string | null;
+  sinceDate?: string | null;
+  newMatches?: ShogiMonthlyResult[];
+  newCount?: number;
+  hasNewMatches?: boolean;
+}
+
+/**
+ * Scrape official match results for a given month (e.g. "202610")
+ * from https://www.shogi.or.jp/game/?month=YYYYMM
+ * Supports sinceDate to detect incremental updates after the latest recorded date.
+ */
+function buildScrapeResponse(
+  month: string,
+  results: ShogiMonthlyResult[],
+  source: string,
+  sinceDate?: string
+): MonthlyScrapeResult {
+  let latestDate: string | null = null;
+  for (const r of results) {
+    if (r.date && (!latestDate || r.date > latestDate)) {
+      latestDate = r.date;
+    }
+  }
+  const cleanSince = sinceDate ? sinceDate.trim() : '';
+  const newMatches = cleanSince ? results.filter((r) => r.date > cleanSince) : [];
+  const hasNewMatches = cleanSince ? newMatches.length > 0 : true;
+
+  return {
+    success: true,
+    month,
+    count: results.length,
+    results,
+    source,
+    latestDate,
+    sinceDate: cleanSince || null,
+    newMatches,
+    newCount: newMatches.length,
+    hasNewMatches,
+  };
+}
+
 export async function scrapeMonthlyResults(
   month: string,
-  force = false
-): Promise<{ success: boolean; month: string; count: number; results: ShogiMonthlyResult[]; source: string }> {
+  force = false,
+  sinceDate?: string
+): Promise<MonthlyScrapeResult> {
   const normalizedMonth = month.replace(/[^0-9]/g, '');
   const now = Date.now();
 
   if (!force && monthlyCache.has(normalizedMonth)) {
     const cached = monthlyCache.get(normalizedMonth)!;
     if (now - cached.timestamp < MONTHLY_CACHE_TTL_MS) {
-      return {
-        success: true,
-        month: normalizedMonth,
-        count: cached.data.length,
-        results: cached.data,
-        source: `cache:https://www.shogi.or.jp/game/?month=${normalizedMonth}`,
-      };
+      return buildScrapeResponse(
+        normalizedMonth,
+        cached.data,
+        `cache:https://www.shogi.or.jp/game/?month=${normalizedMonth}`,
+        sinceDate
+      );
     }
   }
 
@@ -466,13 +514,7 @@ export async function scrapeMonthlyResults(
     const enrichedResults = enrichMonthlyResultsWithSupplements(normalizedMonth, results);
     enrichedResults.sort((a, b) => b.date.localeCompare(a.date));
     monthlyCache.set(normalizedMonth, { timestamp: now, data: enrichedResults });
-    return {
-      success: true,
-      month: normalizedMonth,
-      count: enrichedResults.length,
-      results: enrichedResults,
-      source: url,
-    };
+    return buildScrapeResponse(normalizedMonth, enrichedResults, url, sinceDate);
   }
 
   // Fallback to bundled JSON data if upstream is unreachable or empty
@@ -493,26 +535,14 @@ export async function scrapeMonthlyResults(
       })
     ).sort((a, b) => b.date.localeCompare(a.date));
     monthlyCache.set(normalizedMonth, { timestamp: now, data: enriched });
-    return {
-      success: true,
-      month: normalizedMonth,
-      count: enriched.length,
-      results: enriched,
-      source: `bundled:${url}`,
-    };
+    return buildScrapeResponse(normalizedMonth, enriched, `bundled:${url}`, sinceDate);
   }
 
   // Even if both live scraping and bundled are empty, check if we have special tournament supplements
   const suppOnly = enrichMonthlyResultsWithSupplements(normalizedMonth, []);
   if (suppOnly.length > 0) {
     monthlyCache.set(normalizedMonth, { timestamp: now, data: suppOnly });
-    return {
-      success: true,
-      month: normalizedMonth,
-      count: suppOnly.length,
-      results: suppOnly,
-      source: 'supplement:special_tournaments',
-    };
+    return buildScrapeResponse(normalizedMonth, suppOnly, 'supplement:special_tournaments', sinceDate);
   }
 
   return {
@@ -521,6 +551,11 @@ export async function scrapeMonthlyResults(
     count: 0,
     results: [],
     source: url,
+    latestDate: null,
+    sinceDate: sinceDate || null,
+    newMatches: [],
+    newCount: 0,
+    hasNewMatches: false,
   };
 }
 
@@ -561,9 +596,68 @@ async function getAllMultiYearResults(years = [2025, 2026], force = false): Prom
 }
 
 /**
+ * Returns the YYYYMM format string for current month and optionally previous month.
+ */
+export function getCurrentAndPrevMonthStrings(): string[] {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const currentStr = `${year}${String(month).padStart(2, '0')}`;
+
+  // If day is within the first 5 days of the month, also include previous month to catch late results
+  if (now.getDate() <= 5) {
+    const prevDate = new Date(year, month - 2, 1);
+    const prevStr = `${prevDate.getFullYear()}${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    return [prevStr, currentStr];
+  }
+
+  return [currentStr];
+}
+
+/**
+ * Gets results for multi-year data, but only scrapes active/current months incrementally
+ * to minimize server scraping load and Firestore write quotas.
+ */
+export async function scrapeIncrementalResults(
+  existingData: Record<string, ShogiMonthlyResult[]> = {},
+  force = false
+): Promise<{ merged: Record<string, ShogiMonthlyResult[]>; updatedMonths: string[] }> {
+  const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
+  const res: Record<string, ShogiMonthlyResult[]> = { ...bundled, ...existingData };
+
+  const targetMonths = getCurrentAndPrevMonthStrings();
+  const updatedMonths: string[] = [];
+
+  for (const m of targetMonths) {
+    const scraped = await scrapeMonthlyResults(m, force);
+    if (scraped.results && scraped.results.length > 0) {
+      // Check if data actually changed compared to existing
+      const existingList = res[m] || [];
+      const isDifferent =
+        existingList.length !== scraped.results.length ||
+        JSON.stringify(existingList.map((r) => r.id)) !== JSON.stringify(scraped.results.map((r) => r.id));
+
+      res[m] = scraped.results;
+      if (isDifferent || force) {
+        updatedMonths.push(m);
+      }
+    }
+  }
+
+  return {
+    merged: enrichAllResultsWithSupplements(res),
+    updatedMonths,
+  };
+}
+
+/**
  * Get results for fiscal years (includes 2025 and 2026)
  */
 export async function getAll2026Results(force = false): Promise<Record<string, ShogiMonthlyResult[]>> {
+  if (!force) {
+    const { merged } = await scrapeIncrementalResults({}, false);
+    return merged;
+  }
   return getAllMultiYearResults([2025, 2026], force);
 }
 

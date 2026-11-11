@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShogiMonthlyResult, Player, FollowedPlayerConfig, Match } from '../types/shogi';
-import { getStoredFiscalResults, saveStoredFiscalResults } from '../utils/storage';
+import {
+  getStoredFiscalResults,
+  saveStoredFiscalResults,
+  getStoredFiscalResultsLastSync,
+  saveStoredFiscalResultsLastSync,
+  getLatestMatchDateFromResults
+} from '../utils/storage';
+import {
+  fetchMonthFiscalResultFromCloud,
+  saveSingleMonthFiscalResultToCloud
+} from '../services/firebaseSync';
 import { updateMatchStatsData } from '../utils/yearRecordsGenerator';
 import { clearPlayerMatchCache } from '../services/shogiDbMatchEnrichment';
 import results2026Json from '../data/results2026.json';
@@ -31,7 +41,7 @@ interface MonthlyResultsViewProps {
   followedList: FollowedPlayerConfig[];
   onSelectPlayer: (player: Player) => void;
   onSelectMatch?: (match: Match) => void;
-  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
+  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>, targetMonths?: string[]) => void;
 }
 
 export function getFiscalYearsList(): { year: number; label: string; short: string }[] {
@@ -297,7 +307,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
   }, []);
 
-  // 最新取得: システム日付（new Date()）から年・月を抽出し、最新の公式対局結果を取得して同期
+  // 最新取得: 「保存済み年月日を起点とした翌日以降の差分更新」と「Firestore updatedAtタイムスタンプ比較（マルチデバイス無駄更新防止）」
   const handleRefreshMonth = async () => {
     setIsRefreshing(true);
     setRefreshMessage(null);
@@ -314,23 +324,87 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     setSelectedMonth(targetMonthKey);
     setSelectedDate(null);
 
+    const localResults = monthlyData[targetMonthKey] || [];
+    const localLatestDate = getLatestMatchDateFromResults(localResults);
+    const localLastSyncTime = getStoredFiscalResultsLastSync();
+
     try {
-      const res = await fetch(`/api/matches/results?month=${targetMonthKey}&force=true`);
+      // 1. 【Firestore updatedAt タイムスタンプ先行比較】(マルチデバイス無駄更新防止)
+      // 他の端末（スマホや別タブなど）で既に最新データがFirestoreに反映されているかを1ドキュメント読み取りで確認
+      const cloudDoc = await fetchMonthFiscalResultFromCloud(targetMonthKey);
+      if (cloudDoc && cloudDoc.updatedAt) {
+        const isCloudNewer = !localLastSyncTime || new Date(cloudDoc.updatedAt).getTime() > new Date(localLastSyncTime).getTime();
+        const hasMoreOrEqualResults = cloudDoc.results && cloudDoc.results.length >= localResults.length;
+
+        if (isCloudNewer && hasMoreOrEqualResults) {
+          // 他端末が既にスクレイピングしてFirestoreに保存済み！外部スクレイピングを完全スキップ
+          const updated = {
+            ...monthlyData,
+            [targetMonthKey]: cloudDoc.results,
+          };
+          setMonthlyData(updated);
+          saveStoredFiscalResults(updated);
+          updateMatchStatsData(updated);
+          clearPlayerMatchCache();
+          saveStoredFiscalResultsLastSync(cloudDoc.updatedAt);
+          onUpdateResults?.(updated);
+          setRefreshMessage(
+            `【端末間連携】他端末で更新された最新対局結果（${cloudDoc.results.length}局）をFirestoreから同期しました（外部アクセス不要）`
+          );
+          setIsRefreshing(false);
+          setTimeout(() => setRefreshMessage(null), 5000);
+          return;
+        }
+      }
+
+      // 2. 【保存済み年月日を起点とした翌日以降の差分更新】
+      // クラウドも未更新の場合、保存済みの最新対局日（localLatestDate）の翌日以降の差分のみを取得
+      const sinceQuery = localLatestDate ? `&sinceDate=${encodeURIComponent(localLatestDate)}` : '';
+      const res = await fetch(`/api/matches/results?month=${targetMonthKey}&force=true${sinceQuery}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
+
       if (json.success && json.results) {
-        const updated = {
-          ...monthlyData,
-          [targetMonthKey]: json.results,
-        };
-        setMonthlyData(updated);
-        saveStoredFiscalResults(updated);
-        updateMatchStatsData(updated);
-        clearPlayerMatchCache();
-        onUpdateResults?.(updated);
-        setRefreshMessage(
-          `システム日付（${systemYear}年${systemMonth}月）の最新対局結果（${json.results.length}局）を取得し、表示を更新しました`
-        );
+        const syncTimestamp = new Date().toISOString();
+        saveStoredFiscalResultsLastSync(syncTimestamp);
+
+        // 3. 【条件付き最小Firestore更新】
+        if (json.hasNewMatches && json.newCount && json.newCount > 0) {
+          // 新着対局あり：既存データにマージして当月ドキュメントのみFirestoreに保存
+          const updated = {
+            ...monthlyData,
+            [targetMonthKey]: json.results,
+          };
+          setMonthlyData(updated);
+          saveStoredFiscalResults(updated);
+          updateMatchStatsData(updated);
+          clearPlayerMatchCache();
+          onUpdateResults?.(updated);
+
+          // Firestoreへの書き込みは当月1レコードのみ
+          await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+
+          setRefreshMessage(
+            `【差分更新完了】新着対局結果 ${json.newCount}局（${localLatestDate}の翌日以降）を反映し、クラウドに保存しました`
+          );
+        } else {
+          // 新着対局なし（または既に最新）: Firestore書き込みを完全スキップ（クオータ消費0）
+          if (json.results.length > localResults.length) {
+            const updated = {
+              ...monthlyData,
+              [targetMonthKey]: json.results,
+            };
+            setMonthlyData(updated);
+            saveStoredFiscalResults(updated);
+            updateMatchStatsData(updated);
+            clearPlayerMatchCache();
+            onUpdateResults?.(updated);
+            await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+          }
+          setRefreshMessage(
+            `対局結果は既に最新です（${localLatestDate ? localLatestDate + '以降の' : ''}新着なし・書き込みクオータ消費0）`
+          );
+        }
       } else {
         setRefreshMessage(`システム日付（${systemYear}年${systemMonth}月）の対局結果を確認しました`);
       }
@@ -339,7 +413,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       setRefreshMessage('通信エラーのため現在のデータを表示しています');
     } finally {
       setIsRefreshing(false);
-      setTimeout(() => setRefreshMessage(null), 4000);
+      setTimeout(() => setRefreshMessage(null), 5000);
     }
   };
 
@@ -525,6 +599,15 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button
+              onClick={handleRefreshMonth}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg border border-amber-500/40 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+              title="最新対局日の翌日以降の差分を取得し、他端末更新時はFirestoreから直接読み取って更新"
+            >
+              <RefreshCw size={14} className={`text-amber-400 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? '差分更新中...' : '最新結果を更新'}</span>
+            </button>
             <button
               onClick={() => setShowAuditModal(true)}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg border border-amber-500/40 transition cursor-pointer shadow-sm active:scale-95"

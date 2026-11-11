@@ -383,7 +383,9 @@ export default function App() {
           saveStoredFiscalResults(data.results2026);
           updateMatchStatsData(data.results2026);
           clearPlayerMatchCache();
-          saveFiscalResultsToCloud(data.results2026);
+          if (data.updatedMonths && Array.isArray(data.updatedMonths) && data.updatedMonths.length > 0) {
+            saveFiscalResultsToCloud(data.results2026, data.updatedMonths);
+          }
         }
 
         const now = new Date();
@@ -685,10 +687,15 @@ export default function App() {
   };
 
   // Handler when monthly results are updated/refreshed
-  const handleUpdateFiscalResults = (updatedResults: Record<string, ShogiMonthlyResult[]>) => {
+  const handleUpdateFiscalResults = (
+    updatedResults: Record<string, ShogiMonthlyResult[]>,
+    targetMonths?: string[]
+  ) => {
     updateMatchStatsData(updatedResults);
     clearPlayerMatchCache();
-    saveFiscalResultsToCloud(updatedResults);
+    if (targetMonths && targetMonths.length > 0) {
+      saveFiscalResultsToCloud(updatedResults, targetMonths);
+    }
     setPlayersList((prev) => {
       const updated = prev.map((p) => initializePlayerRecords(p));
       saveStoredPlayers(updated);

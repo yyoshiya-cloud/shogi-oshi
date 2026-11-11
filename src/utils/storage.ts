@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   MATCHES: 'shogi_oshi_all_matches_v1',
   MATCH_LAST_SYNC: 'shogi_oshi_matches_last_sync_v1',
   RESULTS_2026: 'shogi_oshi_results_2026_v4',
+  RESULTS_LAST_SYNC: 'shogi_oshi_results_last_sync_v1',
 };
 
 /**
@@ -468,4 +469,35 @@ export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[
     }
   } catch {}
 }
+
+export function getStoredFiscalResultsLastSync(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.RESULTS_LAST_SYNC);
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredFiscalResultsLastSync(timeString: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.RESULTS_LAST_SYNC, timeString);
+  } catch (e) {
+    console.error('Failed to save results last sync time', e);
+  }
+}
+
+/**
+ * Extracts the latest match date (YYYY-MM-DD) from a list of match results.
+ */
+export function getLatestMatchDateFromResults(results: ShogiMonthlyResult[]): string | null {
+  if (!results || results.length === 0) return null;
+  let maxDate = '';
+  for (const r of results) {
+    if (r.date && r.date > maxDate) {
+      maxDate = r.date;
+    }
+  }
+  return maxDate || null;
+}
+
 

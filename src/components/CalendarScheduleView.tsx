@@ -39,7 +39,7 @@ interface CalendarScheduleViewProps {
   onRefreshMatches?: () => void;
   activeSubTab?: 'schedule' | 'results';
   onChangeSubTab?: (tab: 'schedule' | 'results') => void;
-  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>) => void;
+  onUpdateResults?: (updated: Record<string, ShogiMonthlyResult[]>, targetMonths?: string[]) => void;
 }
 
 export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({

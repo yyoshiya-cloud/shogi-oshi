@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { scrapeAllActivePlayers, fetchPlayerProfileDetail } from './src/services/playerSyncService';
-import { scrapeMatchPlan, scrapeMonthlyResults, getAll2026Results } from './src/services/matchSyncService';
+import { scrapeMatchPlan, scrapeMonthlyResults, getAll2026Results, scrapeIncrementalResults } from './src/services/matchSyncService';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,12 +55,13 @@ async function startServer() {
     try {
       const month = (req.query.month as string) || '202610';
       const force = req.query.force === 'true';
+      const sinceDate = (req.query.sinceDate as string) || undefined;
       const all = req.query.all === 'true';
       if (all) {
-        const results = await getAll2026Results();
+        const results = await getAll2026Results(force);
         return res.json({ success: true, all: true, data: results });
       }
-      const result = await scrapeMonthlyResults(month, force);
+      const result = await scrapeMonthlyResults(month, force, sinceDate);
       res.json(result);
     } catch (error: any) {
       console.error('Error in /api/matches/results:', error);
@@ -75,12 +76,12 @@ async function startServer() {
   app.get('/api/sync/all', async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      console.log(`[Bulk Sync All] Starting complete data synchronization (force=${force})...`);
+      console.log(`[Bulk Sync All] Starting data synchronization (force=${force})...`);
 
-      const [playersRes, matchesRes, results2026] = await Promise.all([
+      const [playersRes, matchesRes, incrementalResults] = await Promise.all([
         scrapeAllActivePlayers(force),
         scrapeMatchPlan(force),
-        getAll2026Results(force),
+        scrapeIncrementalResults({}, force),
       ]);
 
       res.json({
@@ -88,7 +89,8 @@ async function startServer() {
         timestamp: new Date().toISOString(),
         players: playersRes,
         matches: matchesRes,
-        results2026,
+        results2026: incrementalResults.merged,
+        updatedMonths: incrementalResults.updatedMonths,
       });
     } catch (error: any) {
       console.error('Error in /api/sync/all:', error);

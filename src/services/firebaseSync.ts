@@ -26,6 +26,7 @@ import {
   PushNotificationItem,
 } from '../types/shogi';
 import { enrichAllResultsWithSupplements } from './matchSupplementService';
+import { getLatestMatchDateFromResults } from '../utils/storage';
 
 
 const app = initializeApp(firebaseConfig);
@@ -325,20 +326,99 @@ export async function fetchFiscalResultsFromCloud(): Promise<Record<string, Shog
   }
 }
 
+export interface CloudMonthResult {
+  month: string;
+  results: ShogiMonthlyResult[];
+  count: number;
+  latestMatchDate?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Fetch a single month's official match results and metadata from Firestore fiscal_results/{month}.
+ * Extremely fast & light (only 1 document read), perfect for multi-device updatedAt verification.
+ */
+export async function fetchMonthFiscalResultFromCloud(
+  month: string
+): Promise<CloudMonthResult | null> {
+  if (isQuotaExceeded) return null;
+  const path = `fiscal_results/${month}`;
+  try {
+    const snap = await getDoc(doc(db, 'fiscal_results', month));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (Array.isArray(data.results)) {
+        const list = data.results as ShogiMonthlyResult[];
+        list.forEach((r) => {
+          if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
+            r.tournament = 'NHK杯';
+          }
+        });
+        const latestMatchDate = data.latestMatchDate || getLatestMatchDateFromResults(list) || undefined;
+        return {
+          month,
+          results: list,
+          count: data.count || list.length,
+          latestMatchDate,
+          updatedAt: data.updatedAt || undefined,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, path);
+    return null;
+  }
+}
+
+/**
+ * Save a single month's official match results and metadata to Firestore fiscal_results/{month}.
+ * Consumes only 1 write unit instead of batch-writing entire years!
+ */
+export async function saveSingleMonthFiscalResultToCloud(
+  month: string,
+  results: ShogiMonthlyResult[],
+  latestMatchDate?: string
+): Promise<boolean> {
+  if (isQuotaExceeded) return false;
+  const path = `fiscal_results/${month}`;
+  try {
+    const cleanResults = JSON.parse(JSON.stringify(results));
+    cleanResults.forEach((r: any) => {
+      if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
+        r.tournament = 'NHK杯';
+      }
+    });
+    const finalLatestDate = latestMatchDate || getLatestMatchDateFromResults(cleanResults) || null;
+    await setDoc(doc(db, 'fiscal_results', month), {
+      month,
+      results: cleanResults,
+      count: cleanResults.length,
+      latestMatchDate: finalLatestDate,
+      updatedAt: new Date().toISOString(),
+    });
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    return false;
+  }
+}
+
 /**
  * Save 2025 & 2026 fiscal year match results to Firestore (partitioned by month).
  */
 export async function saveFiscalResultsToCloud(
-  results: Record<string, ShogiMonthlyResult[]>
+  results: Record<string, ShogiMonthlyResult[]>,
+  targetMonths?: string[]
 ): Promise<boolean> {
   if (isQuotaExceeded) return false;
   const path = 'fiscal_results';
   try {
-    const months = Object.keys(results);
-    if (months.length === 0) return false;
+    const monthsToSave = targetMonths && targetMonths.length > 0 ? targetMonths : Object.keys(results);
+    if (monthsToSave.length === 0) return false;
 
-    // Save in batches of months
-    for (const month of months) {
+    // Save only target / updated months to save Firestore write quota
+    for (const month of monthsToSave) {
       const monthResults = results[month];
       if (Array.isArray(monthResults) && monthResults.length > 0) {
         const cleanResults = JSON.parse(JSON.stringify(monthResults));
@@ -347,10 +427,12 @@ export async function saveFiscalResultsToCloud(
             r.tournament = 'NHK杯';
           }
         });
+        const latestMatchDate = getLatestMatchDateFromResults(cleanResults);
         await setDoc(doc(db, 'fiscal_results', month), {
           month,
           results: cleanResults,
           count: cleanResults.length,
+          latestMatchDate: latestMatchDate || null,
           updatedAt: new Date().toISOString(),
         });
       }
@@ -366,6 +448,7 @@ export async function saveFiscalResultsToCloud(
  * Fetch user notification history from Firestore users/{userId}/metadata/notifications.
  */
 export async function fetchUserNotificationsFromCloud(userId: string): Promise<PushNotificationItem[] | null> {
+  if (isQuotaExceeded) return null;
   const path = `users/${userId}/metadata/notifications`;
   try {
     const snap = await getDoc(doc(db, 'users', userId, 'metadata', 'notifications'));
@@ -431,6 +514,17 @@ export async function migrateAllLocalStorageToFirebase(
     lastMatchSyncTime?: string | null;
   }
 ): Promise<MigrationSummary> {
+  if (isQuotaExceeded) {
+    return {
+      success: false,
+      followedCount: 0,
+      playersCount: 0,
+      matchesCount: 0,
+      resultsMonthsCount: 0,
+      notificationsCount: 0,
+      migratedAt: new Date().toISOString(),
+    };
+  }
   try {
     // 1. Sync Followed Players to Firestore subcollection
     if (data.followed && data.followed.length > 0) {
