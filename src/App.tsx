@@ -37,7 +37,8 @@ import {
   saveFiscalResultsToCloud,
   fetchUserNotificationsFromCloud,
   saveUserNotificationsToCloud,
-  getSafeCloudUserId
+  getSafeCloudUserId,
+  isFirestoreQuotaExceeded
 } from './services/firebaseSync';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
@@ -395,12 +396,14 @@ export default function App() {
         setLastSyncTime(timeStr);
         setLastMatchSyncTime(timeStr);
 
-        // Also persist to Firebase Firestore
-        if (freshPlayersMerged.length > 0) {
-          savePlayersToCloud(freshPlayersMerged, timeStr);
-        }
-        if (freshMatchesSaved.length > 0) {
-          saveMatchesToCloud(freshMatchesSaved, timeStr);
+        // Also persist to Firebase Firestore if quota not exceeded
+        if (!isFirestoreQuotaExceeded()) {
+          if (freshPlayersMerged.length > 0) {
+            savePlayersToCloud(freshPlayersMerged, timeStr);
+          }
+          if (freshMatchesSaved.length > 0) {
+            saveMatchesToCloud(freshMatchesSaved, timeStr);
+          }
         }
 
         setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '88'}局、全対局結果をFirebaseに反映しました！`);
@@ -470,7 +473,9 @@ export default function App() {
       const updated = [...prev];
       updated[idx] = playerToSave;
       saveStoredPlayers(updated);
-      savePlayersToCloud(updated);
+      if (!isFirestoreQuotaExceeded()) {
+        savePlayersToCloud(updated);
+      }
       return updated;
     });
     if (selectedPlayer?.id === playerToSave.id) {
@@ -547,6 +552,10 @@ export default function App() {
 
     // Firebase Firestore Connection Test & Cloud Data Hydration
     const hydrateAndSeedFirestore = async () => {
+      if (isFirestoreQuotaExceeded()) {
+        console.info('Firestore daily write quota reached; operating in local storage mode.');
+        return;
+      }
       await testConnection();
       try {
         const [cloudPlayers, cloudMatches, cloudFiscal] = await Promise.all([
@@ -621,7 +630,7 @@ export default function App() {
 
   // Cloud Firestore Real-time Multi-device Sync Effect
   useEffect(() => {
-    if (!googleUser?.email) return;
+    if (!googleUser?.email || isFirestoreQuotaExceeded()) return;
 
     const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
 
@@ -727,12 +736,14 @@ export default function App() {
     saveStoredFollowed(updated, googleUser?.email);
 
     // Save directly to Cloud Firestore for multi-device sync
-    const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
-    saveFollowedPlayerCloud(cloudUserId, config);
+    if (!isFirestoreQuotaExceeded() && googleUser?.email) {
+      const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
+      saveFollowedPlayerCloud(cloudUserId, config);
+    }
 
     const target = playersList.find((p) => p.id === config.playerId) || PLAYERS_DATA.find((p) => p.id === config.playerId);
     if (target) {
-      setSyncToast(`【推し登録】${target.name} を登録・クラウド同期しました。全端末（Android, Windows, iOS）に即時反映されます`);
+      setSyncToast(`【推し登録】${target.name} を登録しました。`);
       setTimeout(() => setSyncToast(null), 3500);
 
       // If the followed player happens to have a match today, push today's match notification
@@ -762,12 +773,12 @@ export default function App() {
     saveStoredFollowed(updated, googleUser?.email);
 
     // Delete from Cloud Firestore for multi-device sync
-    if (googleUser?.email) {
+    if (!isFirestoreQuotaExceeded() && googleUser?.email) {
       const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
       removeFollowedPlayerCloud(cloudUserId, playerId);
     }
 
-    setSyncToast(`推し登録を解除し、クラウド同期データを削除・更新しました`);
+    setSyncToast(`推し登録を解除しました`);
     setTimeout(() => setSyncToast(null), 3000);
   };
 
@@ -796,7 +807,7 @@ export default function App() {
       saveStoredFollowed(updated, googleUser?.email);
 
       // Save to Cloud Firestore for multi-device sync
-      if (googleUser?.email) {
+      if (!isFirestoreQuotaExceeded() && googleUser?.email) {
         const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
         saveFollowedPlayerCloud(cloudUserId, updatedConfig);
       }

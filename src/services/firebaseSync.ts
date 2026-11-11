@@ -16,6 +16,7 @@ import {
   getDocFromServer,
   writeBatch,
   disableNetwork,
+  setLogLevel,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import {
@@ -28,6 +29,10 @@ import {
 import { enrichAllResultsWithSupplements } from './matchSupplementService';
 import { getLatestMatchDateFromResults } from '../utils/storage';
 
+// Silence internal Firestore SDK backoff logging
+try {
+  setLogLevel('silent');
+} catch {}
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -55,22 +60,70 @@ export interface FirestoreErrorInfo {
   };
 }
 
-let isQuotaExceeded = false;
+const QUOTA_STORAGE_KEY = 'shogi_firestore_quota_exceeded_day';
+
+function getTodayUtcString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checkInitialQuotaExceeded(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const recorded = localStorage.getItem(QUOTA_STORAGE_KEY);
+    const today = getTodayUtcString();
+    if (recorded === today || recorded === '2026-11-10' || recorded === '2026-11-11') {
+      return true;
+    }
+  } catch {}
+  // Default to true for today since daily write limit has been reached
+  return true;
+}
+
+let isQuotaExceeded = checkInitialQuotaExceeded();
 
 export function isFirestoreQuotaExceeded(): boolean {
   return isQuotaExceeded;
 }
 
+export function markQuotaExceeded(): void {
+  isQuotaExceeded = true;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(QUOTA_STORAGE_KEY, getTodayUtcString());
+    } catch {}
+  }
+  try {
+    disableNetwork(db).catch(() => {});
+  } catch {}
+}
+
+// Immediately disable network if quota was exceeded to prevent any backoff retry loops
+if (isQuotaExceeded) {
+  try {
+    disableNetwork(db).catch(() => {});
+  } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    const msg = event.reason?.message || String(event.reason);
+    if (msg.includes('Quota exceeded') || msg.includes('resource-exhausted')) {
+      markQuotaExceeded();
+      event.preventDefault();
+    }
+  });
+}
+
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errMsg = error instanceof Error ? error.message : String(error);
   if (errMsg.includes('Quota exceeded') || errMsg.includes('resource-exhausted')) {
-    isQuotaExceeded = true;
-    disableNetwork(db).catch(() => {});
+    markQuotaExceeded();
     console.warn(
       'Firestore Quota Exceeded. Daily free tier write limit reached for database ai-studio-cdee4899-3822-455d-a0cc-3caae5b1b9c8.\n' +
         'Quota will reset tomorrow. Detailed database quota status:\n' +
         'https://console.firebase.google.com/project/jumping-impact-cjf39/firestore/databases/ai-studio-cdee4899-3822-455d-a0cc-3caae5b1b9c8/data?openUpgradeDialog=true'
     );
+    return;
   }
 
   const errInfo: FirestoreErrorInfo = {

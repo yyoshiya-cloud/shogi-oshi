@@ -9,7 +9,8 @@ import {
 } from '../utils/storage';
 import {
   fetchMonthFiscalResultFromCloud,
-  saveSingleMonthFiscalResultToCloud
+  saveSingleMonthFiscalResultToCloud,
+  isFirestoreQuotaExceeded
 } from '../services/firebaseSync';
 import { updateMatchStatsData } from '../utils/yearRecordsGenerator';
 import { clearPlayerMatchCache } from '../services/shogiDbMatchEnrichment';
@@ -331,29 +332,31 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     try {
       // 1. 【Firestore updatedAt タイムスタンプ先行比較】(マルチデバイス無駄更新防止)
       // 他の端末（スマホや別タブなど）で既に最新データがFirestoreに反映されているかを1ドキュメント読み取りで確認
-      const cloudDoc = await fetchMonthFiscalResultFromCloud(targetMonthKey);
-      if (cloudDoc && cloudDoc.updatedAt) {
-        const isCloudNewer = !localLastSyncTime || new Date(cloudDoc.updatedAt).getTime() > new Date(localLastSyncTime).getTime();
-        const hasMoreOrEqualResults = cloudDoc.results && cloudDoc.results.length >= localResults.length;
+      if (!isFirestoreQuotaExceeded()) {
+        const cloudDoc = await fetchMonthFiscalResultFromCloud(targetMonthKey);
+        if (cloudDoc && cloudDoc.updatedAt) {
+          const isCloudNewer = !localLastSyncTime || new Date(cloudDoc.updatedAt).getTime() > new Date(localLastSyncTime).getTime();
+          const hasMoreOrEqualResults = cloudDoc.results && cloudDoc.results.length >= localResults.length;
 
-        if (isCloudNewer && hasMoreOrEqualResults) {
-          // 他端末が既にスクレイピングしてFirestoreに保存済み！外部スクレイピングを完全スキップ
-          const updated = {
-            ...monthlyData,
-            [targetMonthKey]: cloudDoc.results,
-          };
-          setMonthlyData(updated);
-          saveStoredFiscalResults(updated);
-          updateMatchStatsData(updated);
-          clearPlayerMatchCache();
-          saveStoredFiscalResultsLastSync(cloudDoc.updatedAt);
-          onUpdateResults?.(updated);
-          setRefreshMessage(
-            `【端末間連携】他端末で更新された最新対局結果（${cloudDoc.results.length}局）をFirestoreから同期しました（外部アクセス不要）`
-          );
-          setIsRefreshing(false);
-          setTimeout(() => setRefreshMessage(null), 5000);
-          return;
+          if (isCloudNewer && hasMoreOrEqualResults) {
+            // 他端末が既にスクレイピングしてFirestoreに保存済み！外部スクレイピングを完全スキップ
+            const updated = {
+              ...monthlyData,
+              [targetMonthKey]: cloudDoc.results,
+            };
+            setMonthlyData(updated);
+            saveStoredFiscalResults(updated);
+            updateMatchStatsData(updated);
+            clearPlayerMatchCache();
+            saveStoredFiscalResultsLastSync(cloudDoc.updatedAt);
+            onUpdateResults?.(updated);
+            setRefreshMessage(
+              `【端末間連携】他端末で更新された最新対局結果（${cloudDoc.results.length}局）をFirestoreから同期しました（外部アクセス不要）`
+            );
+            setIsRefreshing(false);
+            setTimeout(() => setRefreshMessage(null), 5000);
+            return;
+          }
         }
       }
 
@@ -381,11 +384,13 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
           clearPlayerMatchCache();
           onUpdateResults?.(updated);
 
-          // Firestoreへの書き込みは当月1レコードのみ
-          await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+          // Firestoreへの書き込みは当月1レコードのみ（クオータ未達時のみ）
+          if (!isFirestoreQuotaExceeded()) {
+            await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+          }
 
           setRefreshMessage(
-            `【差分更新完了】新着対局結果 ${json.newCount}局（${localLatestDate}の翌日以降）を反映し、クラウドに保存しました`
+            `【差分更新完了】新着対局結果 ${json.newCount}局（${localLatestDate}の翌日以降）を反映しました`
           );
         } else {
           // 新着対局なし（または既に最新）: Firestore書き込みを完全スキップ（クオータ消費0）
@@ -399,7 +404,9 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
             updateMatchStatsData(updated);
             clearPlayerMatchCache();
             onUpdateResults?.(updated);
-            await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+            if (!isFirestoreQuotaExceeded()) {
+              await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
+            }
           }
           setRefreshMessage(
             `対局結果は既に最新です（${localLatestDate ? localLatestDate + '以降の' : ''}新着なし・書き込みクオータ消費0）`
