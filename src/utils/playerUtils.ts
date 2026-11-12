@@ -553,4 +553,187 @@ export function resolvePlayer(id: string | undefined, players: Player[]): Player
   return createFallbackPlayer(targetId);
 }
 
+import { getPlayerTotalTitles } from './titleUtils';
+import { initializePlayerRecords } from './yearRecordsGenerator';
+import { saveStoredPlayers } from './storage';
+
+/**
+ * Normalizes, cleans, and initializes the player list on startup or sync.
+ */
+export function normalizeAndCleanPlayersList(stored: Player[] | null | undefined, staticData: Player[]): Player[] {
+  if (!stored || stored.length === 0) {
+    return staticData.map((p) => {
+      const v = getPlayerTotalTitles(p);
+      const withTitles = v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+      return initializePlayerRecords(withTitles);
+    });
+  }
+
+  const storedIds = new Set(stored.map((p) => p.id));
+  const missingStatic = staticData.filter((p) => !storedIds.has(p.id));
+  const staticMap = new Map(staticData.map((p) => [p.id, p]));
+
+  const needsLpsaOrNakaiUpdate = stored.some((p) => {
+    if (p.id === 'nakai-hiroe' && (p.careerWins < 780 || p.currentYearWins !== 9)) return true;
+    if (p.id === 'watanabe-mana' && (p.careerWins < 240 || p.currentYearWins !== 2)) return true;
+    if (p.affiliation === 'LPSA' && (p.careerWins === 0 || !p.careerWins)) return true;
+    if (p.name && (p.name.includes('※') || p.name.includes('＊') || p.name.includes('*'))) return true;
+    return false;
+  });
+
+  const needsTitleUpdate = stored.some((p) => {
+    const verified = getPlayerTotalTitles(p);
+    return verified > 0 && p.totalTitles !== verified;
+  });
+
+  const needs2025Restore = stored.some((p) => {
+    const r2025 = (p.yearRecords || []).find((r) => r.year === 2025);
+    return (
+      (p.id === 'fujii-sota' || p.id === 'ito-takumi' || p.id === 'habu-yoshiharu') &&
+      (!r2025 || (r2025.wins === 0 && r2025.losses === 0))
+    );
+  });
+
+  const needsLeaveStatsUpdate = stored.some((p) => {
+    if (p.name && p.name.includes('山田朱未') && p.careerWins < 104) return true;
+    if (p.name && p.name.includes('早水千紗') && p.careerWins < 195) return true;
+    if (p.name && p.name.includes('井道千尋') && p.careerWins < 125) return true;
+    return false;
+  });
+
+  const needsClassUpdate = stored.some((p) => {
+    const staticP = staticMap.get(p.id);
+    if (!staticP) return false;
+    return (
+      p.junisenClass === '順位戦参加' ||
+      p.ryuoClass === '竜王戦参加' ||
+      (p.id === 'pro-koji_tanigawa' && p.junisenClass === '名人') ||
+      (staticP.junisenClass && p.junisenClass !== staticP.junisenClass) ||
+      (staticP.ryuoClass && p.ryuoClass !== staticP.ryuoClass)
+    );
+  });
+
+  const needsCleanup =
+    missingStatic.length > 0 ||
+    needsLpsaOrNakaiUpdate ||
+    needsTitleUpdate ||
+    needs2025Restore ||
+    needsLeaveStatsUpdate ||
+    needsClassUpdate ||
+    stored.some(
+      (p) =>
+        (p.danRank && (p.danRank.includes('現役') || p.danRank === '棋士' || p.danRank === '女流棋士')) ||
+        (p.rank && p.rank.includes('現役棋士')) ||
+        (p.name && !p.name.includes(' ') && !p.name.includes('\u3000') && p.name.length >= 3) ||
+        (p.rank && p.rank.length > 25) ||
+        (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
+        (p.heldTitles && p.heldTitles.some((t) => t.includes('段') || t.includes('級'))) ||
+        (!p.danRank &&
+          (p.id === 'fujii-sota' ||
+            p.id === 'ito-takumi' ||
+            p.id === 'nishiyama-tomoka' ||
+            p.id === 'fukuma-kana' ||
+            p.id === 'shimizu-ichiyo'))
+    );
+
+  if (needsCleanup) {
+    const cleaned = [...stored, ...missingStatic].map((p) => {
+      let name = p.name ? formatPlayerName(p.name) : p.name;
+      let rank = p.rank || (p.type === 'women' ? '女流棋士' : '棋士');
+      rank = rank.replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
+      rank = rank.replace(/１/g, '1').replace(/２/g, '2');
+      if (rank.length > 25) {
+        const m = rank.match(/([一二三四五六七八九]段|女流[初一二三四五六七]段|女流[1-2１-２]級|竜王|名人)/);
+        rank = m ? m[1].replace(/１/g, '1').replace(/２/g, '2') : p.type === 'women' ? '女流棋士' : '棋士';
+      }
+      if (rank === '現役棋士') {
+        rank = p.type === 'women' ? '女流棋士' : '棋士';
+      }
+      const validHeldTitles = (p.heldTitles || []).filter((t) => !t.includes('段') && !t.includes('級'));
+      let danRank = p.danRank;
+      if (danRank) {
+        danRank = danRank.replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
+        if (danRank === '現役棋士' || danRank === '女流棋士' || danRank === '棋士') {
+          danRank = undefined;
+        }
+      }
+      if (p.id === 'habu-yoshiharu' || p.name.includes('羽生 善治')) {
+        rank = '九段';
+        danRank = '九段';
+      }
+      if (p.id === 'pro-toshiyuki_moriuchi' || p.name.includes('森内 俊之')) {
+        rank = '九段(永世称号有資格者)';
+        danRank = '九段';
+      }
+      if (!danRank) {
+        if (p.id === 'fujii-sota' || p.name.includes('藤井 聡太')) danRank = '九段';
+        else if (p.id === 'ito-takumi' || p.name.includes('伊藤 匠')) danRank = '九段';
+        else if (p.id === 'nishiyama-tomoka' || p.name.includes('西山 朋佳')) danRank = '女流五段';
+        else if (p.id === 'fukuma-kana' || p.name.includes('福間 香奈')) danRank = '女流六段';
+        else if (p.id === 'shimizu-ichiyo' || p.name.includes('清水 市代')) danRank = '女流七段';
+      }
+      const verifiedTitles = getPlayerTotalTitles(p);
+      const totalTitles = verifiedTitles > 0 ? verifiedTitles : p.totalTitles || 0;
+      const staticP = staticMap.get(p.id);
+      let careerWins = p.careerWins;
+      let careerLosses = p.careerLosses;
+      let careerWinRate = p.careerWinRate;
+      let currentYearWins = p.currentYearWins;
+      let currentYearLosses = p.currentYearLosses;
+      let currentYearWinRate = p.currentYearWinRate;
+      if (staticP && (p.id === 'nakai-hiroe' || p.affiliation === 'LPSA')) {
+        if (p.id === 'nakai-hiroe' && (careerWins < 780 || currentYearWins !== 9)) {
+          careerWins = staticP.careerWins;
+          careerLosses = staticP.careerLosses;
+          careerWinRate = staticP.careerWinRate;
+          currentYearWins = staticP.currentYearWins;
+          currentYearLosses = staticP.currentYearLosses;
+          currentYearWinRate = staticP.currentYearWinRate;
+        } else if (
+          p.affiliation === 'LPSA' &&
+          (!careerWins || careerWins < staticP.careerWins || currentYearWins !== staticP.currentYearWins)
+        ) {
+          careerWins = staticP.careerWins;
+          careerLosses = staticP.careerLosses;
+          careerWinRate = staticP.careerWinRate;
+          currentYearWins = staticP.currentYearWins;
+          currentYearLosses = staticP.currentYearLosses;
+          currentYearWinRate = staticP.currentYearWinRate;
+        }
+      }
+      let junisenClass = p.junisenClass;
+      let ryuoClass = p.ryuoClass;
+      if (staticP) {
+        junisenClass = staticP.junisenClass || junisenClass;
+        ryuoClass = staticP.ryuoClass || ryuoClass;
+      }
+      return {
+        ...p,
+        name,
+        rank,
+        danRank,
+        heldTitles: validHeldTitles,
+        totalTitles,
+        careerWins,
+        careerLosses,
+        careerWinRate,
+        currentYearWins,
+        currentYearLosses,
+        currentYearWinRate,
+        junisenClass: junisenClass || p.junisenClass,
+        ryuoClass: ryuoClass || p.ryuoClass,
+      };
+    });
+    const fullyInitialized = cleaned.map(initializePlayerRecords);
+    saveStoredPlayers(fullyInitialized);
+    return fullyInitialized;
+  }
+
+  return stored.map((p) => {
+    const v = getPlayerTotalTitles(p);
+    const withTitles = v > 0 && p.totalTitles !== v ? { ...p, totalTitles: v } : p;
+    return initializePlayerRecords(withTitles);
+  });
+}
+
 
