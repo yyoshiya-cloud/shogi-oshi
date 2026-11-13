@@ -1126,7 +1126,11 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                       {formatPlayerRankAndDan(p1)}
                     </span>
                     {winner?.id === p1.id && (
-                      <span className="text-[9px] bg-amber-500 text-zinc-950 font-black px-1.5 py-0.2 rounded shrink-0">
+                      <span className={`text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 ${
+                        (p1.type === 'women' || p1.affiliation === 'LPSA' || match.category?.includes('女流'))
+                          ? 'bg-pink-500 text-zinc-950'
+                          : 'bg-sky-400 text-zinc-950'
+                      }`}>
                         勝
                       </span>
                     )}
@@ -1138,7 +1142,11 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                   {/* Gote Player */}
                   <div className="flex items-center justify-end gap-1.5 min-w-0 flex-1 text-right">
                     {winner?.id === p2.id && (
-                      <span className="text-[9px] bg-amber-500 text-zinc-950 font-black px-1.5 py-0.2 rounded shrink-0">
+                      <span className={`text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 ${
+                        (p2.type === 'women' || p2.affiliation === 'LPSA' || match.category?.includes('女流'))
+                          ? 'bg-pink-500 text-zinc-950'
+                          : 'bg-sky-400 text-zinc-950'
+                      }`}>
                         勝
                       </span>
                     )}

@@ -1279,7 +1279,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             isSenteWinner
                               ? isWomenMatch
                                 ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
-                                : 'bg-amber-500/15 border border-amber-500/40 shadow-sm'
+                                : 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
                               : ''
                           }`}
                         >
@@ -1293,7 +1293,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
                                   isWomenMatch
                                     ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
-                                    : 'bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200'
+                                    : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
                                 }`}
                               >
                                 <span>○勝者</span>
@@ -1317,7 +1317,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 isSenteWinner
                                   ? isWomenMatch
                                     ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
-                                    : 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]'
+                                    : 'text-sky-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(56,189,248,0.3)]'
                                   : 'text-zinc-100 font-bold'
                               }`}
                             >
@@ -1353,7 +1353,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             isGoteWinner
                               ? isWomenMatch
                                 ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
-                                : 'bg-amber-500/15 border border-amber-500/40 shadow-sm'
+                                : 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
                               : ''
                           }`}
                         >
@@ -1369,7 +1369,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
                                   isWomenMatch
                                     ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
-                                    : 'bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200'
+                                    : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
                                 }`}
                               >
                                 <span>○勝者</span>
@@ -1391,7 +1391,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 isGoteWinner
                                   ? isWomenMatch
                                     ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
-                                    : 'text-amber-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(245,158,11,0.3)]'
+                                    : 'text-sky-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(56,189,248,0.3)]'
                                   : 'text-zinc-100 font-bold'
                               }`}
                             >

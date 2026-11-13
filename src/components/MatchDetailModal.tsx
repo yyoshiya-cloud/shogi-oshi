@@ -210,7 +210,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 isP1RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
               } ${
                 winner?.id === player1.id
-                  ? 'bg-gradient-to-br from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
+                  ? (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
+                    ? 'bg-gradient-to-br from-pink-950/60 via-pink-900/35 to-zinc-900 border-pink-400/90 ring-1 ring-pink-400/60 shadow-xl shadow-pink-500/15'
+                    : 'bg-gradient-to-br from-sky-950/60 via-sky-900/35 to-zinc-900 border-sky-400/90 ring-1 ring-sky-400/60 shadow-xl shadow-sky-500/15'
                   : isFinished
                   ? 'bg-zinc-900/50 border-zinc-800/80'
                   : 'bg-zinc-900/70 border-zinc-800/80'
@@ -220,7 +222,11 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <div className="flex items-center justify-between gap-1.5 mb-2.5">
                 <span className="text-xs font-black text-amber-400 tracking-wide">☗</span>
                 {winner?.id === player1.id ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                    (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
+                      ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
+                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
+                  }`}>
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
@@ -233,7 +239,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 <span
                   className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
                     winner?.id === player1.id
-                      ? 'text-amber-200 font-black drop-shadow-[0_1px_3px_rgba(245,158,11,0.3)] group-hover:text-amber-100'
+                      ? (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
+                        ? 'text-pink-200 font-black drop-shadow-[0_1px_3px_rgba(236,72,153,0.3)] group-hover:text-pink-100'
+                        : 'text-sky-200 font-black drop-shadow-[0_1px_3px_rgba(56,189,248,0.3)] group-hover:text-sky-100'
                       : 'text-zinc-100 font-bold group-hover:text-amber-300'
                   }`}
                 >
@@ -254,7 +262,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 isP2RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
               } ${
                 winner?.id === player2.id
-                  ? 'bg-gradient-to-bl from-amber-950/60 via-amber-900/35 to-zinc-900 border-amber-400/90 ring-1 ring-amber-400/60 shadow-xl shadow-amber-500/15'
+                  ? (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
+                    ? 'bg-gradient-to-bl from-pink-950/60 via-pink-900/35 to-zinc-900 border-pink-400/90 ring-1 ring-pink-400/60 shadow-xl shadow-pink-500/15'
+                    : 'bg-gradient-to-bl from-sky-950/60 via-sky-900/35 to-zinc-900 border-sky-400/90 ring-1 ring-sky-400/60 shadow-xl shadow-sky-500/15'
                   : isFinished
                   ? 'bg-zinc-900/50 border-zinc-800/80'
                   : 'bg-zinc-900/70 border-zinc-800/80'
@@ -263,7 +273,11 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             >
               <div className="flex items-center justify-end gap-1.5 mb-2.5">
                 {winner?.id === player2.id ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 flex items-center gap-1 shadow-md shadow-amber-500/20 border border-amber-200 whitespace-nowrap shrink-0">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                    (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
+                      ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
+                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
+                  }`}>
                     <span>○ 勝者</span>
                   </span>
                 ) : isFinished ? (
@@ -278,7 +292,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 <span
                   className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
                     winner?.id === player2.id
-                      ? 'text-amber-200 font-black drop-shadow-[0_1px_3px_rgba(245,158,11,0.3)] group-hover:text-amber-100'
+                      ? (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
+                        ? 'text-pink-200 font-black drop-shadow-[0_1px_3px_rgba(236,72,153,0.3)] group-hover:text-pink-100'
+                        : 'text-sky-200 font-black drop-shadow-[0_1px_3px_rgba(56,189,248,0.3)] group-hover:text-sky-100'
                       : 'text-zinc-100 font-bold group-hover:text-amber-300'
                   }`}
                 >
