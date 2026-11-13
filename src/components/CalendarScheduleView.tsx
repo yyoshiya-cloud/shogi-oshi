@@ -225,8 +225,8 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
         if (!isOshi) return false;
       }
       // Status filter
-      if (statusFilter === 'upcoming' && m.status === 'finished') return false;
-      if (statusFilter === 'finished' && m.status !== 'finished') return false;
+      if (statusFilter === 'upcoming' && (m.status === 'finished' || m.date < todayDate)) return false;
+      if (statusFilter === 'finished' && m.status !== 'finished' && m.date >= todayDate) return false;
 
       // Search query filter
       if (searchQuery.trim()) {

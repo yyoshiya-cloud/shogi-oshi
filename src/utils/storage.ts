@@ -258,13 +258,23 @@ export function saveStoredLastSync(timeString: string): void {
   }
 }
 
+export function normalizeMatchStatus(m: Match): Match {
+  if (!m || !m.date) return m;
+  const todayStr = getTodayDateString();
+  if (m.date < todayStr && (m.status === 'live' || m.status === 'upcoming')) {
+    return { ...m, status: 'finished' as const };
+  }
+  return m;
+}
+
 export function deduplicateMatches(matches: Match[]): Match[] {
   if (!Array.isArray(matches)) return [];
   const map = new Map<string, Match>();
   const pairMap = new Map<string, Match>();
 
-  for (const m of matches) {
-    if (!m || !m.id) continue;
+  for (const rawM of matches) {
+    if (!rawM || !rawM.id) continue;
+    const m = normalizeMatchStatus(rawM);
 
     let pairKey = '';
     if (m.date && m.player1Id && m.player2Id) {

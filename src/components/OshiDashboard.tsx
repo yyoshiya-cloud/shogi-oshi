@@ -55,7 +55,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   const todayInfo = getTodayInfo();
 
   // Find today's matches
-  const todayMatches = matches.filter((m) => m.date === todayDate || m.status === 'live');
+  const todayMatches = matches.filter((m) => m.date === todayDate || (m.status === 'live' && m.date >= todayDate));
   const followedTodayMatches = todayMatches.filter(
     (m) =>
       followedList.some((f) => f.playerId === m.player1Id) ||
@@ -259,7 +259,8 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
               const nextMatch = matches.find(
                 (m) =>
                   (m.player1Id === player.id || m.player2Id === player.id) &&
-                  m.status !== 'finished'
+                  m.status !== 'finished' &&
+                  m.date >= todayDate
               );
 
               const opponent = nextMatch

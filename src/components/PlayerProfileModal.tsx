@@ -5,6 +5,7 @@ import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
 import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
+import { getTodayDateString } from '../utils/dateUtils';
 import results2026Json from '../data/results2026.json';
 import { enrichPlayerMatches, getShogiDbSearchUrl } from '../services/shogiDbMatchEnrichment';
 import { OshiConfigModal } from './OshiConfigModal';
@@ -191,10 +192,22 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
   // Past and upcoming matches involving this player (sorted descending by date)
   const playerMatches = useMemo(() => {
+    const todayStr = getTodayDateString();
     return matches
       .filter((m) => m.player1Id === activePlayer.id || m.player2Id === activePlayer.id)
+      .map((m) => {
+        if (m.date < todayStr && (m.status === 'live' || m.status === 'upcoming')) {
+          return { ...m, status: 'finished' as const };
+        }
+        return m;
+      })
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [matches, activePlayer.id]);
+
+  const playerUpcomingMatches = useMemo(() => {
+    const todayStr = getTodayDateString();
+    return playerMatches.filter((m) => m.date >= todayStr && m.status !== 'finished');
+  }, [playerMatches]);
 
   // Months belonging to the selected fiscal year (4月〜翌年3月)
   const fiscalYearMonths = useMemo(() => {
@@ -601,7 +614,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            対局予定 ({playerMatches.length})
+            対局予定 ({playerUpcomingMatches.length})
           </button>
         </div>
 
@@ -1149,11 +1162,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Matches list for this player (upcoming/schedule) */}
+          {/* TAB 3: Matches list for this player (upcoming/schedule only) */}
           {activeTab === 'matches' && (
             <div className="space-y-3">
-              {playerMatches.length > 0 ? (
-                playerMatches.map((match) => {
+              {playerUpcomingMatches.length > 0 ? (
+                playerUpcomingMatches.map((match) => {
                   const opponentId =
                     match.player1Id === activePlayer.id ? match.player2Id : match.player1Id;
                   const opponent = allPlayers.find((p) => p.id === opponentId);
@@ -1176,11 +1189,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             match.status === 'live'
-                              ? 'bg-amber-500/20 text-amber-300'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                               : isFinished
                               ? isWinner
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-zinc-800 text-zinc-400'
+                                : match.winnerId
+                                ? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
                               : 'bg-amber-500/20 text-amber-300'
                           }`}
                         >
@@ -1189,7 +1204,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                             : isFinished
                             ? isWinner
                               ? '○ 勝利'
-                              : '● 敗戦'
+                              : match.winnerId
+                              ? '● 敗戦'
+                              : '対局終了'
                             : '対局予定'}
                         </span>
                       </div>
@@ -1212,9 +1229,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   );
                 })
               ) : (
-                <div className="py-10 text-center text-xs text-zinc-400 bg-zinc-900/40 rounded-2xl border border-zinc-800/60">
-                  <p className="font-bold text-zinc-300 mb-1">直近の対局データがありません</p>
-                  <p>将棋DB2（棋譜データベース）にて全過去対局を検索できます。</p>
+                <div className="py-10 text-center text-xs text-zinc-400 bg-zinc-900/40 rounded-2xl border border-zinc-800/60 space-y-1.5">
+                  <p className="font-bold text-zinc-200 text-sm">本日以降の対局予定はありません</p>
+                  <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">
+                    対局日が経過した過去の公式戦対局結果（勝敗・棋譜）は「年度対局結果」タブよりご確認いただけます。
+                  </p>
                 </div>
               )}
             </div>
