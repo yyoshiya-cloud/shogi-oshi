@@ -169,6 +169,17 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   });
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const handleFiscalUpdate = () => {
+      const latest = getStoredFiscalResults();
+      if (latest) {
+        setMonthlyData(latest);
+      }
+    };
+    window.addEventListener('shogi_fiscal_results_updated', handleFiscalUpdate);
+    return () => window.removeEventListener('shogi_fiscal_results_updated', handleFiscalUpdate);
+  }, []);
+
   const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
   const [hideEmptyMonths, setHideEmptyMonths] = useState<boolean>(true); // デフォルトで対局のない月を除外
   const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
@@ -603,6 +614,20 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     const p1 = resolvePlayer(r.sente, players);
     const p2 = resolvePlayer(r.gote, players);
 
+    const sClean = r.sente.replace(/\s+/g, '');
+    const gClean = r.gote.replace(/\s+/g, '');
+    const wClean = (r.winner || '').replace(/\s+/g, '');
+    const isSenteWin =
+      (Boolean(wClean) && wClean === sClean) ||
+      r.senteMark.includes('○') ||
+      r.senteMark.includes('□');
+    const isGoteWin =
+      (Boolean(wClean) && wClean === gClean) ||
+      r.goteMark.includes('○') ||
+      r.goteMark.includes('□');
+    const resolvedWinnerId = isSenteWin ? p1.id : isGoteWin ? p2.id : undefined;
+    const resolvedWinnerName = isSenteWin ? r.sente : isGoteWin ? r.gote : '';
+
     const m: Match = {
       id: r.id,
       tournament: r.tournament,
@@ -619,10 +644,12 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       timeControl: '公式持ち時間',
       broadcast: r.note?.includes('YouTube') ? ['将棋連盟YouTube'] : [],
       youtubeUrl: r.note?.includes('YouTube') ? 'https://www.youtube.com/@shogi_channel' : undefined,
-      winnerId: r.winner === r.sente ? p1.id : p2.id,
+      winnerId: resolvedWinnerId,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
-      highlights: `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${r.winner}。`,
+      highlights: resolvedWinnerName
+        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}。`
+        : `${r.sente} 対 ${r.gote}（${r.tournament}）。結果未登録。`,
     };
     onSelectMatch(m);
   };
@@ -1192,8 +1219,16 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                   const isSenteOshi = followedPlayerNames.has(senteClean);
                   const isGoteOshi = followedPlayerNames.has(goteClean);
 
-                  const isSenteWinner = result.winner === result.sente;
-                  const isGoteWinner = result.winner === result.gote;
+                  const winnerClean = (result.winner || '').replace(/\s+/g, '');
+                  const isSenteWinner =
+                    (Boolean(winnerClean) && winnerClean === senteClean) ||
+                    result.senteMark.includes('○') ||
+                    result.senteMark.includes('□');
+                  const isGoteWinner =
+                    (Boolean(winnerClean) && winnerClean === goteClean) ||
+                    result.goteMark.includes('○') ||
+                    result.goteMark.includes('□');
+                  const hasResult = isSenteWinner || isGoteWinner;
 
                   // Category badge styling
                   const isLadyTitle =
@@ -1222,7 +1257,10 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                       result.tournament.includes('棋聖') ||
                       result.tournament.includes('叡王'));
 
-                  const badgeClass = isLadyTitle
+                  const isNhkCup = result.tournament.includes('NHK杯') || result.tournament.includes('ＮＨＫ杯');
+                  const badgeClass = isNhkCup
+                    ? 'bg-white text-zinc-950 border-white font-bold'
+                    : isLadyTitle
                     ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
                     : isTitle
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
@@ -1232,12 +1270,10 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
                     : 'bg-zinc-800 text-zinc-300 border-zinc-700';
 
-                  const isWomenMatch =
-                    result.isWomen ||
-                    result.category === '女流タイトル戦' ||
-                    result.category === '女流棋戦' ||
-                    isLadyTitle ||
-                    result.tournament.includes('女流');
+                  const sentePlayerObj = resolvePlayer(result.sente, players);
+                  const gotePlayerObj = resolvePlayer(result.gote, players);
+                  const isSenteWinnerWomen = sentePlayerObj.type === 'women' || sentePlayerObj.affiliation === 'LPSA' || result.sente.includes('女流');
+                  const isGoteWinnerWomen = gotePlayerObj.type === 'women' || gotePlayerObj.affiliation === 'LPSA' || result.gote.includes('女流');
 
                   return (
                     <div
@@ -1277,7 +1313,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           onClick={() => handlePlayerClick(result.sente)}
                           className={`flex flex-col justify-center cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
                             isSenteWinner
-                              ? isWomenMatch
+                              ? isSenteWinnerWomen
                                 ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
                                 : 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
                               : ''
@@ -1288,20 +1324,22 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-zinc-800 text-amber-400 border border-zinc-700">
                               ☗先手
                             </span>
-                            {isSenteWinner ? (
-                              <span
-                                className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
-                                  isWomenMatch
-                                    ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
-                                    : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
-                                }`}
-                              >
-                                <span>○勝者</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
-                                ●敗者
-                              </span>
+                            {hasResult && (
+                              isSenteWinner ? (
+                                <span
+                                  className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
+                                    isSenteWinnerWomen
+                                      ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
+                                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
+                                  }`}
+                                >
+                                  <span>○勝者</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
+                                  ●敗者
+                                </span>
+                              )
                             )}
                             {isSenteOshi && (
                               <span className="text-rose-400 shrink-0" title="推し棋士">
@@ -1315,7 +1353,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             <span
                               className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
                                 isSenteWinner
-                                  ? isWomenMatch
+                                  ? isSenteWinnerWomen
                                     ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
                                     : 'text-sky-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(56,189,248,0.3)]'
                                   : 'text-zinc-100 font-bold'
@@ -1351,7 +1389,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           onClick={() => handlePlayerClick(result.gote)}
                           className={`flex flex-col justify-center items-end text-right cursor-pointer p-1.5 sm:p-2 rounded-xl transition hover:bg-zinc-800/40 min-w-0 ${
                             isGoteWinner
-                              ? isWomenMatch
+                              ? isGoteWinnerWomen
                                 ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
                                 : 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
                               : ''
@@ -1364,20 +1402,22 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 <Heart size={11} className="fill-rose-400" />
                               </span>
                             )}
-                            {isGoteWinner ? (
-                              <span
-                                className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
-                                  isWomenMatch
-                                    ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
-                                    : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
-                                }`}
-                              >
-                                <span>○勝者</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
-                                ●敗者
-                              </span>
+                            {hasResult && (
+                              isGoteWinner ? (
+                                <span
+                                  className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-sm font-mono whitespace-nowrap ${
+                                    isGoteWinnerWomen
+                                      ? 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
+                                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
+                                  }`}
+                                >
+                                  <span>○勝者</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
+                                  ●敗者
+                                </span>
+                              )
                             )}
                             <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-zinc-800 text-sky-400 border border-zinc-700">
                               ☖後手
@@ -1389,7 +1429,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             <span
                               className={`text-xs sm:text-sm font-serif-jp leading-tight whitespace-nowrap ${
                                 isGoteWinner
-                                  ? isWomenMatch
+                                  ? isGoteWinnerWomen
                                     ? 'text-pink-300 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(236,72,153,0.4)]'
                                     : 'text-sky-200 font-black text-sm sm:text-base drop-shadow-[0_1px_2px_rgba(56,189,248,0.3)]'
                                   : 'text-zinc-100 font-bold'
@@ -1410,7 +1450,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           {(() => {
                             const displayLinks = getDisplayLinks(result);
                             if (displayLinks.length === 0) {
-                              return <span className="text-[10px] text-zinc-400">公式戦終局</span>;
+                              return (
+                                <span className="text-[10px] text-zinc-400">
+                                  {hasResult ? '公式戦終局' : '結果未登録'}
+                                </span>
+                              );
                             }
                             return displayLinks.map((link, idx) => {
                               const isYoutube = link.title === '将棋連盟YouTube' || /youtube/i.test(link.title);
@@ -1435,7 +1479,18 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           })()}
                         </div>
 
-
+                        {onSelectMatch && (
+                          <button
+                            onClick={() => handleResultToMatchModal(result)}
+                            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded border transition ${
+                              hasResult
+                                ? 'text-zinc-300 hover:text-white bg-zinc-800/70 hover:bg-zinc-800 border-zinc-700'
+                                : 'text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40'
+                            }`}
+                          >
+                            {hasResult ? '詳細・勝敗編集' : '結果未定（勝敗を入力）'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

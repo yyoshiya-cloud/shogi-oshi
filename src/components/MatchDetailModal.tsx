@@ -37,6 +37,7 @@ interface MatchDetailModalProps {
   onClose: () => void;
   onNotificationSent?: () => void;
   onSelectPlayer?: (player: Player) => void;
+  onUpdateMatch?: (updatedMatch: Match) => void;
 }
 
 export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
@@ -44,6 +45,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   players,
   onClose,
   onSelectPlayer,
+  onUpdateMatch,
 }) => {
   const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -86,6 +88,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     (player2.playerNumber ?? 0) > 0;
 
   const winner = match.winnerId ? players.find((p) => p.id === match.winnerId) : null;
+  const isP1Winner = Boolean(match.winnerId && (winner?.id === player1.id || match.winnerId === player1.id));
+  const isP2Winner = Boolean(match.winnerId && (winner?.id === player2.id || match.winnerId === player2.id));
+  const hasDecidedWinner = isP1Winner || isP2Winner;
   const isFinished = match.status === 'finished';
 
   // System time and status check (JST)
@@ -209,7 +214,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               className={`p-4 rounded-2xl border transition group relative ${
                 isP1RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
               } ${
-                winner?.id === player1.id
+                isP1Winner
                   ? (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
                     ? 'bg-gradient-to-br from-pink-950/60 via-pink-900/35 to-zinc-900 border-pink-400/90 ring-1 ring-pink-400/60 shadow-xl shadow-pink-500/15'
                     : 'bg-gradient-to-br from-sky-950/60 via-sky-900/35 to-zinc-900 border-sky-400/90 ring-1 ring-sky-400/60 shadow-xl shadow-sky-500/15'
@@ -221,24 +226,26 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             >
               <div className="flex items-center justify-between gap-1.5 mb-2.5">
                 <span className="text-xs font-black text-amber-400 tracking-wide">☗</span>
-                {winner?.id === player1.id ? (
-                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
-                    (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
-                      ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
-                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
-                  }`}>
-                    <span>○ 勝者</span>
-                  </span>
-                ) : isFinished ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
-                    ● 敗退
-                  </span>
+                {hasDecidedWinner ? (
+                  isP1Winner ? (
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                      (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
+                        ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
+                        : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
+                    }`}>
+                      <span>○ 勝者</span>
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
+                      ● 敗退
+                    </span>
+                  )
                 ) : null}
               </div>
               <h3 className="flex items-center gap-1.5 min-w-0 mb-1">
                 <span
                   className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
-                    winner?.id === player1.id
+                    isP1Winner
                       ? (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
                         ? 'text-pink-200 font-black drop-shadow-[0_1px_3px_rgba(236,72,153,0.3)] group-hover:text-pink-100'
                         : 'text-sky-200 font-black drop-shadow-[0_1px_3px_rgba(56,189,248,0.3)] group-hover:text-sky-100'
@@ -261,7 +268,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               className={`p-4 rounded-2xl border text-right transition group relative ${
                 isP2RealPlayer ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'
               } ${
-                winner?.id === player2.id
+                isP2Winner
                   ? (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
                     ? 'bg-gradient-to-bl from-pink-950/60 via-pink-900/35 to-zinc-900 border-pink-400/90 ring-1 ring-pink-400/60 shadow-xl shadow-pink-500/15'
                     : 'bg-gradient-to-bl from-sky-950/60 via-sky-900/35 to-zinc-900 border-sky-400/90 ring-1 ring-sky-400/60 shadow-xl shadow-sky-500/15'
@@ -272,18 +279,20 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               title={isP2RealPlayer ? 'クリックして棋士情報を表示' : undefined}
             >
               <div className="flex items-center justify-end gap-1.5 mb-2.5">
-                {winner?.id === player2.id ? (
-                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
-                    (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
-                      ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
-                      : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
-                  }`}>
-                    <span>○ 勝者</span>
-                  </span>
-                ) : isFinished ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
-                    ● 敗退
-                  </span>
+                {hasDecidedWinner ? (
+                  isP2Winner ? (
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                      (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
+                        ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
+                        : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
+                    }`}>
+                      <span>○ 勝者</span>
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
+                      ● 敗退
+                    </span>
+                  )
                 ) : null}
                 <span className="text-xs font-black text-sky-400 tracking-wide">⛉</span>
               </div>
@@ -291,7 +300,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 {isP2RealPlayer && <span className="text-zinc-500 text-xs shrink-0">↗</span>}
                 <span
                   className={`text-base sm:text-lg font-serif-jp transition whitespace-nowrap ${
-                    winner?.id === player2.id
+                    isP2Winner
                       ? (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
                         ? 'text-pink-200 font-black drop-shadow-[0_1px_3px_rgba(236,72,153,0.3)] group-hover:text-pink-100'
                         : 'text-sky-200 font-black drop-shadow-[0_1px_3px_rgba(56,189,248,0.3)] group-hover:text-sky-100'
@@ -303,6 +312,80 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               </h3>
               <p className="text-xs text-amber-300/90 font-semibold">{formatPlayerRankAndDan(player2)}</p>
               <p className="text-[11px] text-zinc-400 mt-0.5">{player2.style || player2.affiliation}</p>
+            </div>
+          </div>
+
+          {/* Manual Result Setting Card */}
+          <div className="bg-zinc-900/95 border border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between text-xs font-bold text-zinc-200">
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <Trophy size={15} />
+                勝敗の手動設定・変更
+              </span>
+              <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
+                match.winnerId ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-zinc-800 text-zinc-400'
+              }`}>
+                {match.winnerId ? '勝者決定済み' : '勝敗未定（結果待ち）'}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400">
+              勝敗が未確定の対局について、後から手動で勝者を指定またはリセットできます。
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => {
+                  const updated: Match = {
+                    ...match,
+                    winnerId: player1.id,
+                    status: 'finished',
+                    highlights: `${player1.name} 対 ${player2.name}（${match.tournament}）。勝者: ${player1.name}。`,
+                  };
+                  onUpdateMatch?.(updated);
+                }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition border ${
+                  match.winnerId === player1.id
+                    ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-md font-black'
+                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-700'
+                }`}
+              >
+                ☗ {p1LastName}の勝ち
+              </button>
+              <button
+                onClick={() => {
+                  const updated: Match = {
+                    ...match,
+                    winnerId: player2.id,
+                    status: 'finished',
+                    highlights: `${player1.name} 対 ${player2.name}（${match.tournament}）。勝者: ${player2.name}。`,
+                  };
+                  onUpdateMatch?.(updated);
+                }}
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition border ${
+                  match.winnerId === player2.id
+                    ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-md font-black'
+                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-700'
+                }`}
+              >
+                ⛉ {p2LastName}の勝ち
+              </button>
+              <button
+                onClick={() => {
+                  const updated: Match = {
+                    ...match,
+                    winnerId: undefined,
+                    status: match.date < todayStr ? 'finished' : match.date === todayStr ? 'live' : 'upcoming',
+                    highlights: `${player1.name} 対 ${player2.name}の公式戦（${match.tournament}）。`,
+                  };
+                  onUpdateMatch?.(updated);
+                }}
+                className={`py-2 px-2 rounded-xl text-xs font-semibold transition border ${
+                  !match.winnerId
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
+                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-400 border-zinc-700'
+                }`}
+              >
+                勝敗未定に戻す
+              </button>
             </div>
           </div>
 

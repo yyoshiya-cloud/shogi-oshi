@@ -245,6 +245,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     let goteLosses = 0;
 
     for (const r of playerOfficialResults) {
+      if (!r.hasResult) continue;
       if (r.isPlayerWinner) {
         wins++;
         if (r.isPlayerSente) senteWins++;
@@ -302,19 +303,37 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       list = list.filter((r) => r.month === resultsMonthFilter);
     }
     if (resultsOutcomeFilter === 'win') {
-      list = list.filter((r) => r.isPlayerWinner);
+      list = list.filter((r) => r.hasResult && r.isPlayerWinner);
     } else if (resultsOutcomeFilter === 'loss') {
-      list = list.filter((r) => !r.isPlayerWinner);
+      list = list.filter((r) => r.hasResult && !r.isPlayerWinner);
     }
     return [...list].sort((a, b) => b.date.localeCompare(a.date));
   }, [playerOfficialResults, resultsMonthFilter, resultsOutcomeFilter]);
 
   const handleSelectResultMatch = (
-    r: ShogiMonthlyResult & { isPlayerWinner: boolean; opponentName: string; isPlayerSente: boolean }
+    r: ShogiMonthlyResult & { isPlayerWinner: boolean; hasResult: boolean; opponentName: string; isPlayerSente: boolean }
   ) => {
     onClose();
     const p1 = allPlayers.find((p) => p.name.replace(/\s+/g, '') === r.sente.replace(/\s+/g, ''));
     const p2 = allPlayers.find((p) => p.name.replace(/\s+/g, '') === r.gote.replace(/\s+/g, ''));
+
+    const sClean = r.sente.replace(/\s+/g, '');
+    const gClean = r.gote.replace(/\s+/g, '');
+    const wClean = (r.winner || '').replace(/\s+/g, '');
+    const isSenteWin =
+      (Boolean(wClean) && wClean === sClean) ||
+      r.senteMark.includes('○') ||
+      r.senteMark.includes('□');
+    const isGoteWin =
+      (Boolean(wClean) && wClean === gClean) ||
+      r.goteMark.includes('○') ||
+      r.goteMark.includes('□');
+    const resolvedWinnerId = isSenteWin
+      ? (p1?.id || r.sente)
+      : isGoteWin
+      ? (p2?.id || r.gote)
+      : undefined;
+    const resolvedWinnerName = isSenteWin ? r.sente : isGoteWin ? r.gote : '';
 
     const m: Match = {
       id: r.id,
@@ -332,10 +351,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       timeControl: '公式持ち時間',
       broadcast: r.note?.includes('YouTube') ? ['将棋連盟YouTube'] : [],
       youtubeUrl: r.note?.includes('YouTube') ? 'https://www.youtube.com/@shogi_channel' : undefined,
-      winnerId: r.winner === r.sente ? (p1?.id || r.sente) : (p2?.id || r.gote),
+      winnerId: resolvedWinnerId,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
-      highlights: `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${r.winner}。`,
+      highlights: resolvedWinnerName
+        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}。`
+        : `${r.sente} 対 ${r.gote}（${r.tournament}）。結果未登録。`,
     };
     onSelectMatch(m);
   };
@@ -1091,13 +1112,19 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
                           {/* Win/Loss Badge */}
                           <div className="shrink-0">
-                            {r.isPlayerWinner ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
-                                <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
-                              </span>
+                            {r.hasResult ? (
+                              r.isPlayerWinner ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
+                                  <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                  <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
+                                </span>
+                              )
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
-                                <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800/80 text-zinc-300 border border-zinc-700">
+                                <span>結果未定</span>
                               </span>
                             )}
                           </div>

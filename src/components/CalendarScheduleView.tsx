@@ -636,13 +636,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
 
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setStripOffsetDays((prev) => prev - 7)}
-                  className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
-                  title="1週間前へ"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
                   onClick={() => {
                     setStripOffsetDays(0);
                     setSelectedDate(todayDate);
@@ -656,13 +649,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 >
                   <Clock size={12} />
                   <span>本日</span>
-                </button>
-                <button
-                  onClick={() => setStripOffsetDays((prev) => prev + 7)}
-                  className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
-                  title="1週間先へ"
-                >
-                  <ChevronRight size={16} />
                 </button>
 
                 <button

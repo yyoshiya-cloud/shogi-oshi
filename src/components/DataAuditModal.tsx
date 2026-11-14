@@ -16,7 +16,9 @@ import {
   Calendar,
   X,
   Sparkles,
-  Zap
+  Zap,
+  FileText,
+  Upload
 } from 'lucide-react';
 
 interface DataAuditModalProps {
@@ -36,10 +38,13 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
     return getStoredFiscalResults() || {};
   });
 
-  const [activeSubTab, setActiveSubTab] = useState<'audit' | 'resync' | 'manual'>('audit');
+  const [activeSubTab, setActiveSubTab] = useState<'audit' | 'resync' | 'manual' | 'csv'>('audit');
   const [selectedMonth, setSelectedMonth] = useState<string>('202607');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // CSV Bulk Import state
+  const [csvText, setCsvText] = useState<string>('');
 
   // Manual Match Registration Form state
   const [manualDate, setManualDate] = useState<string>('2026-07-26');
@@ -276,6 +281,180 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
     }
   };
 
+  // CSV helpers & handlers
+  const parseCsvDate = (raw: string): { date: string; month: string } => {
+    const cleaned = raw.trim().replace(/[年月]/g, '/').replace(/[日]/g, '');
+    const parts = cleaned.split(/[/.-]/);
+    if (parts.length >= 3) {
+      const y = parts[0];
+      const m = parts[1].padStart(2, '0');
+      const d = parts[2].padStart(2, '0');
+      return {
+        date: `${y}-${m}-${d}`,
+        month: `${y}${m}`
+      };
+    }
+    return { date: raw, month: '202504' };
+  };
+
+  const handleLoadSampleCsv = () => {
+    const sample = `2025/4/1,銀河戦,佐藤慎一,藤本渚,藤本渚,Bブロック
+2025/4/3,銀河戦,岡部怜央,野月浩貴,岡部怜央,Cブロック
+2025/4/6,NHK杯戦,吉池隆真,船江恒平,吉池隆真,本戦
+2025/4/8,銀河戦,窪田義行,梶浦宏孝,梶浦宏孝,Dブロック
+2025/4/10,銀河戦,高田明浩,佐藤紳哉,佐藤紳哉,Eブロック
+2025/4/16,伊藤園おーいお茶杯王位戦,渡辺明,丸山忠久,丸山忠久,挑決リーグ / 不戦
+2025/4/29,伊藤園おーいお茶杯王位戦,佐々木大地,渡辺明,佐々木大地,挑決リーグ / 不戦`;
+    setCsvText(sample);
+  };
+
+  const handleFileUploadEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const buffer = event.target?.result as ArrayBuffer;
+      if (buffer) {
+        let text = '';
+        try {
+          const decoder = new TextDecoder('shift-jis');
+          text = decoder.decode(buffer);
+        } catch {
+          const utf8Decoder = new TextDecoder('utf-8');
+          text = utf8Decoder.decode(buffer);
+        }
+        setCsvText(text);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleExecuteCsvImport = () => {
+    if (!csvText.trim()) return;
+    try {
+      setIsProcessing(true);
+      setStatusMessage('CSV対局データを解析・一括登録中...');
+
+      const lines = csvText.split(/\r?\n/);
+      const parsedResults: ShogiMonthlyResult[] = [];
+      const updatedFiscal: Record<string, ShogiMonthlyResult[]> = { ...fiscalData };
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (i === 0 && (line.includes('年月日') || line.includes('棋戦名') || line.includes('先手'))) {
+          continue;
+        }
+
+        const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+        if (cols.length < 5) continue;
+
+        const dateRaw = cols[0];
+        const tournament = cols[1] || '公式戦';
+        const sente = cols[2] || '';
+        const gote = cols[3] || '';
+        const winnerRaw = cols[4] || '';
+        const note = cols[5] || '';
+
+        if (!dateRaw || !sente || !gote) continue;
+
+        const { date, month } = parseCsvDate(dateRaw);
+        const senteClean = sente.trim();
+        const goteClean = gote.trim();
+        const winnerClean = winnerRaw.trim();
+
+        let senteMark = '';
+        let goteMark = '';
+        let winner = '';
+        let loser = '';
+
+        if (winnerClean && !winnerClean.includes('未定') && !winnerClean.includes('結果未定')) {
+          if (winnerClean === senteClean || senteClean.includes(winnerClean) || winnerClean.includes(senteClean)) {
+            senteMark = '○';
+            goteMark = '●';
+            winner = senteClean;
+            loser = goteClean;
+          } else if (winnerClean === goteClean || goteClean.includes(winnerClean) || winnerClean.includes(goteClean)) {
+            senteMark = '●';
+            goteMark = '○';
+            winner = goteClean;
+            loser = senteClean;
+          } else {
+            winner = winnerClean;
+          }
+        }
+
+        const senteP = players.find(p => p.name.replace(/\s+/g, '') === senteClean.replace(/\s+/g, ''));
+        const goteP = players.find(p => p.name.replace(/\s+/g, '') === goteClean.replace(/\s+/g, ''));
+
+        const isWomen = senteClean.includes('女流') || goteClean.includes('女流') || tournament.includes('女流');
+        const category = isWomen ? '女流棋戦' : '一般棋戦';
+
+        const matchResult: ShogiMonthlyResult = {
+          id: `res-csv-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+          date,
+          month,
+          sente: senteClean,
+          gote: goteClean,
+          senteRaw: senteClean,
+          goteRaw: goteClean,
+          sentePlayerId: senteP?.id || `p-${senteClean}`,
+          gotePlayerId: goteP?.id || `p-${goteClean}`,
+          senteMark,
+          goteMark,
+          winner,
+          loser,
+          winnerId: winner ? (winner === senteClean ? (senteP?.id || senteClean) : (goteP?.id || goteClean)) : undefined,
+          loserId: loser ? (loser === senteClean ? (senteP?.id || senteClean) : (goteP?.id || goteClean)) : undefined,
+          resultType: note.includes('不戦') ? 'fusen' : 'normal',
+          tournament,
+          note,
+          venue: '東京・将棋会館',
+          isWomen,
+          category,
+          links: [{ title: '日本将棋連盟公式', url: `https://www.shogi.or.jp/game/?month=${month}` }],
+          sourceUrl: `https://www.shogi.or.jp/game/?month=${month}`
+        };
+
+        parsedResults.push(matchResult);
+
+        if (!updatedFiscal[month]) {
+          updatedFiscal[month] = [];
+        }
+
+        const pKey = [senteClean.replace(/\s+/g, ''), goteClean.replace(/\s+/g, '')].sort().join('_');
+        const exists = updatedFiscal[month].some(r => {
+          const rPKey = [r.sente.replace(/\s+/g, ''), r.gote.replace(/\s+/g, '')].sort().join('_');
+          return r.date === date && rPKey === pKey;
+        });
+
+        if (!exists) {
+          updatedFiscal[month].push(matchResult);
+        }
+      }
+
+      for (const m of Object.keys(updatedFiscal)) {
+        updatedFiscal[m].sort((a, b) => b.date.localeCompare(a.date));
+      }
+
+      setFiscalData(updatedFiscal);
+      saveStoredFiscalResults(updatedFiscal);
+      updateMatchStatsData(updatedFiscal);
+      clearPlayerMatchCache();
+
+      saveFiscalResultsToCloud(updatedFiscal);
+      onUpdateResults?.(updatedFiscal);
+
+      setStatusMessage(`CSVデータから合計 ${parsedResults.length} 件の対局結果を解析・データベースに一括登録しました！`);
+      setActiveSubTab('audit');
+    } catch (err: any) {
+      setStatusMessage(`CSVインポートエラー: ${err?.message || err}`);
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setStatusMessage(null), 5000);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
@@ -346,6 +525,17 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
           >
             <PlusCircle size={14} />
             <span>過去対局の手動補填登録</span>
+          </button>
+          <button
+            onClick={() => setActiveSubTab('csv')}
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+              activeSubTab === 'csv'
+                ? 'border-amber-400 text-amber-300'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <FileText size={14} />
+            <span>CSV一括インポート</span>
           </button>
         </div>
 
@@ -656,6 +846,61 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
                 </button>
               </div>
             </form>
+          )}
+
+          {/* CSV Import Subtab */}
+          {activeSubTab === 'csv' && (
+            <div className="bg-zinc-900/90 rounded-2xl p-4 border border-zinc-800 space-y-3">
+              <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                <FileText size={16} />
+                <span>対局結果 CSV一括インポート機能</span>
+              </h3>
+              <p className="text-[11px] text-zinc-400">
+                CSVデータの形式: <code className="text-amber-400">年月日, 棋戦名, 先手棋士名, 後手棋士名, 勝者棋士名, 備考</code> の順で貼り付けるか、CSVファイルを選択してください。
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <label className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold cursor-pointer border border-zinc-700 transition flex items-center gap-1.5">
+                  <Upload size={13} className="text-sky-400" />
+                  <span>CSVファイルを選択</span>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleFileUploadEvent}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handleLoadSampleCsv}
+                  className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 text-xs font-semibold border border-zinc-700 transition flex items-center gap-1.5"
+                >
+                  <Sparkles size={13} />
+                  <span>未登録サンプルCSVをロード</span>
+                </button>
+              </div>
+
+              <div>
+                <textarea
+                  value={csvText}
+                  onChange={(e) => setCsvText(e.target.value)}
+                  rows={8}
+                  placeholder={`2025/4/1,銀河戦,佐藤慎一,藤本渚,藤本渚,Bブロック\n2025/4/3,銀河戦,岡部怜央,野月浩貴,岡部怜央,Cブロック\n...`}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-xs text-zinc-200 font-mono focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleExecuteCsvImport}
+                  disabled={isProcessing || !csvText.trim()}
+                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs rounded-xl shadow transition cursor-pointer disabled:opacity-50"
+                >
+                  CSVデータを解析してデータベースへ一括登録
+                </button>
+              </div>
+            </div>
           )}
         </div>
 

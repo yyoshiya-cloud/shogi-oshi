@@ -1,5 +1,65 @@
 [
   {
+    "id": "res-ginga-2026-11-03-sugai-watanabe",
+    "date": "2026-11-03",
+    "month": "202611",
+    "sente": "菅井 竜也",
+    "gote": "渡辺 明",
+    "senteRaw": "菅井竜也 八段",
+    "goteRaw": "渡辺明 九段",
+    "sentePlayerId": "sugai-tatsuya",
+    "gotePlayerId": "watanabe-akira",
+    "senteMark": "",
+    "goteMark": "",
+    "winner": "",
+    "loser": "",
+    "winnerId": "",
+    "loserId": "",
+    "resultType": "normal",
+    "tournament": "銀河戦",
+    "note": "本戦トーナメント",
+    "venue": "東京・将棋会館",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "銀河戦",
+        "url": "https://www.shogi.or.jp/match/ginga/"
+      }
+    ],
+    "sourceUrl": "https://www.shogi.or.jp/game/?month=202611"
+  },
+  {
+    "id": "res-nhk-2026-11-08-toyoshima-ueno",
+    "date": "2026-11-08",
+    "month": "202611",
+    "sente": "豊島 将之",
+    "gote": "上野 裕寿",
+    "senteRaw": "豊島将之 九段",
+    "goteRaw": "上野裕寿 四段",
+    "sentePlayerId": "toyoshima-masayuki",
+    "gotePlayerId": "pro-hirohisa_ueno",
+    "senteMark": "",
+    "goteMark": "",
+    "winner": "",
+    "loser": "",
+    "winnerId": "",
+    "loserId": "",
+    "resultType": "normal",
+    "tournament": "NHK杯",
+    "note": "本戦 2回戦",
+    "venue": "東京・NHK放送センター",
+    "isWomen": false,
+    "category": "一般棋戦",
+    "links": [
+      {
+        "title": "NHK杯テレビ将棋トーナメント",
+        "url": "https://www.shogi.or.jp/match/nhk/"
+      }
+    ],
+    "sourceUrl": "https://www.shogi.or.jp/game/?month=202611"
+  },
+  {
     "id": "res-nhk75-2025-03-23-nishiyama-fukuma",
     "date": "2025-03-23",
     "month": "202503",

@@ -2,6 +2,7 @@ import { Player, ShogiMonthlyResult } from '../types/shogi';
 
 export interface EnrichedPlayerMatch extends ShogiMonthlyResult {
   isPlayerWinner: boolean;
+  hasResult: boolean;
   opponentName: string;
   isPlayerSente: boolean;
   kifuUrl: string;
@@ -56,15 +57,22 @@ export function enrichPlayerMatches(
     const isGote = gClean === targetClean || r.gotePlayerId === player.id;
 
     if (isSente || isGote) {
+      const winnerClean = (r.winner || '').replace(/[\s\u3000※＊\*]/g, '');
       const isPlayerWinner =
-        r.winner.replace(/[\s\u3000※＊\*]/g, '') === targetClean ||
+        (Boolean(winnerClean) && winnerClean === targetClean) ||
         (isSente && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
         (isGote && (r.goteMark.includes('○') || r.goteMark.includes('□')));
+      const isPlayerLoser =
+        (Boolean(winnerClean) && winnerClean !== targetClean) ||
+        (isSente && (r.senteMark.includes('●') || r.senteMark.includes('■'))) ||
+        (isGote && (r.goteMark.includes('●') || r.goteMark.includes('■')));
+      const hasResult = isPlayerWinner || isPlayerLoser;
       const opponentName = isSente ? r.gote : r.sente;
 
       realMatches.push({
         ...r,
         isPlayerWinner,
+        hasResult,
         opponentName,
         isPlayerSente: isSente,
         kifuUrl: getShogiDbSearchUrl(player.name, opponentName),

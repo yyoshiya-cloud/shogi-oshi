@@ -553,6 +553,63 @@ export default function App() {
     });
   };
 
+  // Handler for updating a match (manual win/loss setting)
+  const handleUpdateMatch = (updatedMatch: Match) => {
+    setMatchesList((prev) => {
+      const updated = prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
+      saveStoredMatches(updated);
+      return updated;
+    });
+
+    // Also update corresponding ShogiMonthlyResult in fiscalResults if present
+    const currentFiscal = getStoredFiscalResults();
+    if (currentFiscal) {
+      let modified = false;
+      const nextFiscal: Record<string, ShogiMonthlyResult[]> = {};
+      for (const monthKey of Object.keys(currentFiscal)) {
+        const list = currentFiscal[monthKey] || [];
+        nextFiscal[monthKey] = list.map((r) => {
+          if (r.id !== updatedMatch.id) return r;
+          modified = true;
+          if (!updatedMatch.winnerId) {
+            return {
+              ...r,
+              senteMark: '',
+              goteMark: '',
+              winner: '',
+              loser: '',
+              winnerId: '',
+              loserId: '',
+            };
+          }
+          const isSenteWin =
+            updatedMatch.winnerId === updatedMatch.player1Id ||
+            updatedMatch.winnerId === updatedMatch.sentePlayerId ||
+            updatedMatch.winnerId === r.sentePlayerId;
+          return {
+            ...r,
+            senteMark: isSenteWin ? '○' : '●',
+            goteMark: isSenteWin ? '●' : '○',
+            winner: isSenteWin ? r.sente : r.gote,
+            loser: isSenteWin ? r.gote : r.sente,
+            winnerId: isSenteWin ? (r.sentePlayerId || updatedMatch.player1Id) : (r.gotePlayerId || updatedMatch.player2Id),
+            loserId: isSenteWin ? (r.gotePlayerId || updatedMatch.player2Id) : (r.sentePlayerId || updatedMatch.player1Id),
+          };
+        });
+      }
+      if (modified) {
+        saveStoredFiscalResults(nextFiscal);
+        updateMatchStatsData(nextFiscal);
+        clearPlayerMatchCache();
+        window.dispatchEvent(new Event('shogi_fiscal_results_updated'));
+      }
+    }
+
+    setSelectedMatch(updatedMatch);
+    setSyncToast(`【勝敗手動設定】${updatedMatch.tournament} の対局結果を更新しました。`);
+    setTimeout(() => setSyncToast(null), 3500);
+  };
+
   // Handler when monthly results are updated/refreshed
   const handleUpdateFiscalResults = (
     updatedResults: Record<string, ShogiMonthlyResult[]>,
@@ -927,6 +984,7 @@ export default function App() {
             setSelectedMatch(null);
             setSelectedPlayer(p);
           }}
+          onUpdateMatch={handleUpdateMatch}
         />
       )}
 
