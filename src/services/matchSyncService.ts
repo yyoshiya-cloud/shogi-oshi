@@ -9,6 +9,7 @@ import {
   enrichMonthlyResultsWithSupplements,
   enrichAllResultsWithSupplements,
 } from './matchSupplementService';
+import { mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 
 
 
@@ -637,13 +638,13 @@ async function getAllMultiYearResults(years = [2025, 2026], force = false): Prom
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
   const res: Record<string, ShogiMonthlyResult[]> = { ...bundled };
 
-  // Dynamically refresh 2026 fiscal year months
+  // Dynamically refresh 2026 fiscal year months while preserving protected manual/CSV entries
   if (years.includes(2026)) {
     const months2026 = getFiscalYearMonths(2026);
     for (const m of months2026) {
       const data = await scrapeMonthlyResults(m, force);
       if (data.results && data.results.length > 0) {
-        res[m] = data.results;
+        res[m] = mergeProtectedWithOfficialResults(res[m] || [], data.results);
       }
     }
   }
@@ -671,7 +672,7 @@ export function getCurrentAndPrevMonthStrings(): string[] {
 
 /**
  * Gets results for multi-year data, but only scrapes active/current months incrementally
- * to minimize server scraping load and Firestore write quotas.
+ * to minimize server scraping load, always preserving manual-input and CSV-imported results.
  */
 export async function scrapeIncrementalResults(
   existingData: Record<string, ShogiMonthlyResult[]> = {},
@@ -686,13 +687,13 @@ export async function scrapeIncrementalResults(
   for (const m of targetMonths) {
     const scraped = await scrapeMonthlyResults(m, force);
     if (scraped.results && scraped.results.length > 0) {
-      // Check if data actually changed compared to existing
       const existingList = res[m] || [];
+      const mergedMonth = mergeProtectedWithOfficialResults(existingList, scraped.results);
       const isDifferent =
-        existingList.length !== scraped.results.length ||
-        JSON.stringify(existingList.map((r) => r.id)) !== JSON.stringify(scraped.results.map((r) => r.id));
+        existingList.length !== mergedMonth.length ||
+        JSON.stringify(existingList.map((r) => r.id)) !== JSON.stringify(mergedMonth.map((r) => r.id));
 
-      res[m] = scraped.results;
+      res[m] = mergedMonth;
       if (isDifferent || force) {
         updatedMonths.push(m);
       }

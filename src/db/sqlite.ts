@@ -14,6 +14,7 @@ import type {
 import { PLAYERS_DATA, MATCHES_DATA } from '../data/shogiDatabase';
 import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
+import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
@@ -557,6 +558,13 @@ export function getAllMatchArchives(fiscalYear?: number, month?: string): Record
   return out;
 }
 
+const DIRECT_ADMIN_ARCHIVE_SOURCES = new Set([
+  'admin-manual',
+  'admin-delete',
+  'admin-bulk',
+  'backup-restore',
+]);
+
 export function upsertMonthArchive(
   month: string,
   results: ShogiMonthlyResult[],
@@ -564,7 +572,19 @@ export function upsertMonthArchive(
 ): ShogiMonthlyResult[] {
   const db = getDb();
   const normalizedMonth = month.replace(/[^0-9]/g, '');
-  const enriched = enrichMonthlyResultsWithSupplements(normalizedMonth, results);
+
+  let mergedInput = results;
+  if (!DIRECT_ADMIN_ARCHIVE_SOURCES.has(source)) {
+    const existingRow = db
+      .prepare('SELECT results_json FROM match_archives WHERE month = ?')
+      .get(normalizedMonth) as { results_json: string } | undefined;
+    const existingList = existingRow
+      ? parseJsonSafe<ShogiMonthlyResult[]>(existingRow.results_json, [])
+      : [];
+    mergedInput = mergeProtectedWithOfficialResults(existingList, results);
+  }
+
+  const enriched = enrichMonthlyResultsWithSupplements(normalizedMonth, mergedInput);
   const fiscalYear = getFiscalYearFromMonth(normalizedMonth);
   const now = new Date().toISOString();
 
@@ -589,18 +609,30 @@ export function upsertMatchArchivesBulk(
 ): number {
   const db = getDb();
   const now = new Date().toISOString();
+  const selectExistingStmt = db.prepare('SELECT results_json FROM match_archives WHERE month = ?');
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO match_archives (month, fiscal_year, count, results_json, source, updated_at)
     VALUES (@month, @fiscal_year, @count, @results_json, @source, @updated_at)
   `);
 
+  const preserveProtected = !DIRECT_ADMIN_ARCHIVE_SOURCES.has(source);
   let totalMatches = 0;
   const tx = db.transaction(() => {
     for (const [m, list] of Object.entries(archives)) {
       if (!Array.isArray(list)) continue;
       const normalizedMonth = m.replace(/[^0-9]/g, '');
       if (normalizedMonth.length !== 6) continue;
-      const enriched = enrichMonthlyResultsWithSupplements(normalizedMonth, list);
+
+      let mergedInput = list;
+      if (preserveProtected) {
+        const existingRow = selectExistingStmt.get(normalizedMonth) as { results_json: string } | undefined;
+        const existingList = existingRow
+          ? parseJsonSafe<ShogiMonthlyResult[]>(existingRow.results_json, [])
+          : [];
+        mergedInput = mergeProtectedWithOfficialResults(existingList, list);
+      }
+
+      const enriched = enrichMonthlyResultsWithSupplements(normalizedMonth, mergedInput);
       totalMatches += enriched.length;
       stmt.run({
         month: normalizedMonth,
@@ -872,6 +904,10 @@ function normalizeResultRow(raw: any): ShogiMonthlyResult | null {
     category: (raw.category || '一般棋戦') as ShogiMonthlyResult['category'],
     links: Array.isArray(linksRaw) ? linksRaw : [],
     sourceUrl: String(raw.sourceUrl || raw.source_url || `https://www.shogi.or.jp/game/?month=${monthRaw}`),
+    ...(raw.entrySource ? { entrySource: raw.entrySource } : {}),
+    ...(isProtectedMatchResult({ id, entrySource: raw.entrySource, isProtected: raw.isProtected })
+      ? { isProtected: true }
+      : {}),
   };
 }
 

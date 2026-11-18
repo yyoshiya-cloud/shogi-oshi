@@ -161,6 +161,8 @@ export interface ShogiMonthlyResult {
   category: 'タイトル戦' | '順位戦' | '一般棋戦' | '女流タイトル戦' | '女流棋戦';
   links: { title: string; url: string }[];
   sourceUrl: string;
+  entrySource?: 'manual' | 'csv' | 'official' | 'supplement';
+  isProtected?: boolean;
 }
 
 export interface PlayerNameHistoryItem {

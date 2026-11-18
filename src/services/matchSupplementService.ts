@@ -1,4 +1,5 @@
 import { ShogiMonthlyResult } from '../types/shogi';
+import { isProtectedMatchResult } from '../utils/resultProtection';
 import supplementMatchesJson from '../data/specialMatchesSupplement.json';
 
 const supplementMatches = supplementMatchesJson as ShogiMonthlyResult[];
@@ -46,8 +47,9 @@ export function enrichMonthlyResultsWithSupplements(
   const normalizedMonth = month.replace(/[^0-9]/g, '');
   const supplements = getSupplementMatchesForMonth(normalizedMonth);
 
-  // Normalize existing tournament names
+  // Normalize existing tournament names (leaving protected manual/CSV results completely untouched)
   const cleanOfficial = (officialResults || []).map((r) => {
+    if (isProtectedMatchResult(r)) return r;
     if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
       return { ...r, tournament: cleanTournamentName(r.tournament) };
     }

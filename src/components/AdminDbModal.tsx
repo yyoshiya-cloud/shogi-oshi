@@ -25,7 +25,12 @@ import {
   HardDrive,
   UserCheck,
   Pencil,
+  PlusCircle,
+  FileSpreadsheet,
+  Eraser,
 } from 'lucide-react';
+import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
   Player,
   Match,
@@ -84,7 +89,9 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'players' | 'archives' | 'matches' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'players' | 'archives' | 'manual_input' | 'csv_import' | 'matches' | 'logs'
+  >('overview');
   const [overview, setOverview] = useState<DbOverview | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -117,6 +124,22 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [newResGote, setNewResGote] = useState('');
   const [newResWinner, setNewResWinner] = useState<'sente' | 'gote' | 'undecided'>('sente');
   const [newResNote, setNewResNote] = useState('');
+
+  // 対局手動入力機能 state (all fields initialized empty / un-entered)
+  const [manualDate, setManualDate] = useState('');
+  const [manualTournament, setManualTournament] = useState('');
+  const [manualSente, setManualSente] = useState('');
+  const [manualGote, setManualGote] = useState('');
+  const [manualWinner, setManualWinner] = useState<'' | 'sente' | 'gote' | 'undecided'>('');
+  const [manualNote, setManualNote] = useState('');
+
+  // CSVインポート機能 state
+  const [csvInputText, setCsvInputText] = useState('');
+  const [csvImportSummary, setCsvImportSummary] = useState<{
+    imported: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
 
   // Matches tab state
   const [matchQuery, setMatchQuery] = useState('');
@@ -749,6 +772,338 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
+  const findPlayerByName = (rawName: string): Player | undefined => {
+    const cleaned = rawName.trim().replace(/\s+/g, '');
+    if (!cleaned) return undefined;
+    const norm = normalizeShogiPlayerNameForMatch(cleaned);
+    return (
+      players.find((p) => p.name.replace(/\s+/g, '') === cleaned) ||
+      players.find((p) => p.formerName && p.formerName.replace(/\s+/g, '') === cleaned) ||
+      players.find((p) => normalizeShogiPlayerNameForMatch(p.name) === norm) ||
+      players.find((p) => p.formerName && normalizeShogiPlayerNameForMatch(p.formerName) === norm)
+    );
+  };
+
+  const classifyMatchResult = (
+    tournament: string,
+    senteP?: Player,
+    goteP?: Player
+  ): { isWomen: boolean; category: ShogiMonthlyResult['category'] } => {
+    let category: ShogiMonthlyResult['category'] = '一般棋戦';
+    if (
+      tournament.includes('女流王座') ||
+      tournament.includes('白玲') ||
+      tournament.includes('女流名人') ||
+      tournament.includes('女流王将') ||
+      tournament.includes('女流王位') ||
+      tournament.includes('清麗') ||
+      tournament.includes('女王') ||
+      tournament.includes('倉敷藤花')
+    ) {
+      category = '女流タイトル戦';
+    } else if (tournament.includes('女流') || senteP?.type === 'women' || goteP?.type === 'women') {
+      category = '女流棋戦';
+    } else if (
+      tournament.includes('竜王戦') ||
+      tournament.includes('名人戦') ||
+      tournament.includes('王位戦') ||
+      tournament.includes('叡王戦') ||
+      tournament.includes('王座戦') ||
+      tournament.includes('棋王戦') ||
+      tournament.includes('王将戦') ||
+      tournament.includes('棋聖戦')
+    ) {
+      category = 'タイトル戦';
+    } else if (tournament.includes('順位戦')) {
+      category = '順位戦';
+    }
+    const isWomen =
+      category === '女流タイトル戦' ||
+      category === '女流棋戦' ||
+      senteP?.type === 'women' ||
+      goteP?.type === 'women' ||
+      tournament.includes('女流');
+    return { isWomen, category };
+  };
+
+  const handleClearManualInput = () => {
+    setManualDate('');
+    setManualTournament('');
+    setManualSente('');
+    setManualGote('');
+    setManualWinner('');
+    setManualNote('');
+  };
+
+  const handleSubmitManualInput = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualDate || !manualTournament.trim() || !manualSente.trim() || !manualGote.trim() || !manualWinner) {
+      showStatus('error', '対局日・棋戦名・先手・後手・勝者をすべて入力してください');
+      return;
+    }
+    try {
+      setIsBusy(true);
+      const month = manualDate.replace(/[^0-9]/g, '').slice(0, 6);
+      const senteP = findPlayerByName(manualSente);
+      const goteP = findPlayerByName(manualGote);
+      const senteName = senteP?.name || manualSente.trim();
+      const goteName = goteP?.name || manualGote.trim();
+      const tournamentName = manualTournament.trim();
+      const { isWomen, category } = classifyMatchResult(tournamentName, senteP, goteP);
+
+      const winner =
+        manualWinner === 'sente' ? senteName : manualWinner === 'gote' ? goteName : '';
+      const loser =
+        manualWinner === 'sente' ? goteName : manualWinner === 'gote' ? senteName : '';
+
+      const newResult: ShogiMonthlyResult = {
+        id: `db-manual-${Date.now()}`,
+        date: manualDate,
+        month,
+        sente: senteName,
+        gote: goteName,
+        senteRaw: senteName,
+        goteRaw: goteName,
+        sentePlayerId: senteP?.id,
+        gotePlayerId: goteP?.id,
+        senteMark: manualWinner === 'sente' ? '○' : manualWinner === 'gote' ? '●' : '',
+        goteMark: manualWinner === 'gote' ? '○' : manualWinner === 'sente' ? '●' : '',
+        winner,
+        loser,
+        winnerId: manualWinner === 'sente' ? senteP?.id : manualWinner === 'gote' ? goteP?.id : undefined,
+        loserId: manualWinner === 'sente' ? goteP?.id : manualWinner === 'gote' ? senteP?.id : undefined,
+        resultType: 'normal',
+        tournament: tournamentName,
+        note: manualNote.trim(),
+        isWomen,
+        category,
+        links: [{ title: '日本将棋連盟公式', url: `https://www.shogi.or.jp/game/?month=${month}` }],
+        sourceUrl: `https://www.shogi.or.jp/game/?month=${month}`,
+        entrySource: 'manual',
+        isProtected: true,
+      };
+
+      const res = await adminFetch('/api/admin/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newResult),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || '登録に失敗しました');
+
+      handleClearManualInput();
+      if (activeTab === 'archives' || selectedArchiveMonth === month) {
+        await loadArchiveMonth(month);
+      }
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus('success', `${manualDate}「${senteName} vs ${goteName}」をSQLite DBへ手動登録しました`);
+    } catch (err: any) {
+      showStatus('error', err?.message || '対局手動登録エラー');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleSelectCsvFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let decoded = '';
+      try {
+        decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      } catch {
+        decoded = new TextDecoder('shift-jis').decode(bytes);
+      }
+      decoded = decoded.replace(/^\uFEFF/, '');
+      setCsvInputText(decoded);
+      setCsvImportSummary(null);
+      showStatus('success', `CSVファイル「${file.name}」を読み込みました`);
+    } catch (err: any) {
+      showStatus('error', `CSV読み込みエラー: ${err?.message || err}`);
+    }
+  };
+
+  const parseCsvRowFields = (line: string): string[] => {
+    const fields: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  };
+
+  const normalizeCsvDate = (raw: string): string | null => {
+    const s = raw.trim();
+    const m = s.match(/^(\d{4})[\/\-年\.](\d{1,2})[\/\-月\.](\d{1,2})日?$/);
+    if (!m) return null;
+    const yyyy = m[1];
+    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
+    const dd = String(parseInt(m[3], 10)).padStart(2, '0');
+    const monthNum = parseInt(mm, 10);
+    const dayNum = parseInt(dd, 10);
+    if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) return null;
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const handleImportCsv = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvInputText.trim()) return;
+    try {
+      setIsBusy(true);
+      const lines = csvInputText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      const parsedResults: ShogiMonthlyResult[] = [];
+      const errors: string[] = [];
+      let skipped = 0;
+      const seenCsvKeys = new Map<string, number>();
+
+      lines.forEach((line, idx) => {
+        const cols = parseCsvRowFields(line);
+        // Skip header row
+        if (
+          idx === 0 &&
+          (cols[0]?.includes('年月日') || cols[0]?.includes('対局日') || cols[0]?.toLowerCase() === 'date')
+        ) {
+          return;
+        }
+        if (cols.length < 5) {
+          skipped++;
+          errors.push(`${idx + 1}行目: 列数が不足しています（最低5列必要）`);
+          return;
+        }
+
+        const [dateRaw, tournamentRaw, senteRaw, goteRaw, winnerRaw, ...noteParts] = cols;
+        const isoDate = normalizeCsvDate(dateRaw);
+        if (!isoDate) {
+          skipped++;
+          errors.push(`${idx + 1}行目: 日付形式が不正です (${dateRaw})`);
+          return;
+        }
+
+        const tournament = (tournamentRaw || '公式戦').trim();
+        const senteP = findPlayerByName(senteRaw);
+        const goteP = findPlayerByName(goteRaw);
+        const senteName = senteP?.name || senteRaw.trim();
+        const goteName = goteP?.name || goteRaw.trim();
+
+        if (!senteName || !goteName) {
+          skipped++;
+          errors.push(`${idx + 1}行目: 先手または後手の棋士名が空です`);
+          return;
+        }
+
+        const normSente = normalizeShogiPlayerNameForMatch(senteName);
+        const normGote = normalizeShogiPlayerNameForMatch(goteName);
+        const normWinner = normalizeShogiPlayerNameForMatch(winnerRaw || '');
+
+        let side: 'sente' | 'gote' | 'undecided' = 'undecided';
+        if (!winnerRaw || winnerRaw === '未定' || winnerRaw === '-') {
+          side = 'undecided';
+        } else if (
+          normWinner === normSente ||
+          (senteRaw.trim() && normWinner === normalizeShogiPlayerNameForMatch(senteRaw))
+        ) {
+          side = 'sente';
+        } else if (
+          normWinner === normGote ||
+          (goteRaw.trim() && normWinner === normalizeShogiPlayerNameForMatch(goteRaw))
+        ) {
+          side = 'gote';
+        } else {
+          skipped++;
+          errors.push(`${idx + 1}行目: 勝者名「${winnerRaw}」が先手(${senteName})・後手(${goteName})と一致しません`);
+          return;
+        }
+
+        const month = isoDate.replace(/[^0-9]/g, '').slice(0, 6);
+        const note = noteParts.join(',').trim();
+        const { isWomen, category } = classifyMatchResult(tournament, senteP, goteP);
+        const winner = side === 'sente' ? senteName : side === 'gote' ? goteName : '';
+        const loser = side === 'sente' ? goteName : side === 'gote' ? senteName : '';
+
+        const baseKey = `csv-${isoDate}-${normSente}-${normGote}`;
+        const occ = (seenCsvKeys.get(baseKey) || 0) + 1;
+        seenCsvKeys.set(baseKey, occ);
+        const stableCsvId = occ === 1 ? baseKey : `${baseKey}-${occ}`;
+
+        parsedResults.push({
+          id: stableCsvId,
+          date: isoDate,
+          month,
+          sente: senteName,
+          gote: goteName,
+          senteRaw: senteRaw.trim(),
+          goteRaw: goteRaw.trim(),
+          sentePlayerId: senteP?.id,
+          gotePlayerId: goteP?.id,
+          senteMark: side === 'sente' ? '○' : side === 'gote' ? '●' : '',
+          goteMark: side === 'gote' ? '○' : side === 'sente' ? '●' : '',
+          winner,
+          loser,
+          winnerId: side === 'sente' ? senteP?.id : side === 'gote' ? goteP?.id : undefined,
+          loserId: side === 'sente' ? goteP?.id : side === 'gote' ? senteP?.id : undefined,
+          resultType: 'normal',
+          tournament,
+          note,
+          isWomen,
+          category,
+          links: [{ title: '日本将棋連盟公式', url: `https://www.shogi.or.jp/game/?month=${month}` }],
+          sourceUrl: `https://www.shogi.or.jp/game/?month=${month}`,
+          entrySource: 'csv',
+          isProtected: true,
+        });
+      });
+
+      if (parsedResults.length === 0) {
+        setCsvImportSummary({ imported: 0, skipped, errors });
+        showStatus('error', '有効なCSV対局データが見つかりませんでした');
+        return;
+      }
+
+      const res = await adminFetch('/api/admin/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results: parsedResults }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'CSV一括登録に失敗しました');
+
+      setCsvImportSummary({ imported: parsedResults.length, skipped, errors });
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus(
+        'success',
+        `CSVから ${parsedResults.length}件 の対局結果をSQLite DBへ一括登録しました${skipped > 0 ? `（スキップ: ${skipped}件）` : ''}`
+      );
+    } catch (err: any) {
+      showStatus('error', err?.message || 'CSV一括登録エラー');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase().replace(/\s+/g, '');
     if (!q) return players.slice(0, 60);
@@ -927,6 +1282,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                 { id: 'overview', label: 'DB概要・復元', icon: HardDrive },
                 { id: 'players', label: '棋士・改姓履歴', icon: Users },
                 { id: 'archives', label: '2021-2026 対局結果', icon: Trophy },
+                { id: 'manual_input', label: '対局手動入力', icon: PlusCircle },
+                { id: 'csv_import', label: 'CSVインポート', icon: FileSpreadsheet },
                 { id: 'matches', label: '公式対局予定', icon: Calendar },
                 { id: 'logs', label: '同期ログ', icon: History },
               ].map((t) => {
@@ -952,6 +1309,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
             {/* Tab Body */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+              <datalist id="admin-players-datalist">
+                {players.map((p) => (
+                  <option key={p.id} value={p.name} />
+                ))}
+              </datalist>
+
               {/* OVERVIEW & BACKUP/RESTORE */}
               {activeTab === 'overview' && (
                 <div className="space-y-5">
@@ -1519,12 +1882,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               {/* FY2021-2026 MATCH ARCHIVES */}
               {activeTab === 'archives' && (
                 <div className="space-y-4">
-                  <datalist id="admin-players-datalist">
-                    {players.map((p) => (
-                      <option key={p.id} value={p.name} />
-                    ))}
-                  </datalist>
-
                   <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {[2026, 2025, 2024, 2023, 2022, 2021].map((fy) => (
@@ -1666,6 +2023,14 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           >
                             <div className="min-w-0 truncate">
                               <span className="font-mono text-zinc-400 mr-2">{r.date}</span>
+                              {isProtectedMatchResult(r) && (
+                                <span
+                                  className="mr-2 px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold"
+                                  title="公式データ更新時も削除・上書きされません"
+                                >
+                                  {r.entrySource === 'csv' || String(r.id).startsWith('csv-') ? 'CSV保護' : '手動保護'}
+                                </span>
+                              )}
                               <span className="text-amber-300 font-bold mr-2">{r.tournament}</span>
                               <span className="text-zinc-100">
                                 {r.senteMark} {r.sente} vs {r.gote} {r.goteMark}
@@ -1720,14 +2085,244 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                 </div>
               )}
 
+              {/* MANUAL MATCH INPUT TAB (対局手動入力機能) */}
+              {activeTab === 'manual_input' && (
+                <form
+                  onSubmit={handleSubmitManualInput}
+                  className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-5"
+                >
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                        <PlusCircle size={16} />
+                        <span>対局手動入力機能</span>
+                      </h4>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        未登録の過去対局・公式対局結果を直接入力して SQLite データベースへ登録します
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearManualInput}
+                      disabled={isBusy}
+                      className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-rose-950/70 hover:text-rose-300 border border-zinc-700 hover:border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    >
+                      <Eraser size={14} />
+                      <span>全項目削除</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-1.5">対局日</label>
+                      <input
+                        type="date"
+                        value={manualDate}
+                        onChange={(e) => setManualDate(e.target.value)}
+                        required
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-1.5">棋戦名</label>
+                      <input
+                        type="text"
+                        value={manualTournament}
+                        onChange={(e) => setManualTournament(e.target.value)}
+                        placeholder="例: NHK杯 / 銀河戦 / 順位戦"
+                        required
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-1.5">先手 棋士名</label>
+                      <input
+                        type="text"
+                        list="admin-players-datalist"
+                        value={manualSente}
+                        onChange={(e) => setManualSente(e.target.value)}
+                        placeholder="先手棋士名を入力"
+                        required
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-1.5">後手 棋士名</label>
+                      <input
+                        type="text"
+                        list="admin-players-datalist"
+                        value={manualGote}
+                        onChange={(e) => setManualGote(e.target.value)}
+                        placeholder="後手棋士名を入力"
+                        required
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-2">勝者</label>
+                      <div className="flex flex-wrap items-center gap-4 py-1.5">
+                        <label className="flex items-center gap-2 cursor-pointer text-zinc-200">
+                          <input
+                            type="radio"
+                            name="manualWinner"
+                            value="sente"
+                            checked={manualWinner === 'sente'}
+                            onChange={() => setManualWinner('sente')}
+                            className="accent-amber-500"
+                          />
+                          <span>先手 ({manualSente.trim() || '先手'}) の勝利</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-zinc-200">
+                          <input
+                            type="radio"
+                            name="manualWinner"
+                            value="gote"
+                            checked={manualWinner === 'gote'}
+                            onChange={() => setManualWinner('gote')}
+                            className="accent-amber-500"
+                          />
+                          <span>後手 ({manualGote.trim() || '後手'}) の勝利</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-zinc-400">
+                          <input
+                            type="radio"
+                            name="manualWinner"
+                            value="undecided"
+                            checked={manualWinner === 'undecided'}
+                            onChange={() => setManualWinner('undecided')}
+                            className="accent-amber-500"
+                          />
+                          <span>勝敗未定</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-zinc-300 font-semibold block mb-1.5">対局詳細・備考</label>
+                      <input
+                        type="text"
+                        value={manualNote}
+                        onChange={(e) => setManualNote(e.target.value)}
+                        placeholder="例: 本戦 1回戦 第17局 101手"
+                        className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={handleClearManualInput}
+                      disabled={isBusy}
+                      className="sm:w-44 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    >
+                      <Eraser size={14} />
+                      <span>全項目削除</span>
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={
+                        isBusy ||
+                        !manualDate ||
+                        !manualTournament.trim() ||
+                        !manualSente.trim() ||
+                        !manualGote.trim() ||
+                        !manualWinner
+                      }
+                      className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-sm transition shadow-lg cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      この対局をデータベースに手動登録
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* CSV IMPORT TAB (公式対局 CSV一括インポート機能) */}
+              {activeTab === 'csv_import' && (
+                <form
+                  onSubmit={handleImportCsv}
+                  className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-4"
+                >
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                      <FileSpreadsheet size={16} />
+                      <span>対局結果 CSV一括インポート機能</span>
+                    </h4>
+                    <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                      CSVデータの形式:{' '}
+                      <strong className="text-amber-300">
+                        年月日, 棋戦名, 先手棋士名, 後手棋士名, 勝者棋士名, 備考
+                      </strong>{' '}
+                      の順で貼り付けるか、CSVファイルを選択してください。
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-950 border border-zinc-700 hover:border-amber-400 text-xs font-bold text-zinc-200 cursor-pointer transition">
+                      <Upload size={14} className="text-sky-400" />
+                      <span>CSVファイルを選択 (Shift-JIS / UTF-8 自動判別)</span>
+                      <input
+                        type="file"
+                        accept=".csv,text/csv,text/plain"
+                        onChange={handleSelectCsvFile}
+                        disabled={isBusy}
+                        className="hidden"
+                      />
+                    </label>
+                    {csvInputText && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCsvInputText('');
+                          setCsvImportSummary(null);
+                        }}
+                        className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 font-semibold cursor-pointer"
+                      >
+                        入力クリア
+                      </button>
+                    )}
+                  </div>
+
+                  <textarea
+                    value={csvInputText}
+                    onChange={(e) => setCsvInputText(e.target.value)}
+                    rows={8}
+                    placeholder={
+                      '2025/4/1,銀河戦,佐藤慎一,藤本渚,藤本渚,Bブロック\n2025/4/3,銀河戦,岡部怜央,野月浩貴,岡部怜央,Cブロック'
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-700 focus:border-amber-500 rounded-xl p-3.5 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none leading-relaxed"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isBusy || !csvInputText.trim()}
+                    className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-sm transition cursor-pointer disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
+                  >
+                    CSVデータを解析してデータベースへ一括登録
+                  </button>
+
+                  {csvImportSummary && (
+                    <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-1.5">
+                      <div className="flex items-center gap-4 font-bold">
+                        <span className="text-emerald-400">登録成功: {csvImportSummary.imported}件</span>
+                        {csvImportSummary.skipped > 0 && (
+                          <span className="text-amber-400">スキップ: {csvImportSummary.skipped}件</span>
+                        )}
+                      </div>
+                      {csvImportSummary.errors.length > 0 && (
+                        <ul className="text-[11px] text-rose-300 space-y-0.5 max-h-28 overflow-y-auto pt-1">
+                          {csvImportSummary.errors.slice(0, 15).map((err, i) => (
+                            <li key={i}>・{err}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </form>
+              )}
+
               {/* OFFICIAL MATCH SCHEDULES */}
               {activeTab === 'matches' && (
                 <div className="space-y-4">
-                  <datalist id="admin-players-datalist">
-                    {players.map((p) => (
-                      <option key={p.id} value={p.name} />
-                    ))}
-                  </datalist>
 
                   <form
                     onSubmit={handleSaveMatchSchedule}
