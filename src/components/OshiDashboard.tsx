@@ -18,8 +18,6 @@ interface OshiDashboardProps {
   followedList: FollowedPlayerConfig[];
   players: Player[];
   matches: Match[];
-  googleUser?: { name: string; email: string; avatar: string } | null;
-  onOpenGoogleLogin?: () => void;
   onSelectPlayer: (player: Player) => void;
   onSelectMatch: (match: Match) => void;
   onOpenDirectory: () => void;
@@ -41,8 +39,6 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   followedList,
   players,
   matches,
-  googleUser,
-  onOpenGoogleLogin,
   onSelectPlayer,
   onSelectMatch,
   onOpenDirectory,
@@ -131,57 +127,33 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
         </div>
       )}
 
-      {/* Google Account Link Status Banner */}
-      <div className="bg-gradient-to-r from-blue-950/40 via-zinc-900/90 to-zinc-900 border border-blue-500/30 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+      {/* SQLite Local Database Operation Banner */}
+      <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-900/90 to-zinc-900 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.94H1.18v3.15C3.17 21.36 7.23 24 12 24z"/>
-              <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.18C.43 8.1 0 9.99 0 12s.43 3.9 1.18 5.41l4.1-3.15z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.64 1.18 6.59l4.1 3.15c.95-2.83 3.6-4.99 6.72-4.99z"/>
-            </svg>
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
+            <Database size={20} />
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-zinc-100">
-                Googleアカウント連携
+              <span className="text-xs font-bold text-zinc-100 font-serif-jp">
+                SQLite 3 データベース同期モード
               </span>
-              {googleUser ? (
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
-                  リンク保存中
-                </span>
-              ) : (
-                <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded font-semibold border border-zinc-700">
-                  未連携
-                </span>
-              )}
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/30">
+                ローカル運用中
+              </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5">
-              {googleUser
-                ? `登録した推し棋士・女流棋士 (${followedList.length}名) はアカウントにリンクされ、安全に保存されています。`
-                : 'Googleアカウントでログインすると、推し棋士データをクラウドに安全に保存・引き継ぎできます。'}
+              公式データ・対局予定・成績は SQLite (<code className="text-emerald-300 font-mono">data/shogi.db</code>) から自動読み込みされ、データ更新は管理画面（DB管理）から行われます。
             </p>
           </div>
         </div>
-        {onOpenGoogleLogin && (
+        {onOpenAdminDb && (
           <button
-            onClick={onOpenGoogleLogin}
-            className={`self-end sm:self-auto px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 ${
-              googleUser
-                ? 'bg-zinc-800 hover:bg-zinc-700 text-blue-300 border border-zinc-700'
-                : 'bg-white hover:bg-zinc-200 text-zinc-900 shadow-md font-bold'
-            }`}
+            onClick={onOpenAdminDb}
+            className="self-end sm:self-auto px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
           >
-            {!googleUser && (
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.94H1.18v3.15C3.17 21.36 7.23 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.18C.43 8.1 0 9.99 0 12s.43 3.9 1.18 5.41l4.1-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.64 1.18 6.59l4.1 3.15c.95-2.83 3.6-4.99 6.72-4.99z"/>
-              </svg>
-            )}
-            <span>{googleUser ? 'リンク詳細' : 'Googleログイン'}</span>
+            <Lock size={12} />
+            <span>DB管理画面を開く</span>
           </button>
         )}
       </div>

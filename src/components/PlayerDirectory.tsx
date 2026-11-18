@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
-import { KishibetsuSyncPanel } from './KishibetsuSyncPanel';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import { formatPlayerName, isPlayerOnLeave, isPlayerRetired, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
@@ -28,12 +27,10 @@ interface PlayerDirectoryProps {
   onToggleFollow: (config: FollowedPlayerConfig) => void;
   onRemoveFollow: (playerId: string) => void;
   onSelectPlayer: (player: Player) => void;
-  onImportScrapedPlayer?: (player: Player) => void;
-  onUpdateAllPlayers?: (players: Player[]) => void;
   onOpenAdminDb?: () => void;
   isSyncingPlayers?: boolean;
   lastSyncTime?: string | null;
-  onSyncPlayers?: (force?: boolean) => void;
+  onSyncPlayers?: () => void;
   onRefreshMatches?: () => void;
 }
 
@@ -359,8 +356,6 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   onToggleFollow,
   onRemoveFollow,
   onSelectPlayer,
-  onImportScrapedPlayer,
-  onUpdateAllPlayers,
   onOpenAdminDb,
   isSyncingPlayers = false,
   lastSyncTime,

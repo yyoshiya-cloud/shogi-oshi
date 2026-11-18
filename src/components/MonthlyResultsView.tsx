@@ -2,16 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ShogiMonthlyResult, Player, FollowedPlayerConfig, Match } from '../types/shogi';
 import {
   getStoredFiscalResults,
-  saveStoredFiscalResults,
-  getStoredFiscalResultsLastSync,
-  saveStoredFiscalResultsLastSync,
-  getLatestMatchDateFromResults
+  replaceStoredFiscalResults,
 } from '../utils/storage';
-import {
-  fetchMonthFiscalResultFromCloud,
-  saveSingleMonthFiscalResultToCloud,
-  isFirestoreQuotaExceeded
-} from '../services/firebaseSync';
 import { updateMatchStatsData } from '../utils/yearRecordsGenerator';
 import { clearPlayerMatchCache } from '../services/shogiDbMatchEnrichment';
 import results2026Json from '../data/results2026.json';
@@ -30,10 +22,8 @@ import {
   CheckCircle2,
   ArrowUpDown,
   BookOpen,
-  ShieldAlert
 } from 'lucide-react';
-import { formatPlayerName, resolvePlayer, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
-import { DataAuditModal } from './DataAuditModal';
+import { resolvePlayer } from '../utils/playerUtils';
 
 import { getTodayInfo } from '../utils/dateUtils';
 
@@ -182,7 +172,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
   const [monthSortDir, setMonthSortDir] = useState<'desc' | 'asc'>('desc');
   const [hideEmptyMonths, setHideEmptyMonths] = useState<boolean>(true); // デフォルトで対局のない月を除外
-  const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
 
   // 対局データが1局以上ある月のみを抽出（hideEmptyMonthsがtrueの場合、選択中の月は除外しない）
   const availableFiscalYearMonths = useMemo(() => {
@@ -371,7 +360,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
   }, []);
 
-  // 最新取得: 「保存済み年月日を起点とした翌日以降の差分更新」と「Firestore updatedAtタイムスタンプ比較（マルチデバイス無駄更新防止）」
+  // SQLite DB（data/shogi.db）から最新の対局結果データを読み込む（読み取り専用）
   const handleRefreshMonth = async () => {
     setIsRefreshing(true);
     setRefreshMessage(null);
@@ -388,99 +377,29 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     setSelectedMonth(targetMonthKey);
     setSelectedDate(null);
 
-    const localResults = monthlyData[targetMonthKey] || [];
-    const localLatestDate = getLatestMatchDateFromResults(localResults);
-    const localLastSyncTime = getStoredFiscalResultsLastSync();
-
     try {
-      // 1. 【Firestore updatedAt タイムスタンプ先行比較】(マルチデバイス無駄更新防止)
-      // 他の端末（スマホや別タブなど）で既に最新データがFirestoreに反映されているかを1ドキュメント読み取りで確認
-      if (!isFirestoreQuotaExceeded()) {
-        const cloudDoc = await fetchMonthFiscalResultFromCloud(targetMonthKey);
-        if (cloudDoc && cloudDoc.updatedAt) {
-          const isCloudNewer = !localLastSyncTime || new Date(cloudDoc.updatedAt).getTime() > new Date(localLastSyncTime).getTime();
-          const hasMoreOrEqualResults = cloudDoc.results && cloudDoc.results.length >= localResults.length;
-
-          if (isCloudNewer && hasMoreOrEqualResults) {
-            // 他端末が既にスクレイピングしてFirestoreに保存済み！外部スクレイピングを完全スキップ
-            const updated = {
-              ...monthlyData,
-              [targetMonthKey]: cloudDoc.results,
-            };
-            setMonthlyData(updated);
-            saveStoredFiscalResults(updated);
-            updateMatchStatsData(updated);
-            clearPlayerMatchCache();
-            saveStoredFiscalResultsLastSync(cloudDoc.updatedAt);
-            onUpdateResults?.(updated);
-            setRefreshMessage(
-              `【端末間連携】他端末で更新された最新対局結果（${cloudDoc.results.length}局）をFirestoreから同期しました（外部アクセス不要）`
-            );
-            setIsRefreshing(false);
-            setTimeout(() => setRefreshMessage(null), 5000);
-            return;
-          }
-        }
-      }
-
-      // 2. 【保存済み年月日を起点とした翌日以降の差分更新】
-      // クラウドも未更新の場合、保存済みの最新対局日（localLatestDate）の翌日以降の差分のみを取得
-      const sinceQuery = localLatestDate ? `&sinceDate=${encodeURIComponent(localLatestDate)}` : '';
-      const res = await fetch(`/api/matches/results?month=${targetMonthKey}&force=true${sinceQuery}`);
+      const res = await fetch('/api/db/results');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
 
-      if (json.success && json.results) {
-        const syncTimestamp = new Date().toISOString();
-        saveStoredFiscalResultsLastSync(syncTimestamp);
+      if (json.success && json.data && typeof json.data === 'object') {
+        const loadedData = json.data as Record<string, ShogiMonthlyResult[]>;
+        setMonthlyData(loadedData);
+        replaceStoredFiscalResults(loadedData);
+        updateMatchStatsData(loadedData);
+        clearPlayerMatchCache();
+        onUpdateResults?.(loadedData);
 
-        // 3. 【条件付き最小Firestore更新】
-        if (json.hasNewMatches && json.newCount && json.newCount > 0) {
-          // 新着対局あり：既存データにマージして当月ドキュメントのみFirestoreに保存
-          const updated = {
-            ...monthlyData,
-            [targetMonthKey]: json.results,
-          };
-          setMonthlyData(updated);
-          saveStoredFiscalResults(updated);
-          updateMatchStatsData(updated);
-          clearPlayerMatchCache();
-          onUpdateResults?.(updated);
-
-          // Firestoreへの書き込みは当月1レコードのみ（クオータ未達時のみ）
-          if (!isFirestoreQuotaExceeded()) {
-            await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
-          }
-
-          setRefreshMessage(
-            `【差分更新完了】新着対局結果 ${json.newCount}局（${localLatestDate}の翌日以降）を反映しました`
-          );
-        } else {
-          // 新着対局なし（または既に最新）: Firestore書き込みを完全スキップ（クオータ消費0）
-          if (json.results.length > localResults.length) {
-            const updated = {
-              ...monthlyData,
-              [targetMonthKey]: json.results,
-            };
-            setMonthlyData(updated);
-            saveStoredFiscalResults(updated);
-            updateMatchStatsData(updated);
-            clearPlayerMatchCache();
-            onUpdateResults?.(updated);
-            if (!isFirestoreQuotaExceeded()) {
-              await saveSingleMonthFiscalResultToCloud(targetMonthKey, json.results, json.latestDate || undefined);
-            }
-          }
-          setRefreshMessage(
-            `対局結果は既に最新です（${localLatestDate ? localLatestDate + '以降の' : ''}新着なし・書き込みクオータ消費0）`
-          );
-        }
+        const monthCount = loadedData[targetMonthKey]?.length || 0;
+        setRefreshMessage(
+          `SQLite DB（data/shogi.db）から最新対局結果を読み込みました（${systemYear}年${systemMonth}月: ${monthCount}局）`
+        );
       } else {
-        setRefreshMessage(`システム日付（${systemYear}年${systemMonth}月）の対局結果を確認しました`);
+        setRefreshMessage(`SQLite DB（data/shogi.db）の対局結果を確認しました`);
       }
     } catch (err: any) {
-      console.warn('Refresh error:', err);
-      setRefreshMessage('通信エラーのため現在のデータを表示しています');
+      console.warn('SQLite DB results load error:', err);
+      setRefreshMessage('SQLite DBからの読み込みエラーのため現在のデータを表示しています');
     } finally {
       setIsRefreshing(false);
       setTimeout(() => setRefreshMessage(null), 5000);
@@ -690,18 +609,10 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               onClick={handleRefreshMonth}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg border border-amber-500/40 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-              title="最新対局日の翌日以降の差分を取得し、他端末更新時はFirestoreから直接読み取って更新"
+              title="SQLiteデータベース（data/shogi.db）から最新対局結果を再読み込みします"
             >
               <RefreshCw size={14} className={`text-amber-400 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? '差分更新中...' : '最新結果を更新'}</span>
-            </button>
-            <button
-              onClick={() => setShowAuditModal(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg border border-amber-500/40 transition cursor-pointer shadow-sm active:scale-95"
-              title="対局データの漏れ監査・補填・手動登録画面を開く"
-            >
-              <ShieldAlert size={14} className="text-amber-400 shrink-0" />
-              <span>データ監査 & 補填管理</span>
+              <span>{isRefreshing ? 'DB読込中...' : 'DBから再読込'}</span>
             </button>
             <a
               href={`https://www.shogi.or.jp/game/?month=${selectedMonth}`}
@@ -1488,7 +1399,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                 : 'text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40'
                             }`}
                           >
-                            {hasResult ? '詳細・勝敗編集' : '結果未定（勝敗を入力）'}
+                            対局詳細を見る
                           </button>
                         )}
                       </div>
@@ -1499,19 +1410,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
             </div>
           ))}
         </div>
-      )}
-
-      {/* Data Audit & Supplement Management Modal */}
-      {showAuditModal && (
-        <DataAuditModal
-          players={players}
-          onClose={() => setShowAuditModal(false)}
-          onUpdateResults={(updated) => {
-            setMonthlyData(updated);
-            onUpdateResults?.(updated);
-          }}
-          onUpdatePlayers={undefined}
-        />
       )}
     </div>
   );

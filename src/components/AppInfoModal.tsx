@@ -128,10 +128,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose, onOpenAdmin
               </div>
               <div>
                 <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  1. 推し棋士管理 & Firebase クラウド完全同期
+                  1. 推し棋士管理 & SQLite 統合データベース連携
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定。棋士プロフィール・公式対局予定・全対局結果を含む全データをFirebase Firestoreに完全移行・アクセスでき、複数端末（Android, iOS, Windows, Mac）でリアルタイム同期。
+                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定して端末内に保存。棋士プロフィール・公式対局予定・2021〜2026年度対局結果はすべてローカルの SQLite（<code className="text-emerald-300">data/shogi.db</code>）から読み込み、データ更新はパスワード保護された管理画面（DB管理）から安全に行えます。
                 </p>
               </div>
             </div>

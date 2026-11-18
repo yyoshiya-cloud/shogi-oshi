@@ -13,7 +13,8 @@ import {
   Trophy,
   Swords,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Database
 } from 'lucide-react';
 
 function getLastName(fullName: string): string {
@@ -37,7 +38,7 @@ interface MatchDetailModalProps {
   onClose: () => void;
   onNotificationSent?: () => void;
   onSelectPlayer?: (player: Player) => void;
-  onUpdateMatch?: (updatedMatch: Match) => void;
+  onOpenAdminDb?: () => void;
 }
 
 export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
@@ -45,7 +46,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   players,
   onClose,
   onSelectPlayer,
-  onUpdateMatch,
+  onOpenAdminDb,
 }) => {
   const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -315,78 +316,32 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Manual Result Setting Card */}
-          <div className="bg-zinc-900/95 border border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
-            <div className="flex items-center justify-between text-xs font-bold text-zinc-200">
-              <span className="flex items-center gap-1.5 text-amber-400">
-                <Trophy size={15} />
-                勝敗の手動設定・変更
-              </span>
-              <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
-                match.winnerId ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-zinc-800 text-zinc-400'
-              }`}>
-                {match.winnerId ? '勝者決定済み' : '勝敗未定（結果待ち）'}
-              </span>
+          {/* Match Result Status (Managed via Admin DB Screen) */}
+          <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2 text-xs">
+              <Trophy size={15} className="text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold text-zinc-200 block">
+                  対局結果ステータス:{' '}
+                  <span className={match.winnerId ? 'text-amber-300' : 'text-zinc-400'}>
+                    {match.winnerId ? `勝者決定済み (${winner?.name || match.winnerId})` : '勝敗未定（結果待ち）'}
+                  </span>
+                </span>
+                <span className="text-[11px] text-zinc-400">
+                  対局予定・勝敗結果の更新は管理画面（DB管理）から行えます。
+                </span>
+              </div>
             </div>
-            <p className="text-[11px] text-zinc-400">
-              勝敗が未確定の対局について、後から手動で勝者を指定またはリセットできます。
-            </p>
-            <div className="grid grid-cols-3 gap-2">
+            {onOpenAdminDb && (
               <button
-                onClick={() => {
-                  const updated: Match = {
-                    ...match,
-                    winnerId: player1.id,
-                    status: 'finished',
-                    highlights: `${player1.name} 対 ${player2.name}（${match.tournament}）。勝者: ${player1.name}。`,
-                  };
-                  onUpdateMatch?.(updated);
-                }}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition border ${
-                  match.winnerId === player1.id
-                    ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-md font-black'
-                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-700'
-                }`}
+                type="button"
+                onClick={onOpenAdminDb}
+                className="self-end sm:self-auto px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shrink-0"
               >
-                ☗ {p1LastName}の勝ち
+                <Database size={13} />
+                <span>DB管理で更新</span>
               </button>
-              <button
-                onClick={() => {
-                  const updated: Match = {
-                    ...match,
-                    winnerId: player2.id,
-                    status: 'finished',
-                    highlights: `${player1.name} 対 ${player2.name}（${match.tournament}）。勝者: ${player2.name}。`,
-                  };
-                  onUpdateMatch?.(updated);
-                }}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition border ${
-                  match.winnerId === player2.id
-                    ? 'bg-sky-500 text-zinc-950 border-sky-400 shadow-md font-black'
-                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-200 border-zinc-700'
-                }`}
-              >
-                ⛉ {p2LastName}の勝ち
-              </button>
-              <button
-                onClick={() => {
-                  const updated: Match = {
-                    ...match,
-                    winnerId: undefined,
-                    status: match.date < todayStr ? 'finished' : match.date === todayStr ? 'live' : 'upcoming',
-                    highlights: `${player1.name} 対 ${player2.name}の公式戦（${match.tournament}）。`,
-                  };
-                  onUpdateMatch?.(updated);
-                }}
-                className={`py-2 px-2 rounded-xl text-xs font-semibold transition border ${
-                  !match.winnerId
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
-                    : 'bg-zinc-950 hover:bg-zinc-800 text-zinc-400 border-zinc-700'
-                }`}
-              >
-                勝敗未定に戻す
-              </button>
-            </div>
+            )}
           </div>
 
           {/* 直接対局記録（過去の対戦成績） */}

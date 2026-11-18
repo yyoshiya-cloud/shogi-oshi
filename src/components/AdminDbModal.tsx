@@ -24,6 +24,7 @@ import {
   FileJson,
   HardDrive,
   UserCheck,
+  Pencil,
 } from 'lucide-react';
 import type {
   Player,
@@ -94,6 +95,9 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   // Players tab state
   const [playerQuery, setPlayerQuery] = useState('');
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [isCreatingPlayer, setIsCreatingPlayer] = useState(false);
+  const [editingHeldTitlesInput, setEditingHeldTitlesInput] = useState('');
+  const [confirmDeletePlayerId, setConfirmDeletePlayerId] = useState<string | null>(null);
   const [nameChangePlayerId, setNameChangePlayerId] = useState('');
   const [nameChangeOld, setNameChangeOld] = useState('');
   const [nameChangeNew, setNameChangeNew] = useState('');
@@ -104,14 +108,20 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [selectedArchiveFY, setSelectedArchiveFY] = useState<number>(2026);
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string>('202610');
   const [archiveMonthResults, setArchiveMonthResults] = useState<ShogiMonthlyResult[]>([]);
+  const [editingArchiveResult, setEditingArchiveResult] = useState<ShogiMonthlyResult | null>(null);
+  const [editingArchiveOrigMonth, setEditingArchiveOrigMonth] = useState<string | null>(null);
+  const [confirmDeleteResultId, setConfirmDeleteResultId] = useState<string | null>(null);
   const [newResDate, setNewResDate] = useState('2026-10-15');
   const [newResTournament, setNewResTournament] = useState('公式戦');
   const [newResSente, setNewResSente] = useState('');
   const [newResGote, setNewResGote] = useState('');
-  const [newResWinner, setNewResWinner] = useState<'sente' | 'gote'>('sente');
+  const [newResWinner, setNewResWinner] = useState<'sente' | 'gote' | 'undecided'>('sente');
   const [newResNote, setNewResNote] = useState('');
 
   // Matches tab state
+  const [matchQuery, setMatchQuery] = useState('');
+  const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [confirmDeleteMatchId, setConfirmDeleteMatchId] = useState<string | null>(null);
   const [newMatchDate, setNewMatchDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newMatchTime, setNewMatchTime] = useState('10:00');
   const [newMatchTournament, setNewMatchTournament] = useState('');
@@ -119,6 +129,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [newMatchP1, setNewMatchP1] = useState('');
   const [newMatchP2, setNewMatchP2] = useState('');
   const [newMatchVenue, setNewMatchVenue] = useState('東京・将棋会館');
+  const [newMatchStatus, setNewMatchStatus] = useState<'upcoming' | 'live' | 'finished'>('upcoming');
+  const [newMatchWinnerSide, setNewMatchWinnerSide] = useState<'none' | 'p1' | 'p2'>('none');
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -350,24 +362,131 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
+  const startCreatePlayer = () => {
+    const newId = `custom-${Date.now()}`;
+    setIsCreatingPlayer(true);
+    setEditingHeldTitlesInput('');
+    setEditingPlayer({
+      id: newId,
+      name: '',
+      type: 'pro',
+      affiliation: '日本将棋連盟',
+      rank: '四段',
+      danRank: '四段',
+      birthDate: '',
+      birthPlace: '',
+      master: '',
+      style: '居飛車',
+      ryuoClass: '-',
+      junisenClass: '-',
+      heldTitles: [],
+      totalTitles: 0,
+      titleHistory: '',
+      careerWins: 0,
+      careerLosses: 0,
+      careerWinRate: 0,
+      currentYearWins: 0,
+      currentYearLosses: 0,
+      currentYearWinRate: 0,
+      currentYearStreak: 0,
+      rankingInFederation: {},
+      colorAccent: '#f59e0b',
+      avatarBg: 'bg-amber-600',
+      shortBio: '',
+      highlights: [],
+      yearRecords: [],
+      senteWinRate: 50,
+      goteWinRate: 50,
+      openingStats: [],
+      headToHead: [],
+      externalLinks: {
+        officialProfile: '',
+        kifuDatabase: '',
+      },
+    });
+  };
+
+  const startEditPlayer = (p: Player) => {
+    setIsCreatingPlayer(false);
+    setEditingHeldTitlesInput((p.heldTitles || []).join('、'));
+    setEditingPlayer({ ...p });
+  };
+
   const handleSaveEditedPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPlayer) return;
+    if (!editingPlayer || !editingPlayer.name.trim()) return;
     try {
       setIsBusy(true);
-      const res = await adminFetch(`/api/admin/players/${encodeURIComponent(editingPlayer.id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingPlayer),
-      });
+      const calcRate = (w: number, l: number) =>
+        w + l > 0 ? Math.round((w / (w + l)) * 10000) / 10000 : 0;
+
+      const parsedTitles = editingHeldTitlesInput
+        .split(/[,、\s]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const cw = Number(editingPlayer.careerWins) || 0;
+      const cl = Number(editingPlayer.careerLosses) || 0;
+      const yw = Number(editingPlayer.currentYearWins) || 0;
+      const yl = Number(editingPlayer.currentYearLosses) || 0;
+
+      const payload: Player = {
+        ...editingPlayer,
+        id: editingPlayer.id.trim() || `custom-${Date.now()}`,
+        name: editingPlayer.name.trim(),
+        heldTitles: parsedTitles,
+        careerWins: cw,
+        careerLosses: cl,
+        careerWinRate: calcRate(cw, cl),
+        currentYearWins: yw,
+        currentYearLosses: yl,
+        currentYearWinRate: calcRate(yw, yl),
+      };
+
+      const res = await adminFetch(
+        isCreatingPlayer
+          ? '/api/admin/players'
+          : `/api/admin/players/${encodeURIComponent(payload.id)}`,
+        {
+          method: isCreatingPlayer ? 'POST' : 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || '更新に失敗しました');
+      if (!res.ok || !json.success) throw new Error(json.error || '保存に失敗しました');
       setEditingPlayer(null);
+      setIsCreatingPlayer(false);
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', `${json.player.name} のプロフィールをSQLite DBへ保存しました`);
+      showStatus(
+        'success',
+        `${json.player.name} のプロフィールをSQLite DBへ${isCreatingPlayer ? '新規登録' : '保存'}しました`
+      );
     } catch (err: any) {
       showStatus('error', err?.message || '保存エラー');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleDeletePlayer = async (id: string, name: string) => {
+    try {
+      setIsBusy(true);
+      const res = await adminFetch(`/api/admin/players/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('削除に失敗しました');
+      setConfirmDeletePlayerId(null);
+      if (editingPlayer?.id === id) {
+        setEditingPlayer(null);
+        setIsCreatingPlayer(false);
+      }
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus('success', `${name} をSQLite DBから削除しました`);
+    } catch (err: any) {
+      showStatus('error', err?.message || '削除エラー');
     } finally {
       setIsBusy(false);
     }
@@ -402,7 +521,33 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const handleAddArchiveResult = async (e: React.FormEvent) => {
+  const startEditArchiveResult = (r: ShogiMonthlyResult) => {
+    setEditingArchiveResult(r);
+    setEditingArchiveOrigMonth(r.month || selectedArchiveMonth);
+    setNewResDate(r.date);
+    setNewResTournament(r.tournament || '公式戦');
+    setNewResSente(r.sente);
+    setNewResGote(r.gote);
+    if (r.senteMark === '○' || r.senteMark === '□' || r.winner === r.sente) {
+      setNewResWinner('sente');
+    } else if (r.goteMark === '○' || r.goteMark === '□' || r.winner === r.gote) {
+      setNewResWinner('gote');
+    } else {
+      setNewResWinner('undecided');
+    }
+    setNewResNote(r.note || '');
+  };
+
+  const resetArchiveResultForm = () => {
+    setEditingArchiveResult(null);
+    setEditingArchiveOrigMonth(null);
+    setNewResSente('');
+    setNewResGote('');
+    setNewResNote('');
+    setNewResWinner('sente');
+  };
+
+  const handleSaveArchiveResult = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newResDate || !newResSente.trim() || !newResGote.trim()) return;
     try {
@@ -412,12 +557,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const goteClean = newResGote.trim();
       const senteP = players.find((p) => p.name.replace(/\s+/g, '') === senteClean.replace(/\s+/g, ''));
       const goteP = players.find((p) => p.name.replace(/\s+/g, '') === goteClean.replace(/\s+/g, ''));
-      const winner = newResWinner === 'sente' ? senteClean : goteClean;
-      const loser = newResWinner === 'sente' ? goteClean : senteClean;
+      const winner =
+        newResWinner === 'sente' ? senteClean : newResWinner === 'gote' ? goteClean : '';
+      const loser =
+        newResWinner === 'sente' ? goteClean : newResWinner === 'gote' ? senteClean : '';
       const isWomen = senteP?.type === 'women' || goteP?.type === 'women' || newResTournament.includes('女流');
 
-      const newResult: ShogiMonthlyResult = {
-        id: `db-res-${Date.now()}`,
+      const resultObj: ShogiMonthlyResult = {
+        ...(editingArchiveResult || {}),
+        id: editingArchiveResult?.id || `db-res-${Date.now()}`,
         date: newResDate,
         month,
         sente: senteClean,
@@ -426,39 +574,48 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         goteRaw: goteClean,
         sentePlayerId: senteP?.id,
         gotePlayerId: goteP?.id,
-        senteMark: newResWinner === 'sente' ? '○' : '●',
-        goteMark: newResWinner === 'gote' ? '○' : '●',
+        senteMark: newResWinner === 'sente' ? '○' : newResWinner === 'gote' ? '●' : '',
+        goteMark: newResWinner === 'gote' ? '○' : newResWinner === 'sente' ? '●' : '',
         winner,
         loser,
-        winnerId: newResWinner === 'sente' ? senteP?.id : goteP?.id,
-        loserId: newResWinner === 'sente' ? goteP?.id : senteP?.id,
-        resultType: 'normal',
+        winnerId: newResWinner === 'sente' ? senteP?.id : newResWinner === 'gote' ? goteP?.id : undefined,
+        loserId: newResWinner === 'sente' ? goteP?.id : newResWinner === 'gote' ? senteP?.id : undefined,
+        resultType: editingArchiveResult?.resultType || 'normal',
         tournament: newResTournament.trim() || '公式戦',
         note: newResNote.trim(),
         isWomen,
         category: isWomen ? '女流棋戦' : '一般棋戦',
-        links: [{ title: '日本将棋連盟公式', url: `https://www.shogi.or.jp/game/?month=${month}` }],
-        sourceUrl: `https://www.shogi.or.jp/game/?month=${month}`,
+        links: editingArchiveResult?.links?.length
+          ? editingArchiveResult.links
+          : [{ title: '日本将棋連盟公式', url: `https://www.shogi.or.jp/game/?month=${month}` }],
+        sourceUrl: editingArchiveResult?.sourceUrl || `https://www.shogi.or.jp/game/?month=${month}`,
       };
+
+      // If edited result moved to a different month, remove from old month first
+      if (editingArchiveResult && editingArchiveOrigMonth && editingArchiveOrigMonth !== month) {
+        await adminFetch(
+          `/api/admin/results/${encodeURIComponent(editingArchiveOrigMonth)}/${encodeURIComponent(editingArchiveResult.id)}`,
+          { method: 'DELETE' }
+        );
+      }
 
       const res = await adminFetch('/api/admin/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newResult),
+        body: JSON.stringify(resultObj),
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || '登録失敗');
 
-      setNewResSente('');
-      setNewResGote('');
-      setNewResNote('');
+      const wasEditing = Boolean(editingArchiveResult);
+      resetArchiveResultForm();
       setSelectedArchiveMonth(month);
       await loadArchiveMonth(month);
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', `${month} に対局結果を追加しました`);
+      showStatus('success', `${month} の対局結果を${wasEditing ? '更新' : '追加'}しました`);
     } catch (err: any) {
-      showStatus('error', err?.message || '対局結果追加エラー');
+      showStatus('error', err?.message || '対局結果保存エラー');
     } finally {
       setIsBusy(false);
     }
@@ -471,6 +628,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('削除に失敗しました');
+      setConfirmDeleteResultId(null);
+      if (editingArchiveResult?.id === id) resetArchiveResultForm();
       await loadArchiveMonth(month);
       await loadAdminData();
       await onDatabaseUpdated();
@@ -482,33 +641,75 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const handleAddMatchSchedule = async (e: React.FormEvent) => {
+  const startEditMatch = (m: Match) => {
+    setEditingMatch(m);
+    setNewMatchDate(m.date);
+    setNewMatchTime(m.time || '10:00');
+    setNewMatchTournament(m.tournament || '');
+    setNewMatchRound(m.round || '');
+    setNewMatchVenue(m.venue || '東京・将棋会館');
+    setNewMatchP1(playerMap.get(m.player1Id)?.name || m.player1Id);
+    setNewMatchP2(playerMap.get(m.player2Id)?.name || m.player2Id);
+    setNewMatchStatus(m.status || 'upcoming');
+    if (m.winnerId && m.winnerId === m.player1Id) {
+      setNewMatchWinnerSide('p1');
+    } else if (m.winnerId && m.winnerId === m.player2Id) {
+      setNewMatchWinnerSide('p2');
+    } else {
+      setNewMatchWinnerSide('none');
+    }
+  };
+
+  const resetMatchForm = () => {
+    setEditingMatch(null);
+    setNewMatchDate(new Date().toISOString().slice(0, 10));
+    setNewMatchTime('10:00');
+    setNewMatchTournament('');
+    setNewMatchRound('');
+    setNewMatchP1('');
+    setNewMatchP2('');
+    setNewMatchVenue('東京・将棋会館');
+    setNewMatchStatus('upcoming');
+    setNewMatchWinnerSide('none');
+  };
+
+  const handleSaveMatchSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMatchDate || !newMatchTournament.trim() || !newMatchP1.trim() || !newMatchP2.trim()) return;
     try {
       setIsBusy(true);
-      const p1 = players.find((p) => p.name.replace(/\s+/g, '') === newMatchP1.replace(/\s+/g, ''));
-      const p2 = players.find((p) => p.name.replace(/\s+/g, '') === newMatchP2.replace(/\s+/g, ''));
+      const p1Clean = newMatchP1.trim();
+      const p2Clean = newMatchP2.trim();
+      const p1 = players.find((p) => p.name.replace(/\s+/g, '') === p1Clean.replace(/\s+/g, '') || p.id === p1Clean);
+      const p2 = players.find((p) => p.name.replace(/\s+/g, '') === p2Clean.replace(/\s+/g, '') || p.id === p2Clean);
       const isWomen = p1?.type === 'women' || p2?.type === 'women' || newMatchTournament.includes('女流');
 
+      const p1Id = p1?.id || p1Clean;
+      const p2Id = p2?.id || p2Clean;
+      const winnerId =
+        newMatchWinnerSide === 'p1' ? p1Id : newMatchWinnerSide === 'p2' ? p2Id : undefined;
+      const resolvedStatus = winnerId ? 'finished' : newMatchStatus;
+
       const matchObj: Match = {
-        id: `db-match-${Date.now()}`,
+        ...(editingMatch || {}),
+        id: editingMatch?.id || `db-match-${Date.now()}`,
         tournament: newMatchTournament.trim(),
-        category: isWomen ? '女流棋戦' : '一般棋戦',
+        category: isWomen ? '女流棋戦' : (editingMatch?.category || '一般棋戦'),
         round: newMatchRound.trim() || '公式戦',
         date: newMatchDate,
         time: newMatchTime || '10:00',
-        player1Id: p1?.id || newMatchP1.trim(),
-        player2Id: p2?.id || newMatchP2.trim(),
-        sentePlayerId: p1?.id,
-        gotePlayerId: p2?.id,
-        status: 'upcoming',
+        player1Id: p1Id,
+        player2Id: p2Id,
+        sentePlayerId: p1?.id || editingMatch?.sentePlayerId,
+        gotePlayerId: p2?.id || editingMatch?.gotePlayerId,
+        status: resolvedStatus,
+        winnerId,
         venue: newMatchVenue.trim() || '東京・将棋会館',
-        timeControl: '',
-        broadcast: [],
-        kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${newMatchP1.trim()} ${newMatchP2.trim()}`)}`,
-        kifuMoves: [],
-        highlights: `${newMatchP1.trim()} 対 ${newMatchP2.trim()}（${newMatchTournament.trim()}）`,
+        timeControl: editingMatch?.timeControl || '',
+        broadcast: editingMatch?.broadcast || [],
+        kifuUrl: editingMatch?.kifuUrl || `https://shogidb2.com/search?q=${encodeURIComponent(`${p1Clean} ${p2Clean}`)}`,
+        kifuMoves: editingMatch?.kifuMoves || [],
+        highlights: `${p1?.name || p1Clean} 対 ${p2?.name || p2Clean}（${newMatchTournament.trim()}）`,
       };
 
       const res = await adminFetch('/api/admin/matches', {
@@ -519,15 +720,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || '登録失敗');
 
-      setNewMatchTournament('');
-      setNewMatchRound('');
-      setNewMatchP1('');
-      setNewMatchP2('');
+      const wasEditing = Boolean(editingMatch);
+      resetMatchForm();
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', '公式対局予定をSQLite DBに追加しました');
+      showStatus('success', `公式対局予定をSQLite DBに${wasEditing ? '更新' : '追加'}しました`);
     } catch (err: any) {
-      showStatus('error', err?.message || '予定追加エラー');
+      showStatus('error', err?.message || '予定保存エラー');
     } finally {
       setIsBusy(false);
     }
@@ -538,6 +737,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       setIsBusy(true);
       const res = await adminFetch(`/api/admin/matches/${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('削除失敗');
+      setConfirmDeleteMatchId(null);
+      if (editingMatch?.id === id) resetMatchForm();
       await loadAdminData();
       await onDatabaseUpdated();
       showStatus('success', '対局予定を削除しました');
@@ -560,6 +761,19 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       })
       .slice(0, 80);
   }, [players, playerQuery]);
+
+  const filteredMatches = useMemo(() => {
+    const q = matchQuery.trim().toLowerCase().replace(/\s+/g, '');
+    if (!q) return matches;
+    return matches.filter((m) => {
+      const p1Name = players.find((p) => p.id === m.player1Id)?.name || m.player1Id;
+      const p2Name = players.find((p) => p.id === m.player2Id)?.name || m.player2Id;
+      const str = `${m.date} ${m.tournament} ${m.round || ''} ${p1Name} ${p2Name} ${m.venue || ''}`
+        .toLowerCase()
+        .replace(/\s+/g, '');
+      return str.includes(q);
+    });
+  }, [matches, matchQuery, players]);
 
   const playerMap = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
@@ -971,7 +1185,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     )}
                   </form>
 
-                  {/* Edit Player Modal/Form Inline */}
+                  {/* Edit or Create Player Form Inline */}
                   {editingPlayer && (
                     <form
                       onSubmit={handleSaveEditedPlayer}
@@ -979,23 +1193,30 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-sky-300">
-                          プロフィール編集: {editingPlayer.name} ({editingPlayer.id})
+                          {isCreatingPlayer
+                            ? '新規棋士・女流棋士プロフィール登録'
+                            : `プロフィール編集: ${editingPlayer.name} (${editingPlayer.id})`}
                         </h4>
                         <button
                           type="button"
-                          onClick={() => setEditingPlayer(null)}
-                          className="text-xs text-zinc-400 hover:text-white"
+                          onClick={() => {
+                            setEditingPlayer(null);
+                            setIsCreatingPlayer(false);
+                          }}
+                          className="text-xs text-zinc-400 hover:text-white cursor-pointer"
                         >
                           キャンセル
                         </button>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">氏名</label>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">氏名 *</label>
                           <input
                             type="text"
+                            required
                             value={editingPlayer.name}
                             onChange={(e) => setEditingPlayer({ ...editingPlayer, name: e.target.value })}
+                            placeholder="例: 藤井 聡太"
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
                           />
                         </div>
@@ -1009,22 +1230,73 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">称号・段位</label>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">区分</label>
+                          <select
+                            value={editingPlayer.type}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, type: e.target.value as 'pro' | 'women' })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          >
+                            <option value="pro">棋士</option>
+                            <option value="women">女流棋士</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">所属</label>
+                          <select
+                            value={editingPlayer.affiliation || '日本将棋連盟'}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, affiliation: e.target.value as any })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          >
+                            <option value="日本将棋連盟">日本将棋連盟</option>
+                            <option value="LPSA">LPSA</option>
+                            <option value="無所属">無所属</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">称号・表示段位</label>
                           <input
                             type="text"
                             value={editingPlayer.rank}
                             onChange={(e) => setEditingPlayer({ ...editingPlayer, rank: e.target.value })}
+                            placeholder="例: 竜王・名人 / 九段"
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] text-zinc-400 block mb-0.5">所属</label>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">公式段位 (danRank)</label>
                           <input
                             type="text"
-                            value={editingPlayer.affiliation || ''}
-                            onChange={(e) => setEditingPlayer({ ...editingPlayer, affiliation: e.target.value as any })}
+                            value={editingPlayer.danRank || ''}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, danRank: e.target.value })}
+                            placeholder="例: 九段 / 女流五段"
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
                           />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">棋士番号 / 女流番号</label>
+                          <input
+                            type="number"
+                            value={editingPlayer.playerNumber ?? ''}
+                            onChange={(e) =>
+                              setEditingPlayer({
+                                ...editingPlayer,
+                                playerNumber: e.target.value ? Number(e.target.value) : undefined,
+                              })
+                            }
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">戦型</label>
+                          <select
+                            value={editingPlayer.style || '居飛車'}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, style: e.target.value as any })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          >
+                            <option value="居飛車">居飛車</option>
+                            <option value="振り飛車">振り飛車</option>
+                            <option value="オールラウンダー">オールラウンダー</option>
+                          </select>
                         </div>
                         <div>
                           <label className="text-[10px] text-zinc-400 block mb-0.5">順位戦クラス</label>
@@ -1041,6 +1313,25 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             type="text"
                             value={editingPlayer.ryuoClass}
                             onChange={(e) => setEditingPlayer({ ...editingPlayer, ryuoClass: e.target.value })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">保持タイトル (読点区切り)</label>
+                          <input
+                            type="text"
+                            value={editingHeldTitlesInput}
+                            onChange={(e) => setEditingHeldTitlesInput(e.target.value)}
+                            placeholder="例: 竜王、名人"
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">タイトル獲得合計</label>
+                          <input
+                            type="number"
+                            value={editingPlayer.totalTitles}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, totalTitles: Number(e.target.value) })}
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
                           />
                         </div>
@@ -1062,6 +1353,61 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
                           />
                         </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">通算 勝</label>
+                          <input
+                            type="number"
+                            value={editingPlayer.careerWins}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, careerWins: Number(e.target.value) })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">通算 敗</label>
+                          <input
+                            type="number"
+                            value={editingPlayer.careerLosses}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, careerLosses: Number(e.target.value) })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">生年月日 (YYYY-MM-DD)</label>
+                          <input
+                            type="text"
+                            value={editingPlayer.birthDate || ''}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, birthDate: e.target.value })}
+                            placeholder="2002-07-19"
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">出身地</label>
+                          <input
+                            type="text"
+                            value={editingPlayer.birthPlace || ''}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, birthPlace: e.target.value })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">師匠</label>
+                          <input
+                            type="text"
+                            value={editingPlayer.master || ''}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, master: e.target.value })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">顔写真URL (photoUrl)</label>
+                          <input
+                            type="text"
+                            value={editingPlayer.photoUrl || ''}
+                            onChange={(e) => setEditingPlayer({ ...editingPlayer, photoUrl: e.target.value || undefined })}
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="text-[10px] text-zinc-400 block mb-0.5">短評・プロフィール紹介</label>
@@ -1075,25 +1421,35 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       <button
                         type="submit"
                         disabled={isBusy}
-                        className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         <Save size={14} />
-                        <span>SQLite DBに保存</span>
+                        <span>{isCreatingPlayer ? '新規棋士をSQLite DBに保存' : 'SQLite DBに保存'}</span>
                       </button>
                     </form>
                   )}
 
                   {/* Player Search & List */}
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl overflow-hidden">
-                    <div className="p-3 border-b border-zinc-800 flex items-center gap-2">
-                      <Search size={15} className="text-zinc-400" />
-                      <input
-                        type="text"
-                        value={playerQuery}
-                        onChange={(e) => setPlayerQuery(e.target.value)}
-                        placeholder="棋士名・旧姓・ID・段位で検索..."
-                        className="w-full bg-transparent text-xs text-zinc-100 focus:outline-none"
-                      />
+                    <div className="p-3 border-b border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                        <Search size={15} className="text-zinc-400" />
+                        <input
+                          type="text"
+                          value={playerQuery}
+                          onChange={(e) => setPlayerQuery(e.target.value)}
+                          placeholder="棋士名・旧姓・ID・段位で検索..."
+                          className="w-full bg-transparent text-xs text-zinc-100 focus:outline-none"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={startCreatePlayer}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        <Plus size={14} />
+                        <span>新規棋士を登録</span>
+                      </button>
                     </div>
                     <div className="divide-y divide-zinc-800/70 max-h-[340px] overflow-y-auto">
                       {filteredPlayers.map((p) => (
@@ -1115,13 +1471,44 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                               </span>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setEditingPlayer(p)}
-                            className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold shrink-0 cursor-pointer"
-                          >
-                            編集
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => startEditPlayer(p)}
+                              className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer flex items-center gap-1"
+                            >
+                              <Pencil size={12} />
+                              <span>編集</span>
+                            </button>
+                            {confirmDeletePlayerId === p.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePlayer(p.id, p.name)}
+                                  disabled={isBusy}
+                                  className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer text-[11px]"
+                                >
+                                  確定削除
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeletePlayerId(null)}
+                                  className="px-2 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer text-[11px]"
+                                >
+                                  取消
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeletePlayerId(p.id)}
+                                className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer"
+                                title="削除"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1132,6 +1519,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               {/* FY2021-2026 MATCH ARCHIVES */}
               {activeTab === 'archives' && (
                 <div className="space-y-4">
+                  <datalist id="admin-players-datalist">
+                    {players.map((p) => (
+                      <option key={p.id} value={p.name} />
+                    ))}
+                  </datalist>
+
                   <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {[2026, 2025, 2024, 2023, 2022, 2021].map((fy) => (
@@ -1163,15 +1556,32 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </select>
                   </div>
 
-                  {/* Quick Add Match Result */}
+                  {/* Add / Edit Match Result */}
                   <form
-                    onSubmit={handleAddArchiveResult}
-                    className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 space-y-3"
+                    onSubmit={handleSaveArchiveResult}
+                    className={`bg-zinc-900/80 border rounded-2xl p-4 space-y-3 ${
+                      editingArchiveResult ? 'border-sky-500/50' : 'border-zinc-800'
+                    }`}
                   >
-                    <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                      <Plus size={14} />
-                      <span>対局結果を追加（2021〜2026年度対応）</span>
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className={`text-xs font-bold flex items-center gap-1.5 ${editingArchiveResult ? 'text-sky-300' : 'text-amber-300'}`}>
+                        {editingArchiveResult ? <Pencil size={14} /> : <Plus size={14} />}
+                        <span>
+                          {editingArchiveResult
+                            ? `対局結果を編集中 (${editingArchiveResult.date} ${editingArchiveResult.sente} vs ${editingArchiveResult.gote})`
+                            : '対局結果を追加（2021〜2026年度対応）'}
+                        </span>
+                      </h4>
+                      {editingArchiveResult && (
+                        <button
+                          type="button"
+                          onClick={resetArchiveResultForm}
+                          className="text-xs text-zinc-400 hover:text-white cursor-pointer"
+                        >
+                          キャンセル
+                        </button>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
                       <input
                         type="date"
@@ -1190,6 +1600,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       />
                       <input
                         type="text"
+                        list="admin-players-datalist"
                         value={newResSente}
                         onChange={(e) => setNewResSente(e.target.value)}
                         placeholder="先手氏名"
@@ -1198,6 +1609,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       />
                       <input
                         type="text"
+                        list="admin-players-datalist"
                         value={newResGote}
                         onChange={(e) => setNewResGote(e.target.value)}
                         placeholder="後手氏名"
@@ -1211,15 +1623,27 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       >
                         <option value="sente">先手勝ち</option>
                         <option value="gote">後手勝ち</option>
+                        <option value="undecided">勝敗未定</option>
                       </select>
                       <button
                         type="submit"
                         disabled={isBusy}
-                        className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl px-3 py-1.5 cursor-pointer"
+                        className={`font-bold rounded-xl px-3 py-1.5 cursor-pointer disabled:opacity-50 ${
+                          editingArchiveResult
+                            ? 'bg-sky-500 hover:bg-sky-400 text-zinc-950'
+                            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950'
+                        }`}
                       >
-                        DB登録
+                        {editingArchiveResult ? '更新保存' : 'DB登録'}
                       </button>
                     </div>
+                    <input
+                      type="text"
+                      value={newResNote}
+                      onChange={(e) => setNewResNote(e.target.value)}
+                      placeholder="備考・手数・千日手・詳細メモ（任意）"
+                      className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs"
+                    />
                   </form>
 
                   {/* Month Archive List */}
@@ -1238,7 +1662,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         {archiveMonthResults.map((r) => (
                           <div
                             key={r.id}
-                            className="px-4 py-2 flex items-center justify-between gap-3 text-xs"
+                            className="px-4 py-2 flex items-center justify-between gap-3 text-xs hover:bg-zinc-900/60"
                           >
                             <div className="min-w-0 truncate">
                               <span className="font-mono text-zinc-400 mr-2">{r.date}</span>
@@ -1246,15 +1670,48 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                               <span className="text-zinc-100">
                                 {r.senteMark} {r.sente} vs {r.gote} {r.goteMark}
                               </span>
+                              {r.note && (
+                                <span className="ml-2 text-zinc-500 text-[11px]">({r.note})</span>
+                              )}
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteArchiveResult(selectedArchiveMonth, r.id)}
-                              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer shrink-0"
-                              title="削除"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => startEditArchiveResult(r)}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer flex items-center gap-1"
+                              >
+                                <Pencil size={12} />
+                                <span>編集</span>
+                              </button>
+                              {confirmDeleteResultId === r.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteArchiveResult(selectedArchiveMonth, r.id)}
+                                    disabled={isBusy}
+                                    className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer text-[11px]"
+                                  >
+                                    削除
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteResultId(null)}
+                                    className="px-2 py-1 rounded-lg bg-zinc-800 text-zinc-400 cursor-pointer text-[11px]"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteResultId(r.id)}
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer"
+                                  title="削除"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1266,15 +1723,38 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               {/* OFFICIAL MATCH SCHEDULES */}
               {activeTab === 'matches' && (
                 <div className="space-y-4">
+                  <datalist id="admin-players-datalist">
+                    {players.map((p) => (
+                      <option key={p.id} value={p.name} />
+                    ))}
+                  </datalist>
+
                   <form
-                    onSubmit={handleAddMatchSchedule}
-                    className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 space-y-3"
+                    onSubmit={handleSaveMatchSchedule}
+                    className={`bg-zinc-900/80 border rounded-2xl p-4 space-y-3 ${
+                      editingMatch ? 'border-amber-500/50' : 'border-zinc-800'
+                    }`}
                   >
-                    <h4 className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
-                      <Plus size={14} />
-                      <span>公式対局予定を追加 (matches テーブル)</span>
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <h4 className={`text-xs font-bold flex items-center gap-1.5 ${editingMatch ? 'text-amber-300' : 'text-sky-300'}`}>
+                        {editingMatch ? <Pencil size={14} /> : <Plus size={14} />}
+                        <span>
+                          {editingMatch
+                            ? `公式対局予定を編集 (${editingMatch.date} ${editingMatch.tournament})`
+                            : '公式対局予定を追加 (matches テーブル)'}
+                        </span>
+                      </h4>
+                      {editingMatch && (
+                        <button
+                          type="button"
+                          onClick={resetMatchForm}
+                          className="text-xs text-zinc-400 hover:text-white cursor-pointer"
+                        >
+                          キャンセル
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <input
                         type="date"
                         value={newMatchDate}
@@ -1299,6 +1779,14 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       />
                       <input
                         type="text"
+                        value={newMatchRound}
+                        onChange={(e) => setNewMatchRound(e.target.value)}
+                        placeholder="回戦・第○局"
+                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                      />
+                      <input
+                        type="text"
+                        list="admin-players-datalist"
                         value={newMatchP1}
                         onChange={(e) => setNewMatchP1(e.target.value)}
                         placeholder="対局者1氏名"
@@ -1307,51 +1795,151 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       />
                       <input
                         type="text"
+                        list="admin-players-datalist"
                         value={newMatchP2}
                         onChange={(e) => setNewMatchP2(e.target.value)}
                         placeholder="対局者2氏名"
                         required
                         className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
                       />
+                      <input
+                        type="text"
+                        value={newMatchVenue}
+                        onChange={(e) => setNewMatchVenue(e.target.value)}
+                        placeholder="対局場所"
+                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                      />
+                      <div className="flex gap-1.5">
+                        <select
+                          value={newMatchStatus}
+                          onChange={(e) => setNewMatchStatus(e.target.value as any)}
+                          className="w-1/2 bg-zinc-950 border border-zinc-700 rounded-xl px-2 py-1.5"
+                        >
+                          <option value="upcoming">予定</option>
+                          <option value="live">対局中</option>
+                          <option value="finished">終局</option>
+                        </select>
+                        <select
+                          value={newMatchWinnerSide}
+                          onChange={(e) => {
+                            const val = e.target.value as 'none' | 'p1' | 'p2';
+                            setNewMatchWinnerSide(val);
+                            if (val !== 'none') setNewMatchStatus('finished');
+                          }}
+                          className="w-1/2 bg-zinc-950 border border-zinc-700 rounded-xl px-2 py-1.5"
+                        >
+                          <option value="none">勝者未定</option>
+                          <option value="p1">1勝ち</option>
+                          <option value="p2">2勝ち</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
                       <button
                         type="submit"
                         disabled={isBusy}
-                        className="bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold rounded-xl px-3 py-1.5 cursor-pointer"
+                        className={`font-bold rounded-xl px-4 py-1.5 text-xs cursor-pointer disabled:opacity-50 ${
+                          editingMatch
+                            ? 'bg-amber-500 hover:bg-amber-400 text-zinc-950'
+                            : 'bg-sky-500 hover:bg-sky-400 text-zinc-950'
+                        }`}
                       >
-                        予定登録
+                        {editingMatch ? '対局予定を更新' : '予定登録'}
                       </button>
                     </div>
                   </form>
 
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl overflow-hidden">
-                    <div className="px-4 py-2.5 border-b border-zinc-800 text-xs font-bold text-zinc-200">
-                      登録済み 公式対局予定 ({matches.length}件)
+                    <div className="px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-zinc-200">
+                        登録済み 公式対局予定 ({filteredMatches.length} / {matches.length}件)
+                      </span>
+                      <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs">
+                        <Search size={13} className="text-zinc-500" />
+                        <input
+                          type="text"
+                          value={matchQuery}
+                          onChange={(e) => setMatchQuery(e.target.value)}
+                          placeholder="棋戦・対局者・日付で検索"
+                          className="bg-transparent text-zinc-100 focus:outline-none w-44"
+                        />
+                      </div>
                     </div>
                     <div className="divide-y divide-zinc-800/70 max-h-[340px] overflow-y-auto">
-                      {matches.map((m) => {
+                      {filteredMatches.map((m) => {
                         const p1 = playerMap.get(m.player1Id)?.name || m.player1Id;
                         const p2 = playerMap.get(m.player2Id)?.name || m.player2Id;
+                        const winnerName = m.winnerId
+                          ? playerMap.get(m.winnerId)?.name || m.winnerId
+                          : null;
                         return (
                           <div
                             key={m.id}
-                            className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs"
+                            className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs hover:bg-zinc-900/60"
                           >
                             <div className="min-w-0 truncate">
                               <span className="font-mono text-zinc-400 mr-2">
                                 {m.date} {m.time}
                               </span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold mr-2 ${
+                                  m.status === 'finished'
+                                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
+                                    : m.status === 'live'
+                                    ? 'bg-rose-950 text-rose-300 border border-rose-500/30'
+                                    : 'bg-zinc-800 text-zinc-300'
+                                }`}
+                              >
+                                {m.status === 'finished' ? '終局' : m.status === 'live' ? '対局中' : '予定'}
+                              </span>
                               <span className="text-sky-300 font-bold mr-2">{m.tournament}</span>
                               <span className="text-zinc-100">
                                 {p1} vs {p2}
                               </span>
+                              {winnerName && (
+                                <span className="ml-2 text-amber-300 text-[11px] font-bold">
+                                  (勝: {winnerName})
+                                </span>
+                              )}
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteMatchSchedule(m.id)}
-                              className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer shrink-0"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => startEditMatch(m)}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer flex items-center gap-1"
+                              >
+                                <Pencil size={12} />
+                                <span>編集</span>
+                              </button>
+                              {confirmDeleteMatchId === m.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteMatchSchedule(m.id)}
+                                    disabled={isBusy}
+                                    className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer text-[11px]"
+                                  >
+                                    削除
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteMatchId(null)}
+                                    className="px-2 py-1 rounded-lg bg-zinc-800 text-zinc-400 cursor-pointer text-[11px]"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteMatchId(m.id)}
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition cursor-pointer"
+                                  title="削除"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}

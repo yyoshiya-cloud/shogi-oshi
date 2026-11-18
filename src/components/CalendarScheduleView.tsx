@@ -33,7 +33,6 @@ interface CalendarScheduleViewProps {
   followedList: FollowedPlayerConfig[];
   onSelectMatch: (match: Match) => void;
   onSelectPlayer?: (player: Player) => void;
-  onSyncScrapedMatches?: (newMatches: Match[]) => void;
   isSyncingMatches?: boolean;
   lastMatchSyncTime?: string | null;
   onRefreshMatches?: () => void;
@@ -71,7 +70,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   followedList,
   onSelectMatch,
   onSelectPlayer,
-  onSyncScrapedMatches,
   isSyncingMatches = false,
   lastMatchSyncTime = null,
   onRefreshMatches,
@@ -195,7 +193,13 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
     googleExportItems.forEach((item, idx) => {
       const url = getGoogleCalendarUrl(item.match, item.p1, item.p2);
       setTimeout(() => {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }, idx * 250);
     });
 
@@ -446,13 +450,13 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
               <p className="text-[11px] text-zinc-400 mt-0.5">
                 {isSyncingMatches ? (
                   <span className="text-amber-400 animate-pulse font-medium">
-                    日本将棋連盟（shogi.or.jp）から最新対局予定を取得中...
+                    SQLite DB（data/shogi.db）から対局予定を読み込み中...
                   </span>
                 ) : (
                   <span>
-                    全 <strong className="text-amber-300 font-bold">{matches.length}</strong> 局の公式戦日程を反映済み
+                    SQLite DB（data/shogi.db）より全 <strong className="text-amber-300 font-bold">{matches.length}</strong> 局を読み込み済み
                     {lastMatchSyncTime && (
-                      <span className="ml-1 text-zinc-400 font-mono">（最終同期: {lastMatchSyncTime}）</span>
+                      <span className="ml-1 text-zinc-400 font-mono">（最終読込: {lastMatchSyncTime}）</span>
                     )}
                   </span>
                 )}
@@ -461,6 +465,17 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            {onRefreshMatches && (
+              <button
+                onClick={onRefreshMatches}
+                disabled={isSyncingMatches}
+                className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold border border-zinc-700 transition flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-50"
+                title="SQLite DB（data/shogi.db）から対局予定を再読み込み"
+              >
+                <RefreshCw size={12} className={`text-emerald-400 ${isSyncingMatches ? 'animate-spin' : ''}`} />
+                <span>DB再読込</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 const info = getTodayInfo();

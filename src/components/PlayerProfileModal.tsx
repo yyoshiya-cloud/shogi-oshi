@@ -15,7 +15,6 @@ import {
   Heart,
   Trophy,
   ExternalLink,
-  Loader2,
   Filter,
   Settings2,
 } from 'lucide-react';
@@ -31,7 +30,6 @@ interface PlayerProfileModalProps {
   onToggleFollow?: (config: FollowedPlayerConfig) => void;
   onAddComment: (playerId: string, text: string) => void;
   onSelectMatch: (match: Match) => void;
-  onUpdatePlayer?: (player: Player) => void;
 }
 
 function formatWomenJunisenClass(player: Player): string {
@@ -74,14 +72,12 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   onToggleFollow,
   onAddComment,
   onSelectMatch,
-  onUpdatePlayer,
 }) => {
   if (!player) return null;
 
   const [activeTab, setActiveTab] = useState<'stats' | 'results' | 'matches'>('stats');
   const [commentInput, setCommentInput] = useState('');
   const [activePlayer, setActivePlayer] = useState<Player>(player);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [resultsFiscalYear, setResultsFiscalYear] = useState<number>(2026);
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
   const [resultsOutcomeFilter, setResultsOutcomeFilter] = useState<'all' | 'win' | 'loss'>('all');
@@ -115,80 +111,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       setActivePlayer(player);
     }
   }, [player, allPlayers, resultsRevision]);
-
-  // On-demand detail enrichment if official link is available and basic bio is missing
-  useEffect(() => {
-    const profileUrl = player.externalLinks?.officialProfile;
-    const isJSA = profileUrl && profileUrl.startsWith('https://www.shogi.or.jp/player/');
-    const isLPSA =
-      player.affiliation === 'LPSA' || (profileUrl && profileUrl.includes('joshi-shogi.com'));
-
-    if (
-      (!player.birthDate || !player.master || player.careerWins === 0) &&
-      (isJSA || isLPSA)
-    ) {
-      let isCancelled = false;
-      setLoadingDetails(true);
-
-      const targetUrl = isLPSA ? 'https://joshi-shogi.com/profile/' : profileUrl;
-      fetch(
-        `/api/players/profile-details?url=${encodeURIComponent(targetUrl)}&name=${encodeURIComponent(
-          player.name
-        )}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (!isCancelled && data.success && data.details) {
-            const d = data.details;
-            const updated: Player = {
-              ...player,
-              photoUrl: d.photoUrl || player.photoUrl,
-              danRank: d.danRank || player.danRank,
-              birthDate: d.birthDate || player.birthDate,
-              birthPlace: d.birthPlace || player.birthPlace,
-              master: d.master || player.master,
-              ryuoClass: d.ryuoClass || player.ryuoClass,
-              junisenClass: d.junisenClass || player.junisenClass,
-              currentYearWins:
-                d.currentYearWins !== undefined ? d.currentYearWins : player.currentYearWins,
-              currentYearLosses:
-                d.currentYearLosses !== undefined ? d.currentYearLosses : player.currentYearLosses,
-              currentYearWinRate:
-                d.currentYearWinRate !== undefined ? d.currentYearWinRate : player.currentYearWinRate,
-              currentYearStreak:
-                d.currentYearStreak !== undefined ? d.currentYearStreak : player.currentYearStreak,
-              totalTitles:
-                player.id === 'ito-takumi' || player.name.includes('伊藤 匠')
-                  ? 4
-                  : d.totalTitles !== undefined
-                  ? d.totalTitles
-                  : player.totalTitles,
-              titleHistory: d.titleHistory || player.titleHistory,
-              eiseiTitles: d.eiseiTitles || player.eiseiTitles,
-              highlights: d.highlights || player.highlights,
-              bloodType: d.bloodType || player.bloodType,
-              motto: d.motto || player.motto,
-              favPiece: d.favPiece || player.favPiece,
-              achievements: d.achievements || player.achievements,
-              shortBio:
-                d.shortBio && !isBoilerplateBio(d.shortBio)
-                  ? d.shortBio
-                  : (player.shortBio && !isBoilerplateBio(player.shortBio) ? player.shortBio : undefined),
-            };
-            setActivePlayer(updated);
-            onUpdatePlayer?.(updated);
-          }
-        })
-        .catch((err) => console.warn('Could not fetch player details:', err))
-        .finally(() => {
-          if (!isCancelled) setLoadingDetails(false);
-        });
-
-      return () => {
-        isCancelled = true;
-      };
-    }
-  }, [player.id, player.externalLinks?.officialProfile, player.name]);
 
   // Past and upcoming matches involving this player (sorted descending by date)
   const playerMatches = useMemo(() => {
@@ -440,12 +362,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                 <OshiBadgeTag badge={followedConfig.badge} size="sm" />
               </div>
             )}
-            {loadingDetails && (
-              <span className="text-[10px] text-amber-300 flex items-center gap-1 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
-                <Loader2 size={10} className="animate-spin" />
-                連盟データ同期中
-              </span>
-            )}
           </div>
 
           {/* Photo + Name row with Action Buttons on the right */}
@@ -655,12 +571,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
                     基本プロフィール情報
                   </h3>
-                  {loadingDetails && (
-                    <span className="text-[11px] text-amber-300 flex items-center gap-1.5 animate-pulse">
-                      <Loader2 size={11} className="animate-spin" />
-                      連盟・公式データ取得中...
-                    </span>
-                  )}
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">

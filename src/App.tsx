@@ -20,26 +20,12 @@ import {
   triggerPushNotification,
   deduplicateMatches,
   getStoredFiscalResults,
-  saveStoredFiscalResults,
   replaceStoredFiscalResults
 } from './utils/storage';
-import {
-  subscribeFollowedPlayers,
-  saveFollowedPlayerCloud,
-  removeFollowedPlayerCloud,
-  fetchPlayersFromCloud,
-  savePlayersToCloud,
-  fetchMatchesFromCloud,
-  saveMatchesToCloud,
-  fetchFiscalResultsFromCloud,
-  saveFiscalResultsToCloud,
-  isFirestoreQuotaExceeded
-} from './services/firebaseSync';
 import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString } from './utils/dateUtils';
-import { getPlayerTotalTitles } from './utils/titleUtils';
-import { formatPlayerName, normalizeAndCleanPlayersList, registerDynamicNameHistory } from './utils/playerUtils';
+import { normalizeAndCleanPlayersList, registerDynamicNameHistory } from './utils/playerUtils';
 import { initializePlayerRecords, updateMatchStatsData } from './utils/yearRecordsGenerator';
 import { clearPlayerMatchCache } from './services/shogiDbMatchEnrichment';
 import { OshiDashboard } from './components/OshiDashboard';
@@ -48,11 +34,8 @@ import { PlayerDirectory } from './components/PlayerDirectory';
 import { NotificationCenter } from './components/NotificationCenter';
 import { MatchDetailModal } from './components/MatchDetailModal';
 import { PlayerProfileModal } from './components/PlayerProfileModal';
-import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
-import { DataAuditModal } from './components/DataAuditModal';
 import { AdminDbModal } from './components/AdminDbModal';
-import { verifyAndRestoreDataIntegrity } from './services/dataIntegrityMiddleware';
 import {
   Heart,
   Calendar,
@@ -61,8 +44,6 @@ import {
   Sparkles,
   X,
   RefreshCw,
-  Cloud,
-  ShieldAlert,
   Database
 } from 'lucide-react';
 
@@ -109,70 +90,12 @@ export default function App() {
   const [activeHeadsUp, setActiveHeadsUp] = useState<PushNotificationItem | null>(null);
   const [calendarSubTab, setCalendarSubTab] = useState<'schedule' | 'results'>('schedule');
 
-  // Google Account & App Info states
-  const [googleUser, setGoogleUser] = useState<{ name: string; email: string; avatar: string } | null>(() => {
-    try {
-      const raw = localStorage.getItem('shogi_oshi_google_user');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.email === 'shogi.oshi.user@gmail.com' || !parsed.email) {
-          const actualUser = {
-            name: 'Y.Yoshiya',
-            email: 'y.yoshiya@gmail.com',
-            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-          };
-          localStorage.setItem('shogi_oshi_google_user', JSON.stringify(actualUser));
-          return actualUser;
-        }
-        return parsed;
-      }
-      // Default to actual user account
-      const defaultActualUser = {
-        name: 'Y.Yoshiya',
-        email: 'y.yoshiya@gmail.com',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      };
-      localStorage.setItem('shogi_oshi_google_user', JSON.stringify(defaultActualUser));
-      return defaultActualUser;
-    } catch {
-      return {
-        name: 'Y.Yoshiya',
-        email: 'y.yoshiya@gmail.com',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      };
-    }
-  });
-  const [showGoogleLoginModal, setShowGoogleLoginModal] = useState(false);
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
-  const [showDataAuditModal, setShowDataAuditModal] = useState(false);
   const [showAdminDbModal, setShowAdminDbModal] = useState(false);
 
-  const handleLoginGoogle = (user: { name: string; email: string; avatar: string }) => {
-    setGoogleUser(user);
-    try {
-      localStorage.setItem('shogi_oshi_google_user', JSON.stringify(user));
-    } catch {}
-    const accountFollowed = getStoredFollowed(user.email);
-    setFollowedList(accountFollowed);
-    setSyncToast(`Googleアカウント (${user.email}) に推し棋士・女流棋士データをリンクしました`);
-    setTimeout(() => setSyncToast(null), 4000);
-  };
-
-  const handleLogoutGoogle = () => {
-    setGoogleUser(null);
-    setFollowedList([]); // クリア
-    try {
-      localStorage.removeItem('shogi_oshi_google_user');
-    } catch {}
-    setSyncToast(`Googleアカウントからログアウトしました。推し棋士一覧をクリアしました。`);
-    setTimeout(() => setSyncToast(null), 3000);
-  };
-
-  // Auto-sync state
+  // SQLite DB read-only sync state
   const [isSyncingAll, setIsSyncingAll] = useState(false);
-  const [isSyncingPlayers, setIsSyncingPlayers] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(getStoredLastSync());
-  const [isSyncingMatches, setIsSyncingMatches] = useState(false);
   const [lastMatchSyncTime, setLastMatchSyncTime] = useState<string | null>(getStoredMatchLastSync());
   const [syncToast, setSyncToast] = useState<string | null>(null);
 
@@ -208,9 +131,16 @@ export default function App() {
           return initializedPlayers.find((p: Player) => p.id === cur.id) || cur;
         });
 
+        const now = new Date();
+        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        saveStoredLastSync(timeStr);
+        saveStoredMatchLastSync(timeStr);
+        setLastSyncTime(timeStr);
+        setLastMatchSyncTime(timeStr);
+
         if (showToast) {
           const mCount = Array.isArray(data.matches) ? data.matches.length : 0;
-          setSyncToast(`棋士・女流棋士DB（data/shogi.db）を反映しました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
+          setSyncToast(`SQLite DB（data/shogi.db）から最新データを読み込みました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
           setTimeout(() => setSyncToast(null), 4000);
         }
         return true;
@@ -223,215 +153,28 @@ export default function App() {
     }
   };
 
-  const handleSyncAllData = async (force = true) => {
+  const handleReloadFromSqlite = async () => {
     try {
       setIsSyncingAll(true);
-      setIsSyncingPlayers(true);
-      setIsSyncingMatches(true);
-      setSyncToast('連盟・LPSA公式から【全データ一括最新化】を実行中... (プロフィール/対局予定/対局結果)');
-
-      const res = await fetch(`/api/sync/all${force ? '?force=true' : ''}`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-
-      let playersCount = 0;
-      let matchesCount = 0;
-
-      if (data.success) {
-        // Hydrate directly from SQLite DB first so any DB-side edits / name history are preserved alongside freshly synced data
-        const dbHydrated = await hydrateFromSqliteDb(false);
-        if (!dbHydrated) {
-          if (data.players && data.players.success && Array.isArray(data.players.players)) {
-            const freshPlayers: Player[] = data.players.players;
-            playersCount = freshPlayers.length;
-            setPlayersList((prev) => {
-              const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
-              const merged = [...freshPlayers, ...customPlayers].map((p) => {
-                const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
-                return initializePlayerRecords(withTitles);
-              });
-              saveStoredPlayers(merged);
-              return merged;
-            });
-          }
-
-          if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
-            const freshMatches: Match[] = data.matches.matches;
-            setMatchesList((prev) => {
-              const merged = deduplicateMatches([...prev, ...freshMatches]);
-              saveStoredMatches(merged);
-              return merged;
-            });
-            matchesCount = freshMatches.length;
-          }
-
-          if (data.results2026) {
-            saveStoredFiscalResults(data.results2026);
-            updateMatchStatsData(data.results2026);
-            clearPlayerMatchCache();
-          }
-        } else {
-          playersCount = data.players?.count || 0;
-          matchesCount = data.matches?.count || 0;
-        }
-
-        const now = new Date();
-        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        saveStoredLastSync(timeStr);
-        saveStoredMatchLastSync(timeStr);
-        setLastSyncTime(timeStr);
-        setLastMatchSyncTime(timeStr);
-
-        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '44'}局、全対局結果を棋士・女流棋士DBに保存しました！`);
-        setTimeout(() => setSyncToast(null), 5000);
+      const ok = await hydrateFromSqliteDb(true);
+      if (!ok) {
+        setSyncToast('SQLite DB（data/shogi.db）からの読み込みに失敗しました');
+        setTimeout(() => setSyncToast(null), 3500);
       }
-    } catch (e) {
-      console.warn('Bulk sync error, executing parallel syncs:', e);
-      await Promise.all([handleSyncPlayers(force), handleSyncMatches(force)]);
     } finally {
       setIsSyncingAll(false);
-      setIsSyncingPlayers(false);
-      setIsSyncingMatches(false);
     }
   };
 
-  const handleSyncMatches = async (force = false) => {
-    try {
-      setIsSyncingMatches(true);
-      const res = await fetch(`/api/matches/sync${force ? '?force=true' : ''}`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.matches) && data.matches.length > 0) {
-        setMatchesList((prev) => {
-          const officialMatches: Match[] = data.matches;
-          const merged = deduplicateMatches([...prev, ...officialMatches]);
-          saveStoredMatches(merged);
-          return merged;
-        });
-
-        if (Array.isArray(data.discoveredPlayers) && data.discoveredPlayers.length > 0) {
-          setPlayersList((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const newDiscovered = data.discoveredPlayers.filter((p: Player) => !existingIds.has(p.id));
-            if (newDiscovered.length > 0) {
-              const updated = [...prev, ...newDiscovered];
-              saveStoredPlayers(updated);
-              return updated;
-            }
-            return prev;
-          });
-        }
-
-        const now = new Date();
-        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        saveStoredMatchLastSync(timeStr);
-        setLastMatchSyncTime(timeStr);
-
-        setSyncToast(`日本将棋連盟公式（shogi.or.jp）から最新対局予定 ${data.count}局 を反映しました`);
-        setTimeout(() => setSyncToast(null), 4000);
-      }
-    } catch (e) {
-      console.warn('Auto-sync matches notice:', e);
-    } finally {
-      setIsSyncingMatches(false);
-    }
-  };
-
-  const handleUpdatePlayer = (updatedPlayer: Player) => {
-    const verifiedTitles = getPlayerTotalTitles(updatedPlayer);
-    const playerToSave =
-      verifiedTitles > 0 && updatedPlayer.totalTitles !== verifiedTitles
-        ? { ...updatedPlayer, totalTitles: verifiedTitles }
-        : updatedPlayer;
-
-    setPlayersList((prev) => {
-      const idx = prev.findIndex((p) => p.id === playerToSave.id);
-      if (idx === -1) return prev;
-      const updated = [...prev];
-      updated[idx] = playerToSave;
-      saveStoredPlayers(updated);
-      if (!isFirestoreQuotaExceeded()) {
-        savePlayersToCloud(updated);
-      }
-      return updated;
-    });
-    if (selectedPlayer?.id === playerToSave.id) {
-      setSelectedPlayer(playerToSave);
-    }
-  };
-
-  const handleSyncPlayers = async (force = false) => {
-    try {
-      setIsSyncingPlayers(true);
-      const res = await fetch(`/api/players/sync${force ? '?force=true' : ''}`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.players) && data.players.length > 0) {
-        setPlayersList((prev) => {
-          // Keep custom added players
-          const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
-          const merged = [...data.players, ...customPlayers].map((p) => {
-            const cleanRank = (p.rank || '').replace(/[\(（](?:現役棋士|女流棋士|棋士)[\)）]/g, '').trim();
-            const cleanDan = (p.danRank === '現役棋士' || p.danRank === '女流棋士' || p.danRank === '棋士') ? undefined : p.danRank;
-            const withTitles = {
-              ...p,
-              rank: cleanRank || (p.type === 'women' ? '女流棋士' : '棋士'),
-              danRank: cleanDan,
-              totalTitles: (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? 4 : p.totalTitles,
-            };
-            return initializePlayerRecords(withTitles);
-          });
-          saveStoredPlayers(merged);
-          return merged;
-        });
-
-        const now = new Date();
-        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        saveStoredLastSync(timeStr);
-        setLastSyncTime(timeStr);
-
-        setSyncToast(`現役棋士${data.count}名の最新情報を自動保存しました（連盟・LPSA）`);
-        setTimeout(() => setSyncToast(null), 4000);
-      }
-    } catch (e) {
-      console.warn('Auto-sync players notice:', e);
-    } finally {
-      setIsSyncingPlayers(false);
-    }
-  };
-
-  // Load persisted state on mount & automatically trigger player auto-scraping
+  // Load local followed list & hydrate official data strictly from SQLite DB (data/shogi.db)
   useEffect(() => {
-    // 1. Verify dataset integrity on startup. Automatically restore from backup if corrupted/empty data detected.
-    const integrityReport = verifyAndRestoreDataIntegrity();
-    if (integrityReport.isRestored) {
-      const restoredPlayers = getStoredPlayers();
-      const restoredMatches = getStoredMatches();
-      const restoredFiscal = getStoredFiscalResults();
-      if (restoredPlayers && restoredPlayers.length > 0) {
-        setPlayersList(restoredPlayers);
-      }
-      if (restoredMatches && restoredMatches.length > 0) {
-        setMatchesList(restoredMatches);
-      }
-      if (restoredFiscal) {
-        updateMatchStatsData(restoredFiscal);
-      }
-      setSyncToast(
-        `【データ自動復旧】不審な空データを検知したためバックアップより自動復元しました（対局予定: ${integrityReport.matchesCount}件、対局結果: ${integrityReport.resultsCount}件）`
-      );
-      setTimeout(() => setSyncToast(null), 7000);
-    }
-
-    const followed = getStoredFollowed(googleUser?.email);
+    const followed = getStoredFollowed();
     setFollowedList(followed);
 
     const followedIds = new Set(followed.map((f) => f.playerId));
 
     const rawNotifs = getStoredNotifications(matchesList);
-    const synchronizedNotifs = rawNotifs;
-
-    const validNotifs = synchronizedNotifs.filter((n) => {
+    const validNotifs = rawNotifs.filter((n) => {
       if (n.playerId && !followedIds.has(n.playerId)) {
         return false;
       }
@@ -440,7 +183,6 @@ export default function App() {
     setNotifications(validNotifs);
     saveStoredNotifications(validNotifs);
 
-    // Initial check: if there's an unread today's match or match result notification for a followed player, show heads up preview
     const unread = validNotifs.find((n) => !n.read);
     if (unread) {
       setActiveHeadsUp(unread);
@@ -448,33 +190,9 @@ export default function App() {
       setActiveHeadsUp(null);
     }
 
-    // Primary data source: Integrated SQLite database (data/shogi.db)
-    const initializeFromDatabase = async () => {
-      const ok = await hydrateFromSqliteDb(false);
-      if (!ok) {
-        // Fallback if backend DB bootstrap failed or empty
-        await Promise.all([handleSyncPlayers(false), handleSyncMatches(false)]);
-      }
-    };
-    initializeFromDatabase();
+    // Read-only hydration from SQLite database (data/shogi.db)
+    hydrateFromSqliteDb(false);
   }, []);
-
-  // Cloud Firestore Real-time Multi-device Sync Effect
-  useEffect(() => {
-    if (!googleUser?.email || isFirestoreQuotaExceeded()) return;
-
-    const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-    // Attach real-time Firestore listener for multi-device sync
-    const unsubscribe = subscribeFollowedPlayers(cloudUserId, (remoteList) => {
-      setFollowedList(remoteList);
-      saveStoredFollowed(remoteList, googleUser.email);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [googleUser?.email]);
 
   const refreshNotifications = () => {
     const followedIds = new Set(followedList.map((f) => f.playerId));
@@ -508,95 +226,15 @@ export default function App() {
     setActiveHeadsUp(null);
   };
 
-  // Handler for importing scraped player
-  const handleImportScrapedPlayer = (newPlayer: Player) => {
-    setPlayersList((prev) => {
-      const exists = prev.some((p) => p.name === newPlayer.name || p.id === newPlayer.id);
-      if (exists) return prev;
-      return [newPlayer, ...prev];
-    });
-  };
-
-  // Handler for merging scraped matches
-  const handleSyncScrapedMatches = (scrapedMatches: Match[]) => {
-    setMatchesList((prev) => {
-      const existingIds = new Set(prev.map((m) => m.id));
-      const filteredNew = scrapedMatches.filter((m) => !existingIds.has(m.id));
-      return [...filteredNew, ...prev];
-    });
-  };
-
-  // Handler for updating a match (manual win/loss setting)
-  const handleUpdateMatch = (updatedMatch: Match) => {
-    setMatchesList((prev) => {
-      const updated = prev.map((m) => (m.id === updatedMatch.id ? updatedMatch : m));
-      saveStoredMatches(updated);
-      return updated;
-    });
-
-    // Also update corresponding ShogiMonthlyResult in fiscalResults if present
-    const currentFiscal = getStoredFiscalResults();
-    if (currentFiscal) {
-      let modified = false;
-      const nextFiscal: Record<string, ShogiMonthlyResult[]> = {};
-      for (const monthKey of Object.keys(currentFiscal)) {
-        const list = currentFiscal[monthKey] || [];
-        nextFiscal[monthKey] = list.map((r) => {
-          if (r.id !== updatedMatch.id) return r;
-          modified = true;
-          if (!updatedMatch.winnerId) {
-            return {
-              ...r,
-              senteMark: '',
-              goteMark: '',
-              winner: '',
-              loser: '',
-              winnerId: '',
-              loserId: '',
-            };
-          }
-          const isSenteWin =
-            updatedMatch.winnerId === updatedMatch.player1Id ||
-            updatedMatch.winnerId === updatedMatch.sentePlayerId ||
-            updatedMatch.winnerId === r.sentePlayerId;
-          return {
-            ...r,
-            senteMark: isSenteWin ? '○' : '●',
-            goteMark: isSenteWin ? '●' : '○',
-            winner: isSenteWin ? r.sente : r.gote,
-            loser: isSenteWin ? r.gote : r.sente,
-            winnerId: isSenteWin ? (r.sentePlayerId || updatedMatch.player1Id) : (r.gotePlayerId || updatedMatch.player2Id),
-            loserId: isSenteWin ? (r.gotePlayerId || updatedMatch.player2Id) : (r.sentePlayerId || updatedMatch.player1Id),
-          };
-        });
-      }
-      if (modified) {
-        saveStoredFiscalResults(nextFiscal);
-        updateMatchStatsData(nextFiscal);
-        clearPlayerMatchCache();
-        window.dispatchEvent(new Event('shogi_fiscal_results_updated'));
-      }
-    }
-
-    setSelectedMatch(updatedMatch);
-    setSyncToast(`【勝敗手動設定】${updatedMatch.tournament} の対局結果を更新しました。`);
-    setTimeout(() => setSyncToast(null), 3500);
-  };
-
-  // Handler when monthly results are updated/refreshed
-  const handleUpdateFiscalResults = (
-    updatedResults: Record<string, ShogiMonthlyResult[]>,
-    targetMonths?: string[]
+  // Handler when monthly results are reloaded from SQLite
+  const handleResultsReloaded = (
+    updatedResults: Record<string, ShogiMonthlyResult[]>
   ) => {
     updateMatchStatsData(updatedResults);
     clearPlayerMatchCache();
-    if (targetMonths && targetMonths.length > 0) {
-      saveFiscalResultsToCloud(updatedResults, targetMonths);
-    }
     setPlayersList((prev) => {
       const updated = prev.map((p) => initializePlayerRecords(p));
       saveStoredPlayers(updated);
-      savePlayersToCloud(updated);
       return updated;
     });
     setSelectedPlayer((cur) => {
@@ -605,13 +243,8 @@ export default function App() {
     });
   };
 
-  // Follow/unfollow handlers
+  // Follow/unfollow handlers (saved locally without Google account requirement)
   const handleToggleFollow = (config: FollowedPlayerConfig) => {
-    if (!googleUser) {
-      setSyncToast('推し棋士を登録するにはGoogleアカウントでログインしてください。');
-      setTimeout(() => setSyncToast(null), 3500);
-      return;
-    }
     const idx = followedList.findIndex((f) => f.playerId === config.playerId);
     let updated: FollowedPlayerConfig[];
     if (idx >= 0) {
@@ -621,13 +254,7 @@ export default function App() {
       updated = [...followedList, config];
     }
     setFollowedList(updated);
-    saveStoredFollowed(updated, googleUser?.email);
-
-    // Save directly to Cloud Firestore for multi-device sync
-    if (!isFirestoreQuotaExceeded() && googleUser?.email) {
-      const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
-      saveFollowedPlayerCloud(cloudUserId, config);
-    }
+    saveStoredFollowed(updated);
 
     const target = playersList.find((p) => p.id === config.playerId) || PLAYERS_DATA.find((p) => p.id === config.playerId);
     if (target) {
@@ -658,13 +285,7 @@ export default function App() {
   const handleRemoveFollow = (playerId: string) => {
     const updated = followedList.filter((f) => f.playerId !== playerId);
     setFollowedList(updated);
-    saveStoredFollowed(updated, googleUser?.email);
-
-    // Delete from Cloud Firestore for multi-device sync
-    if (!isFirestoreQuotaExceeded() && googleUser?.email) {
-      const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
-      removeFollowedPlayerCloud(cloudUserId, playerId);
-    }
+    saveStoredFollowed(updated);
 
     setSyncToast(`推し登録を解除しました`);
     setTimeout(() => setSyncToast(null), 3000);
@@ -692,13 +313,7 @@ export default function App() {
       };
       updated[idx] = updatedConfig;
       setFollowedList(updated);
-      saveStoredFollowed(updated, googleUser?.email);
-
-      // Save to Cloud Firestore for multi-device sync
-      if (!isFirestoreQuotaExceeded() && googleUser?.email) {
-        const cloudUserId = googleUser.email.replace(/[^a-zA-Z0-9_-]/g, '_');
-        saveFollowedPlayerCloud(cloudUserId, updatedConfig);
-      }
+      saveStoredFollowed(updated);
     }
   };
 
@@ -738,29 +353,29 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Bulk Sync All Data button - Icon-only mark design */}
+          {/* Reload all data strictly from SQLite DB (read-only) */}
           <button
-            onClick={() => handleSyncAllData(true)}
+            onClick={handleReloadFromSqlite}
             disabled={isSyncingAll}
-            aria-label="一括更新"
+            aria-label="SQLite読込"
             className={`h-9 w-9 rounded-xl border transition flex items-center justify-center cursor-pointer shadow-sm active:scale-95 ${
               isSyncingAll
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse'
                 : 'bg-zinc-900 hover:bg-zinc-850 text-amber-400 hover:text-amber-300 border-amber-500/30 hover:border-amber-500/60'
             }`}
-            title="公式対局予定・対局結果・全棋士プロフィールを最新データに一括更新"
+            title="SQLiteデータベース（data/shogi.db）から最新データを再読み込み"
           >
             <RefreshCw size={16} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Cloud Sync Status button - Opens Firebase synchronization modal */}
+          {/* Local Storage & SQLite Status button */}
           <button
-            onClick={() => setShowGoogleLoginModal(true)}
-            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-sky-400 hover:text-sky-300 border border-sky-500/30 hover:border-sky-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-            title="Firebase クラウド同期・移行ステータス"
+            onClick={() => setShowAppInfoModal(true)}
+            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            title="アプリ情報・SQLite DBステータス"
           >
-            <Cloud size={14} className="text-sky-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">クラウド同期</span>
+            <Database size={14} className="text-emerald-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">ローカル保存</span>
           </button>
 
           {/* Integrated Shogi DB Management Portal button (password-protected) */}
@@ -771,16 +386,6 @@ export default function App() {
           >
             <Database size={14} className="text-emerald-400 shrink-0" />
             <span className="text-[11px] sm:text-xs font-bold whitespace-nowrap">DB管理</span>
-          </button>
-
-          {/* Data Audit & Supplement Management button */}
-          <button
-            onClick={() => setShowDataAuditModal(true)}
-            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-            title="公式対局データの更新漏れ監査・補填・手動登録画面を開く"
-          >
-            <ShieldAlert size={14} className="text-amber-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">データ監査</span>
           </button>
 
           {/* Quick notification bell */}
@@ -821,8 +426,6 @@ export default function App() {
             followedList={followedList}
             players={playersList}
             matches={matchesList}
-            googleUser={googleUser}
-            onOpenGoogleLogin={() => setShowGoogleLoginModal(true)}
             onSelectPlayer={(p) => setSelectedPlayer(p)}
             onSelectMatch={(m) => setSelectedMatch(m)}
             onOpenDirectory={() => setActiveTab('directory')}
@@ -847,13 +450,12 @@ export default function App() {
             followedList={followedList}
             onSelectMatch={(m) => setSelectedMatch(m)}
             onSelectPlayer={(p) => setSelectedPlayer(p)}
-            onSyncScrapedMatches={handleSyncScrapedMatches}
-            isSyncingMatches={isSyncingMatches}
+            isSyncingMatches={isSyncingAll}
             lastMatchSyncTime={lastMatchSyncTime}
-            onRefreshMatches={() => handleSyncAllData(true)}
+            onRefreshMatches={handleReloadFromSqlite}
             activeSubTab={calendarSubTab}
             onChangeSubTab={(tab) => setCalendarSubTab(tab)}
-            onUpdateResults={handleUpdateFiscalResults}
+            onUpdateResults={handleResultsReloaded}
           />
         )}
 
@@ -864,15 +466,10 @@ export default function App() {
             onToggleFollow={handleToggleFollow}
             onRemoveFollow={handleRemoveFollow}
             onSelectPlayer={(p) => setSelectedPlayer(p)}
-            onImportScrapedPlayer={handleImportScrapedPlayer}
-            onUpdateAllPlayers={(updated) => {
-              setPlayersList(updated);
-              saveStoredPlayers(updated);
-            }}
-            onRefreshMatches={() => handleSyncAllData(true)}
-            isSyncingPlayers={isSyncingAll || isSyncingPlayers}
+            onRefreshMatches={handleReloadFromSqlite}
+            isSyncingPlayers={isSyncingAll}
             lastSyncTime={lastSyncTime}
-            onSyncPlayers={() => handleSyncAllData(true)}
+            onSyncPlayers={handleReloadFromSqlite}
             onOpenAdminDb={() => setShowAdminDbModal(true)}
           />
         )}
@@ -981,7 +578,10 @@ export default function App() {
             setSelectedMatch(null);
             setSelectedPlayer(p);
           }}
-          onUpdateMatch={handleUpdateMatch}
+          onOpenAdminDb={() => {
+            setSelectedMatch(null);
+            setShowAdminDbModal(true);
+          }}
         />
       )}
 
@@ -1000,28 +600,6 @@ export default function App() {
             setSelectedPlayer(null);
             setSelectedMatch(m);
           }}
-          onUpdatePlayer={handleUpdatePlayer}
-        />
-      )}
-
-      {/* Google Account Login & Firebase Cloud Sync Modal */}
-      {showGoogleLoginModal && (
-        <GoogleLoginModal
-          currentUser={googleUser}
-          followedList={followedList}
-          players={playersList}
-          matches={matchesList}
-          fiscalResults={getStoredFiscalResults()}
-          notifications={notifications}
-          lastSyncTime={lastSyncTime}
-          lastMatchSyncTime={lastMatchSyncTime}
-          onLogin={handleLoginGoogle}
-          onLogout={handleLogoutGoogle}
-          onClose={() => setShowGoogleLoginModal(false)}
-          onCloudDataMigrated={() => {
-            setSyncToast('Firebaseへの全データ完全移行・同期が完了しました');
-            setTimeout(() => setSyncToast(null), 4000);
-          }}
         />
       )}
 
@@ -1030,21 +608,6 @@ export default function App() {
         <AppInfoModal
           onClose={() => setShowAppInfoModal(false)}
           onOpenAdminDb={() => setShowAdminDbModal(true)}
-        />
-      )}
-
-      {/* Data Audit & Supplement Management Modal */}
-      {showDataAuditModal && (
-        <DataAuditModal
-          players={playersList}
-          onClose={() => setShowDataAuditModal(false)}
-          onUpdateResults={(updatedResults) => {
-            handleUpdateFiscalResults(updatedResults);
-          }}
-          onUpdatePlayers={(updatedPlayers) => {
-            setPlayersList(updatedPlayers);
-            saveStoredPlayers(updatedPlayers);
-          }}
         />
       )}
 

@@ -489,10 +489,10 @@ async function startServer() {
   });
 
   // =========================================================================
-  // EXISTING SCRAPING ROUTES (also sync back into SQLite data/shogi.db)
+  // ADMIN-ONLY SCRAPING ROUTES (sync back into SQLite data/shogi.db)
   // =========================================================================
 
-  app.get('/api/players/sync', async (req, res) => {
+  app.get('/api/players/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
       const result = await scrapeAllActivePlayers(force);
@@ -512,7 +512,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/matches/sync', async (req, res) => {
+  app.get('/api/matches/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
       const result = await scrapeMatchPlan(force);
@@ -532,7 +532,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/matches/results', async (req, res) => {
+  app.get('/api/matches/results', requireAdmin, async (req, res) => {
     try {
       const month = (req.query.month as string) || '202610';
       const force = req.query.force === 'true';
@@ -560,7 +560,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/sync/all', async (req, res) => {
+  app.get('/api/sync/all', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
       console.log(`[Bulk Sync All] Starting data synchronization (force=${force})...`);
@@ -608,7 +608,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/players/profile-details', async (req, res) => {
+  app.get('/api/players/profile-details', requireAdmin, async (req, res) => {
     try {
       const url = req.query.url as string;
       if (!url) {
