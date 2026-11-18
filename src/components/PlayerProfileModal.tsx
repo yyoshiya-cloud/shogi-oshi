@@ -474,6 +474,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   <h2 className="text-xl sm:text-2xl font-black font-serif-jp tracking-wider leading-tight">
                     {formatPlayerName(activePlayer.name)}
                   </h2>
+                  {activePlayer.formerName && (
+                    <span className="text-xs text-zinc-400 font-medium">
+                      （旧姓：{activePlayer.formerName}）
+                    </span>
+                  )}
                   <span className="text-xs sm:text-sm font-bold text-amber-300 font-serif-jp leading-tight">
                     {formatPlayerRankAndDan(activePlayer)}
                   </span>
@@ -893,35 +898,25 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               <div className="bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/30 rounded-2xl p-4 border border-amber-500/30 shadow-md">
                 {/* Fiscal Year Selection Buttons & ShogiDB2 Quick Search */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-zinc-800/80">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-zinc-300">年度切替:</span>
-                    <div className="inline-flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
-                      <button
-                        onClick={() => {
-                          setResultsFiscalYear(2026);
-                          setResultsMonthFilter('all');
-                        }}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                          resultsFiscalYear === 2026
-                            ? 'bg-amber-500 text-zinc-950 shadow-sm'
-                            : 'text-zinc-400 hover:text-zinc-200'
-                        }`}
-                      >
-                        2026年度
-                      </button>
-                      <button
-                        onClick={() => {
-                          setResultsFiscalYear(2025);
-                          setResultsMonthFilter('all');
-                        }}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                          resultsFiscalYear === 2025
-                            ? 'bg-amber-500 text-zinc-950 shadow-sm'
-                            : 'text-zinc-400 hover:text-zinc-200'
-                        }`}
-                      >
-                        2025年度
-                      </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-zinc-300 shrink-0">年度切替:</span>
+                    <div className="inline-flex flex-wrap rounded-xl bg-zinc-950 p-1 border border-zinc-800 gap-0.5">
+                      {[2026, 2025, 2024, 2023, 2022, 2021].map((fy) => (
+                        <button
+                          key={fy}
+                          onClick={() => {
+                            setResultsFiscalYear(fy);
+                            setResultsMonthFilter('all');
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            resultsFiscalYear === fy
+                              ? 'bg-amber-500 text-zinc-950 shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          {fy}年度
+                        </button>
+                      ))}
                     </div>
                   </div>
 

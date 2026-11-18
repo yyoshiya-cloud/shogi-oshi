@@ -20,13 +20,13 @@ import {
   triggerPushNotification,
   deduplicateMatches,
   getStoredFiscalResults,
-  saveStoredFiscalResults
+  saveStoredFiscalResults,
+  replaceStoredFiscalResults
 } from './utils/storage';
 import {
   subscribeFollowedPlayers,
   saveFollowedPlayerCloud,
   removeFollowedPlayerCloud,
-  testConnection,
   fetchPlayersFromCloud,
   savePlayersToCloud,
   fetchMatchesFromCloud,
@@ -39,7 +39,7 @@ import { AndroidFrame } from './components/AndroidFrame';
 import { isTodayOrResultNotification } from './utils/notificationFilter';
 import { getTodayDateString } from './utils/dateUtils';
 import { getPlayerTotalTitles } from './utils/titleUtils';
-import { formatPlayerName, normalizeAndCleanPlayersList } from './utils/playerUtils';
+import { formatPlayerName, normalizeAndCleanPlayersList, registerDynamicNameHistory } from './utils/playerUtils';
 import { initializePlayerRecords, updateMatchStatsData } from './utils/yearRecordsGenerator';
 import { clearPlayerMatchCache } from './services/shogiDbMatchEnrichment';
 import { OshiDashboard } from './components/OshiDashboard';
@@ -51,6 +51,7 @@ import { PlayerProfileModal } from './components/PlayerProfileModal';
 import { GoogleLoginModal } from './components/GoogleLoginModal';
 import { AppInfoModal } from './components/AppInfoModal';
 import { DataAuditModal } from './components/DataAuditModal';
+import { AdminDbModal } from './components/AdminDbModal';
 import { verifyAndRestoreDataIntegrity } from './services/dataIntegrityMiddleware';
 import {
   Heart,
@@ -61,7 +62,8 @@ import {
   X,
   RefreshCw,
   Cloud,
-  ShieldAlert
+  ShieldAlert,
+  Database
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -143,6 +145,7 @@ export default function App() {
   const [showGoogleLoginModal, setShowGoogleLoginModal] = useState(false);
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
   const [showDataAuditModal, setShowDataAuditModal] = useState(false);
+  const [showAdminDbModal, setShowAdminDbModal] = useState(false);
 
   const handleLoginGoogle = (user: { name: string; email: string; avatar: string }) => {
     setGoogleUser(user);
@@ -173,6 +176,53 @@ export default function App() {
   const [lastMatchSyncTime, setLastMatchSyncTime] = useState<string | null>(getStoredMatchLastSync());
   const [syncToast, setSyncToast] = useState<string | null>(null);
 
+  const hydrateFromSqliteDb = async (showToast = false): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/db/bootstrap');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data?.success) return false;
+
+      if (Array.isArray(data.nameHistory)) {
+        registerDynamicNameHistory(data.nameHistory);
+      }
+
+      if (data.fiscalResults && typeof data.fiscalResults === 'object' && Object.keys(data.fiscalResults).length > 0) {
+        updateMatchStatsData(data.fiscalResults);
+        replaceStoredFiscalResults(data.fiscalResults);
+        clearPlayerMatchCache();
+      }
+
+      if (Array.isArray(data.matches)) {
+        const dedupedMatches = deduplicateMatches(data.matches);
+        setMatchesList(dedupedMatches);
+        saveStoredMatches(dedupedMatches);
+      }
+
+      if (Array.isArray(data.players) && data.players.length > 0) {
+        const initializedPlayers = data.players.map((p: Player) => initializePlayerRecords(p));
+        setPlayersList(initializedPlayers);
+        saveStoredPlayers(initializedPlayers);
+        setSelectedPlayer((cur) => {
+          if (!cur) return null;
+          return initializedPlayers.find((p: Player) => p.id === cur.id) || cur;
+        });
+
+        if (showToast) {
+          const mCount = Array.isArray(data.matches) ? data.matches.length : 0;
+          setSyncToast(`棋士・女流棋士DB（data/shogi.db）を反映しました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
+          setTimeout(() => setSyncToast(null), 4000);
+        }
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.warn('SQLite DB bootstrap error:', err);
+      return false;
+    }
+  };
+
   const handleSyncAllData = async (force = true) => {
     try {
       setIsSyncingAll(true);
@@ -188,41 +238,41 @@ export default function App() {
       let matchesCount = 0;
 
       if (data.success) {
-        let freshPlayersMerged: Player[] = [];
-        if (data.players && data.players.success && Array.isArray(data.players.players)) {
-          const freshPlayers: Player[] = data.players.players;
-          playersCount = freshPlayers.length;
-          setPlayersList((prev) => {
-            const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
-            const merged = [...freshPlayers, ...customPlayers].map((p) => {
-              const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
-              return initializePlayerRecords(withTitles);
+        // Hydrate directly from SQLite DB first so any DB-side edits / name history are preserved alongside freshly synced data
+        const dbHydrated = await hydrateFromSqliteDb(false);
+        if (!dbHydrated) {
+          if (data.players && data.players.success && Array.isArray(data.players.players)) {
+            const freshPlayers: Player[] = data.players.players;
+            playersCount = freshPlayers.length;
+            setPlayersList((prev) => {
+              const customPlayers = prev.filter((p) => p.id.startsWith('custom-'));
+              const merged = [...freshPlayers, ...customPlayers].map((p) => {
+                const withTitles = (p.id === 'ito-takumi' || (p.name && p.name.includes('伊藤 匠'))) ? { ...p, totalTitles: 4 } : p;
+                return initializePlayerRecords(withTitles);
+              });
+              saveStoredPlayers(merged);
+              return merged;
             });
-            freshPlayersMerged = merged;
-            saveStoredPlayers(merged);
-            return merged;
-          });
-        }
-
-        let freshMatchesSaved: Match[] = [];
-        if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
-          const freshMatches: Match[] = data.matches.matches;
-          freshMatchesSaved = freshMatches;
-          setMatchesList((prev) => {
-            const merged = deduplicateMatches([...prev, ...freshMatches]);
-            saveStoredMatches(merged);
-            return merged;
-          });
-          matchesCount = freshMatches.length;
-        }
-
-        if (data.results2026) {
-          saveStoredFiscalResults(data.results2026);
-          updateMatchStatsData(data.results2026);
-          clearPlayerMatchCache();
-          if (data.updatedMonths && Array.isArray(data.updatedMonths) && data.updatedMonths.length > 0) {
-            saveFiscalResultsToCloud(data.results2026, data.updatedMonths);
           }
+
+          if (data.matches && data.matches.success && Array.isArray(data.matches.matches)) {
+            const freshMatches: Match[] = data.matches.matches;
+            setMatchesList((prev) => {
+              const merged = deduplicateMatches([...prev, ...freshMatches]);
+              saveStoredMatches(merged);
+              return merged;
+            });
+            matchesCount = freshMatches.length;
+          }
+
+          if (data.results2026) {
+            saveStoredFiscalResults(data.results2026);
+            updateMatchStatsData(data.results2026);
+            clearPlayerMatchCache();
+          }
+        } else {
+          playersCount = data.players?.count || 0;
+          matchesCount = data.matches?.count || 0;
         }
 
         const now = new Date();
@@ -232,17 +282,7 @@ export default function App() {
         setLastSyncTime(timeStr);
         setLastMatchSyncTime(timeStr);
 
-        // Also persist to Firebase Firestore if quota not exceeded
-        if (!isFirestoreQuotaExceeded()) {
-          if (freshPlayersMerged.length > 0) {
-            savePlayersToCloud(freshPlayersMerged, timeStr);
-          }
-          if (freshMatchesSaved.length > 0) {
-            saveMatchesToCloud(freshMatchesSaved, timeStr);
-          }
-        }
-
-        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '88'}局、全対局結果をFirebaseに反映しました！`);
+        setSyncToast(`【全データ一括更新完了】棋士・女流棋士${playersCount || '256'}名、対局予定${matchesCount || '44'}局、全対局結果を棋士・女流棋士DBに保存しました！`);
         setTimeout(() => setSyncToast(null), 5000);
       }
     } catch (e) {
@@ -408,82 +448,15 @@ export default function App() {
       setActiveHeadsUp(null);
     }
 
-    // Firebase Firestore Connection Test & Cloud Data Hydration
-    const hydrateAndSeedFirestore = async () => {
-      if (isFirestoreQuotaExceeded()) {
-        console.info('Firestore daily write quota reached; operating in local storage mode.');
-        return;
-      }
-      await testConnection();
-      try {
-        const [cloudPlayers, cloudMatches, cloudFiscal] = await Promise.all([
-          fetchPlayersFromCloud(),
-          fetchMatchesFromCloud(),
-          fetchFiscalResultsFromCloud(),
-        ]);
-
-        // 1. Players from Cloud
-        if (cloudPlayers && Array.isArray(cloudPlayers.players) && cloudPlayers.players.length > 0) {
-          const initialized = cloudPlayers.players.map(initializePlayerRecords);
-          setPlayersList(initialized);
-          saveStoredPlayers(initialized);
-          if (cloudPlayers.lastSyncTime) {
-            setLastSyncTime(cloudPlayers.lastSyncTime);
-            saveStoredLastSync(cloudPlayers.lastSyncTime);
-          }
-        }
-
-        // 2. Matches from Cloud
-        if (cloudMatches && Array.isArray(cloudMatches.matches) && cloudMatches.matches.length > 0) {
-          setMatchesList(cloudMatches.matches);
-          saveStoredMatches(cloudMatches.matches);
-          if (cloudMatches.lastSyncTime) {
-            setLastMatchSyncTime(cloudMatches.lastSyncTime);
-            saveStoredMatchLastSync(cloudMatches.lastSyncTime);
-          }
-        }
-
-        // 3. Fiscal results from Cloud
-        if (cloudFiscal && Object.keys(cloudFiscal).length > 0) {
-          for (const m of Object.keys(cloudFiscal)) {
-            if (Array.isArray(cloudFiscal[m])) {
-              cloudFiscal[m].forEach((r) => {
-                if (r.tournament && (/N\s*H\s*K杯/i.test(r.tournament) || /Ｎ\s*Ｈ\s*Ｋ杯/.test(r.tournament))) {
-                  r.tournament = 'NHK杯';
-                }
-              });
-            }
-          }
-          saveStoredFiscalResults(cloudFiscal);
-          updateMatchStatsData(cloudFiscal);
-          clearPlayerMatchCache();
-        }
-      } catch (err) {
-        console.warn('Initial cloud data sync note:', err);
+    // Primary data source: Integrated SQLite database (data/shogi.db)
+    const initializeFromDatabase = async () => {
+      const ok = await hydrateFromSqliteDb(false);
+      if (!ok) {
+        // Fallback if backend DB bootstrap failed or empty
+        await Promise.all([handleSyncPlayers(false), handleSyncMatches(false)]);
       }
     };
-
-    hydrateAndSeedFirestore();
-
-    const stored = getStoredPlayers();
-    const needsForceSync =
-      !stored ||
-      stored.length === 0 ||
-      !stored.some((p) => p.id === 'tanaka-saki') ||
-      stored.some(
-        (p) =>
-          (p.rank && p.rank.length > 25) ||
-          (p.rank && (p.rank.includes('１') || p.rank.includes('２'))) ||
-          (p.heldTitles && p.heldTitles.some((t) => t.includes('段') || t.includes('級')))
-      );
-    handleSyncPlayers(needsForceSync);
-
-    const storedMatches = getStoredMatches();
-    const needsMatchSync =
-      !storedMatches ||
-      storedMatches.length === 0 ||
-      storedMatches.some((m) => m.id.startsWith('match-live-') || m.id.startsWith('match-up-'));
-    handleSyncMatches(needsMatchSync);
+    initializeFromDatabase();
   }, []);
 
   // Cloud Firestore Real-time Multi-device Sync Effect
@@ -744,10 +717,10 @@ export default function App() {
       }}
     >
       {/* Top Application Bar */}
-      <header className="px-3.5 sm:px-6 py-2.5 bg-zinc-950/95 border-b border-zinc-800/80 sticky top-0 z-20 flex items-center justify-between gap-2.5 backdrop-blur-none">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <header className="px-2.5 sm:px-6 py-2.5 bg-zinc-950/95 border-b border-zinc-800/80 sticky top-0 z-20 flex items-center justify-between gap-1.5 sm:gap-2.5 backdrop-blur-none">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           {/* Shogi Koma App Logo Icon */}
-          <div className="relative w-10 h-10 rounded-2xl overflow-hidden shrink-0 border border-amber-500/30 shadow-md bg-zinc-900 group">
+          <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl overflow-hidden shrink-0 border border-amber-500/30 shadow-md bg-zinc-900 group">
             <img
               src="/icon-192.png"
               alt="将棋推し活アプリ"
@@ -755,16 +728,16 @@ export default function App() {
             />
           </div>
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-base font-black text-zinc-100 font-serif-jp tracking-wide truncate flex items-center gap-1.5">
+            <h1 className="text-xs sm:text-base font-black text-zinc-100 font-serif-jp tracking-wide truncate flex items-center gap-1.5">
               <span>将棋推し活アプリ</span>
             </h1>
-            <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">
+            <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate hidden sm:block">
               棋士・女流棋士 応援ナビ
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Bulk Sync All Data button - Icon-only mark design */}
           <button
             onClick={() => handleSyncAllData(true)}
@@ -787,7 +760,17 @@ export default function App() {
             title="Firebase クラウド同期・移行ステータス"
           >
             <Cloud size={14} className="text-sky-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">クラウド同期</span>
+            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">クラウド同期</span>
+          </button>
+
+          {/* Integrated Shogi DB Management Portal button (password-protected) */}
+          <button
+            onClick={() => setShowAdminDbModal(true)}
+            className="h-9 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 hover:text-emerald-200 border border-emerald-500/50 hover:border-emerald-400 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
+            title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
+          >
+            <Database size={14} className="text-emerald-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold whitespace-nowrap">DB管理</span>
           </button>
 
           {/* Data Audit & Supplement Management button */}
@@ -797,7 +780,7 @@ export default function App() {
             title="公式対局データの更新漏れ監査・補填・手動登録画面を開く"
           >
             <ShieldAlert size={14} className="text-amber-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden sm:inline">データ監査</span>
+            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">データ監査</span>
           </button>
 
           {/* Quick notification bell */}
@@ -851,6 +834,7 @@ export default function App() {
               setCalendarSubTab('results');
               setActiveTab('calendar');
             }}
+            onOpenAdminDb={() => setShowAdminDbModal(true)}
             onRemoveFollow={handleRemoveFollow}
             onToggleFollow={handleToggleFollow}
           />
@@ -889,6 +873,7 @@ export default function App() {
             isSyncingPlayers={isSyncingAll || isSyncingPlayers}
             lastSyncTime={lastSyncTime}
             onSyncPlayers={() => handleSyncAllData(true)}
+            onOpenAdminDb={() => setShowAdminDbModal(true)}
           />
         )}
 
@@ -896,7 +881,7 @@ export default function App() {
 
       {/* Android Bottom Navigation Bar (Material 3 style) */}
       <nav className="fixed sm:sticky bottom-0 left-0 right-0 z-30 bg-zinc-950 border-t border-zinc-800/80 px-2 py-1.5">
-        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+        <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
           {/* Dashboard Tab */}
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -957,6 +942,18 @@ export default function App() {
               <Users size={20} />
             </div>
             <span className="text-[10px] mt-0.5">棋士名鑑</span>
+          </button>
+
+          {/* Integrated DB Management Button (Password-Protected) */}
+          <button
+            onClick={() => setShowAdminDbModal(true)}
+            className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition text-emerald-400 hover:text-emerald-300"
+            title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
+          >
+            <div className="p-1 rounded-xl bg-emerald-500/20 text-emerald-400">
+              <Database size={20} />
+            </div>
+            <span className="text-[10px] mt-0.5 font-bold text-emerald-400">DB管理</span>
           </button>
 
           {/* App Info & Features Button */}
@@ -1030,7 +1027,10 @@ export default function App() {
 
       {/* App Info & Features Modal */}
       {showAppInfoModal && (
-        <AppInfoModal onClose={() => setShowAppInfoModal(false)} />
+        <AppInfoModal
+          onClose={() => setShowAppInfoModal(false)}
+          onOpenAdminDb={() => setShowAdminDbModal(true)}
+        />
       )}
 
       {/* Data Audit & Supplement Management Modal */}
@@ -1044,6 +1044,16 @@ export default function App() {
           onUpdatePlayers={(updatedPlayers) => {
             setPlayersList(updatedPlayers);
             saveStoredPlayers(updatedPlayers);
+          }}
+        />
+      )}
+
+      {/* Password-Protected Integrated Shogi DB Management Portal */}
+      {showAdminDbModal && (
+        <AdminDbModal
+          onClose={() => setShowAdminDbModal(false)}
+          onDatabaseUpdated={async () => {
+            await hydrateFromSqliteDb(true);
           }}
         />
       )}

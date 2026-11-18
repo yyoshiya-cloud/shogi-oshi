@@ -216,10 +216,11 @@ export function getStoredPlayers(): Player[] {
 export function saveStoredPlayers(data: Player[]): void {
   try {
     pruneOldStorage();
-    // Save lightweight delta containing only dynamic and stats fields to keep size under 25KB
+    // Save lightweight delta containing dynamic, profile override, and stats fields
     const slim = data.map((p) => ({
       id: p.id,
       name: p.name,
+      formerName: p.formerName,
       currentYearWins: p.currentYearWins,
       currentYearLosses: p.currentYearLosses,
       currentYearWinRate: p.currentYearWinRate,
@@ -228,10 +229,14 @@ export function saveStoredPlayers(data: Player[]): void {
       careerWinRate: p.careerWinRate,
       yearRecords: p.yearRecords,
       rank: p.rank,
+      danRank: p.danRank,
       heldTitles: p.heldTitles,
       totalTitles: p.totalTitles,
       junisenClass: p.junisenClass,
       ryuoClass: p.ryuoClass,
+      photoUrl: p.photoUrl,
+      shortBio: p.shortBio,
+      highlights: p.highlights,
     }));
     localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(slim));
   } catch {
@@ -444,7 +449,12 @@ export async function triggerPushNotification(
   return newItem;
 }
 
+let memoryFiscalResults: Record<string, ShogiMonthlyResult[]> | null = null;
+
 export function getStoredFiscalResults(): Record<string, ShogiMonthlyResult[]> {
+  if (memoryFiscalResults) {
+    return memoryFiscalResults;
+  }
   const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.RESULTS_2026);
@@ -455,40 +465,67 @@ export function getStoredFiscalResults(): Record<string, ShogiMonthlyResult[]> {
   }
 }
 
-export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[]>): void {
+export function replaceStoredFiscalResults(data: Record<string, ShogiMonthlyResult[]>): void {
+  const enriched = enrichAllResultsWithSupplements(data || {});
+  memoryFiscalResults = enriched;
   try {
     pruneOldStorage();
-    const base = results2026Json as Record<string, ShogiMonthlyResult[]>;
-    let existingDelta: Record<string, ShogiMonthlyResult[]> = {};
-    const raw = localStorage.getItem(STORAGE_KEYS.RESULTS_2026);
-    if (raw) {
-      try {
-        existingDelta = JSON.parse(raw);
-      } catch {}
-    }
-
-    const mergedDelta: Record<string, ShogiMonthlyResult[]> = { ...existingDelta };
-    for (const key of Object.keys(data)) {
-      if (data[key] && Array.isArray(data[key])) {
-        const existingList = mergedDelta[key] || base[key] || [];
-        const map = new Map<string, ShogiMonthlyResult>();
-        for (const item of existingList) {
-          if (item && item.id) map.set(item.id, item);
-        }
-        for (const item of data[key]) {
-          if (item && item.id) map.set(item.id, item);
-        }
-        mergedDelta[key] = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+    localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(enriched));
+  } catch {
+    // If 70 months of FY2021-2026 exceed 5MB localStorage, keep full dataset in memoryFiscalResults
+    try {
+      const recentOnly: Record<string, ShogiMonthlyResult[]> = {};
+      for (const k of Object.keys(enriched)) {
+        if (k >= '202504') recentOnly[k] = enriched[k];
       }
-    }
+      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(recentOnly));
+    } catch {}
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('shogi_results_updated', { detail: enriched }));
+    window.dispatchEvent(new Event('shogi_fiscal_results_updated'));
+  }
+}
 
-    if (Object.keys(mergedDelta).length > 0) {
-      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(mergedDelta));
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('shogi_results_updated', { detail: mergedDelta }));
+export function saveStoredFiscalResults(data: Record<string, ShogiMonthlyResult[]>): void {
+  const current = getStoredFiscalResults();
+  const merged: Record<string, ShogiMonthlyResult[]> = { ...current };
+
+  for (const key of Object.keys(data)) {
+    if (data[key] && Array.isArray(data[key])) {
+      const existingList = merged[key] || [];
+      const map = new Map<string, ShogiMonthlyResult>();
+      for (const item of existingList) {
+        if (item && item.id) map.set(item.id, item);
       }
+      for (const item of data[key]) {
+        if (item && item.id) map.set(item.id, item);
+      }
+      merged[key] = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
     }
-  } catch {}
+  }
+
+  memoryFiscalResults = merged;
+
+  try {
+    pruneOldStorage();
+    if (Object.keys(merged).length > 0) {
+      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(merged));
+    }
+  } catch {
+    try {
+      const recentOnly: Record<string, ShogiMonthlyResult[]> = {};
+      for (const k of Object.keys(merged)) {
+        if (k >= '202504') recentOnly[k] = merged[k];
+      }
+      localStorage.setItem(STORAGE_KEYS.RESULTS_2026, JSON.stringify(recentOnly));
+    } catch {}
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('shogi_results_updated', { detail: merged }));
+    window.dispatchEvent(new Event('shogi_fiscal_results_updated'));
+  }
 }
 
 export function getStoredFiscalResultsLastSync(): string | null {

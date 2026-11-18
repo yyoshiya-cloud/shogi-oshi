@@ -4,9 +4,10 @@ import { Sparkles, Trophy, Heart, Calendar, Users, Bell, X, ExternalLink, Trendi
 
 interface AppInfoModalProps {
   onClose: () => void;
+  onOpenAdminDb?: () => void;
 }
 
-export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
+export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose, onOpenAdminDb }) => {
   // Lock body scroll while modal is active
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -221,11 +222,22 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Footer Close */}
-        <div className="pt-2">
+        {/* Footer Actions */}
+        <div className="pt-2 space-y-2">
+          {onOpenAdminDb && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenAdminDb();
+              }}
+              className="w-full py-2.5 rounded-2xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/50 text-emerald-300 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>棋士・女流棋士DB 管理画面を開く（パスワード保護）</span>
+            </button>
+          )}
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs shadow-lg transition"
+            className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs shadow-lg transition cursor-pointer"
           >
             閉じる
           </button>

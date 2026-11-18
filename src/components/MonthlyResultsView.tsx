@@ -100,7 +100,7 @@ export function getDisplayLinks(result: ShogiMonthlyResult): { title: string; ur
 export function getFiscalYearsList(): { year: number; label: string; short: string }[] {
   const now = new Date();
   const currentFY = (now.getMonth() + 1) >= 4 ? now.getFullYear() : now.getFullYear() - 1;
-  const yearSet = new Set<number>([currentFY, 2026, 2025]);
+  const yearSet = new Set<number>([currentFY, 2026, 2025, 2024, 2023, 2022, 2021]);
   const years = Array.from(yearSet).sort((a, b) => b - a);
   return years.map((y) => ({
     year: y,
@@ -363,8 +363,8 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
   // Listen for storage updates
   useEffect(() => {
     const handleResultsUpdated = (e: any) => {
-      if (e.detail) {
-        setMonthlyData((prev) => ({ ...prev, ...e.detail }));
+      if (e.detail && typeof e.detail === 'object') {
+        setMonthlyData(e.detail);
       }
     };
     window.addEventListener('shogi_results_updated', handleResultsUpdated);

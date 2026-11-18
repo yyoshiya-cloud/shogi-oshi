@@ -17,7 +17,8 @@ import {
   ChevronRight,
   RefreshCw,
   AlertCircle,
-  X
+  X,
+  Database
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -29,6 +30,7 @@ interface PlayerDirectoryProps {
   onSelectPlayer: (player: Player) => void;
   onImportScrapedPlayer?: (player: Player) => void;
   onUpdateAllPlayers?: (players: Player[]) => void;
+  onOpenAdminDb?: () => void;
   isSyncingPlayers?: boolean;
   lastSyncTime?: string | null;
   onSyncPlayers?: (force?: boolean) => void;
@@ -359,6 +361,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   onSelectPlayer,
   onImportScrapedPlayer,
   onUpdateAllPlayers,
+  onOpenAdminDb,
   isSyncingPlayers = false,
   lastSyncTime,
   onSyncPlayers,
@@ -479,6 +482,16 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
               日本将棋連盟・LPSA所属プロの公式戦通算成績、獲得タイトル、戦型データを網羅
             </p>
           </div>
+          {onOpenAdminDb && (
+            <button
+              onClick={onOpenAdminDb}
+              className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition flex items-center gap-2 shrink-0 cursor-pointer shadow-sm active:scale-95"
+              title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
+            >
+              <Database size={15} className="text-emerald-400" />
+              <span>DB管理・氏名変更</span>
+            </button>
+          )}
         </div>
       </div>
 

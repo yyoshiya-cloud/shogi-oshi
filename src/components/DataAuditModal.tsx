@@ -208,6 +208,38 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
     }
   };
 
+  // Trigger Backend Sync Worker via API
+  const handleRunBackendSyncWorker = async () => {
+    try {
+      setIsProcessing(true);
+      setStatusMessage('バックエンド同期ワーカーを実行中（全棋士・対局予定・月別結果の最新スクレイピング & クラウド同期）...');
+
+      const res = await fetch('/api/sync/all?force=true');
+      if (!res.ok) throw new Error(`HTTP Status ${res.status}`);
+      const json = await res.json();
+
+      if (json.success && json.results2026) {
+        const updatedFiscal = json.results2026;
+        setFiscalData(updatedFiscal);
+        saveStoredFiscalResults(updatedFiscal);
+        updateMatchStatsData(updatedFiscal);
+        clearPlayerMatchCache();
+
+        await saveFiscalResultsToCloud(updatedFiscal);
+        onUpdateResults?.(updatedFiscal);
+
+        setStatusMessage(`バックエンド同期ワーカーの実行が完了しました！ (プレイヤー数: ${json.players?.count || 0}名, 予定数: ${json.matches?.count || 0}件)`);
+      } else {
+        setStatusMessage('バックエンド同期ワーカーは正常に完了しましたが、返却データが空でした。');
+      }
+    } catch (err: any) {
+      setStatusMessage(`ワーカー実行エラー: ${err?.message || err}`);
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => setStatusMessage(null), 6000);
+    }
+  };
+
   // Add a manual match
   const handleAddManualMatch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -709,6 +741,24 @@ export const DataAuditModal: React.FC<DataAuditModalProps> = ({
                       全棋士成績を再計算・同期
                     </button>
                   </div>
+                </div>
+
+                <div className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2 mt-3">
+                  <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                    <Zap size={14} />
+                    <span>3. バックエンド同期ワーカーの即時実行 (全自動一括スクレイピング)</span>
+                  </h4>
+                  <p className="text-[11px] text-zinc-400">
+                    スタンドアロン・バックエンド同期ワーカーの全機能（公式プレイヤー、対局予定、全月間対局結果の最新スクレイピング・補填統合・統計再計算）をダッシュボードから直接実行・クラウド同期します。
+                  </p>
+                  <button
+                    onClick={handleRunBackendSyncWorker}
+                    disabled={isProcessing}
+                    className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs rounded-xl transition cursor-pointer shadow-md disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw size={14} className={isProcessing ? 'animate-spin' : ''} />
+                    <span>バックエンド同期ワーカーを今すぐ実行</span>
+                  </button>
                 </div>
               </div>
 

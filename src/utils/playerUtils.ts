@@ -157,7 +157,33 @@ export function formatBirthDateWithAge(birthDateStr?: string | null): string {
   return clean;
 }
 
-import { Player } from '../types/shogi';
+import { Player, PlayerNameHistoryItem } from '../types/shogi';
+
+const dynamicNameToPlayerId = new Map<string, string>();
+const dynamicPlayerToOldNames = new Map<string, Set<string>>();
+
+export function registerDynamicNameHistory(history: PlayerNameHistoryItem[]): void {
+  dynamicNameToPlayerId.clear();
+  dynamicPlayerToOldNames.clear();
+  if (!Array.isArray(history)) return;
+  for (const h of history) {
+    if (!h.playerId || !h.oldName) continue;
+    const normOld = normalizeShogiPlayerNameForMatch(h.oldName);
+    if (normOld) {
+      dynamicNameToPlayerId.set(normOld, h.playerId);
+    }
+    if (!dynamicPlayerToOldNames.has(h.playerId)) {
+      dynamicPlayerToOldNames.set(h.playerId, new Set());
+    }
+    dynamicPlayerToOldNames.get(h.playerId)!.add(h.oldName);
+    if (normOld) dynamicPlayerToOldNames.get(h.playerId)!.add(normOld);
+  }
+}
+
+export function getHistoricalNamesForPlayer(playerId: string): string[] {
+  const set = dynamicPlayerToOldNames.get(playerId);
+  return set ? Array.from(set) : [];
+}
 
 export function isPlayerOnLeave(player: { highlights?: string[]; shortBio?: string; name?: string }): boolean {
   if (player.highlights && player.highlights.some(h => h.includes('休場'))) return true;
@@ -265,6 +291,7 @@ export function applyPlayerOverrides(p: Player): Player {
       shortBio: '現在は休場中。',
     };
   }
+
   if (nameClean.includes('中倉宏美')) {
     return {
       ...p,
@@ -547,6 +574,27 @@ export function resolvePlayer(id: string | undefined, players: Player[]): Player
       return pNorm === normTarget;
     });
     if (byNorm) return byNorm;
+
+    // Former name match (e.g. 里見香奈 -> 福間香奈)
+    const byFormerName = players.find((p) => p.formerName && normalizeShogiPlayerNameForMatch(p.formerName) === normTarget);
+    if (byFormerName) return byFormerName;
+
+    // Dynamic DB player_name_history lookup
+    const mappedPlayerId = dynamicNameToPlayerId.get(normTarget);
+    if (mappedPlayerId) {
+      const byHistId = players.find((p) => p.id === mappedPlayerId);
+      if (byHistId) return byHistId;
+    }
+  }
+
+  const KNOWN_NAME_CHANGES: Record<string, string> = {
+    '里見香奈': '福間香奈',
+    '里見': '福間',
+  };
+  const mappedName = KNOWN_NAME_CHANGES[clean] || KNOWN_NAME_CHANGES[normTarget];
+  if (mappedName) {
+    const byMapped = players.find((p) => p.name.replace(/\s+/g, '') === mappedName || normalizeShogiPlayerNameForMatch(p.name) === normalizeShogiPlayerNameForMatch(mappedName));
+    if (byMapped) return byMapped;
   }
 
   // 5. Fallback safe Player object

@@ -11,7 +11,7 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        injectRegister: null,
         includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'],
         manifest: ({
           id: '/',
@@ -63,9 +63,12 @@ export default defineConfig(() => {
         } as any),
         workbox: {
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
         },
         devOptions: {
-          enabled: true,
+          enabled: false,
         },
       }),
     ],

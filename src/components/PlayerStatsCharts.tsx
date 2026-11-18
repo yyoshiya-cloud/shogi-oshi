@@ -108,6 +108,7 @@ export const PlayerYearlyChartSvg: React.FC<PlayerYearlyChartSvgProps> = ({
           selectedYearIndex === index ||
           (selectedYearIndex === null && index === 0);
         const isPreDebut = item.isPreDebut === true;
+        const isLeave = item.isLeave === true;
 
         const winHeight = item.wins > 0 ? Math.max(2, (item.wins / ceilingVal) * plotH) : 0;
         const winY = bottomY - winHeight;
@@ -157,6 +158,27 @@ export const PlayerYearlyChartSvg: React.FC<PlayerYearlyChartSvgProps> = ({
                   textAnchor="middle"
                 >
                   プロ前
+                </text>
+              </g>
+            ) : isLeave ? (
+              <g>
+                <line
+                  x1={groupCenterX - (isZoomed ? 12 : 8)}
+                  y1={bottomY - (isZoomed ? 16 : 12)}
+                  x2={groupCenterX + (isZoomed ? 12 : 8)}
+                  y2={bottomY - (isZoomed ? 16 : 12)}
+                  stroke="#f59e0b"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <text
+                  x={groupCenterX}
+                  y={bottomY - (isZoomed ? 26 : 20)}
+                  fill="#fbbf24"
+                  fontSize={isZoomed ? '10' : '8'}
+                  textAnchor="middle"
+                >
+                  休場
                 </text>
               </g>
             ) : (
@@ -479,6 +501,7 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                       : effectiveYearRecords[0];
                   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
                   const isPreDebut = activeRecord?.isPreDebut === true;
+                  const isLeave = activeRecord?.isLeave === true;
                   const isZeroGames = totalGames === 0;
 
                   return (
@@ -494,6 +517,8 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                         )}
                         {isPreDebut ? (
                           <span className="text-zinc-400 font-medium">プロ入り前（公式戦未出場）</span>
+                        ) : isLeave ? (
+                          <span className="text-amber-400 font-medium">公式戦休場（1年間休場）</span>
                         ) : isZeroGames ? (
                           <span className="text-zinc-400 font-medium">
                             総対局数 <strong className="text-white text-sm font-bold">0</strong> 局
@@ -509,6 +534,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                         {isPreDebut ? (
                           <span className="px-2.5 py-1 rounded-lg bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                             奨励会・研修会等在籍期間
+                          </span>
+                        ) : isLeave ? (
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-medium text-xs">
+                            公式戦休場中
                           </span>
                         ) : isZeroGames ? (
                           <div className="px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-400 font-medium text-xs">
@@ -633,12 +662,13 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                             (selectedYearIndex === null && originalIdx === 0);
                           const total = r.wins + r.losses;
                           const isPreDebut = r.isPreDebut === true;
+                          const isLeave = r.isLeave === true;
                           const isZeroGames = total === 0;
                           const activeRates = effectiveYearRecords
-                            .filter((item) => item.wins + item.losses > 0 && !item.isPreDebut)
+                            .filter((item) => item.wins + item.losses > 0 && !item.isPreDebut && !item.isLeave)
                             .map((item) => item.rate);
                           const isBestRate =
-                            !isPreDebut && !isZeroGames && activeRates.length > 0 && r.rate === Math.max(...activeRates);
+                            !isPreDebut && !isLeave && !isZeroGames && activeRates.length > 0 && r.rate === Math.max(...activeRates);
 
                           return (
                             <tr
@@ -672,21 +702,21 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                 </span>
                               </td>
                               <td className="py-2 px-3 text-center font-medium">
-                                {isPreDebut ? (
+                                {isPreDebut || isLeave ? (
                                   <span className="text-zinc-500">－</span>
                                 ) : (
                                   total
                                 )}
                               </td>
                               <td className="py-2 px-3 text-center font-bold">
-                                {isPreDebut ? (
+                                {isPreDebut || isLeave ? (
                                   <span className="text-zinc-600 font-normal">－</span>
                                 ) : (
                                   <span className="text-emerald-400">{r.wins}</span>
                                 )}
                               </td>
                               <td className="py-2 px-3 text-center font-bold">
-                                {isPreDebut ? (
+                                {isPreDebut || isLeave ? (
                                   <span className="text-zinc-600 font-normal">－</span>
                                 ) : (
                                   <span className="text-rose-400">{r.losses}</span>
@@ -696,6 +726,10 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
                                 {isPreDebut ? (
                                   <span className="text-zinc-500 font-sans text-[11px] font-normal">
                                     － (プロ入り前)
+                                  </span>
+                                ) : isLeave ? (
+                                  <span className="text-amber-400 font-sans text-[11px] font-bold">
+                                    休場
                                   </span>
                                 ) : isZeroGames ? (
                                   <span className="text-zinc-500 font-sans text-[11px] font-normal">
@@ -919,6 +953,7 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
       : records[0];
   const totalGames = activeRecord ? activeRecord.wins + activeRecord.losses : 0;
   const isPreDebut = activeRecord?.isPreDebut === true;
+  const isLeave = activeRecord?.isLeave === true;
   const isZeroGames = totalGames === 0;
 
   return createPortal(
@@ -1026,6 +1061,10 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
               <span className="text-zinc-400 font-medium text-sm">
                 プロ入り前（公式戦未出場）
               </span>
+            ) : isLeave ? (
+              <span className="text-amber-400 font-medium text-sm">
+                公式戦休場（1年間休場）
+              </span>
             ) : isZeroGames ? (
               <span className="text-zinc-400 font-medium text-sm">
                 総対局数 <strong className="text-white text-base font-bold">0</strong> 局
@@ -1040,6 +1079,10 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
             {isPreDebut ? (
               <span className="px-3 py-1.5 rounded-xl bg-zinc-800/60 border border-zinc-700/60 text-zinc-400 font-medium text-xs">
                 奨励会・研修会等在籍期間
+              </span>
+            ) : isLeave ? (
+              <span className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-medium text-xs">
+                公式戦休場中
               </span>
             ) : isZeroGames ? (
               <div className="bg-zinc-950/80 px-3.5 py-1.5 rounded-xl border border-zinc-800 text-zinc-400 font-medium text-xs">

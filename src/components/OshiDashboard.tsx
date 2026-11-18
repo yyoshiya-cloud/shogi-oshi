@@ -9,7 +9,9 @@ import {
   Calendar,
   Trophy,
   ChevronRight,
-  Plus
+  Plus,
+  Database,
+  Lock
 } from 'lucide-react';
 
 interface OshiDashboardProps {
@@ -23,6 +25,7 @@ interface OshiDashboardProps {
   onOpenDirectory: () => void;
   onOpenCalendar: () => void;
   onOpenResults?: () => void;
+  onOpenAdminDb?: () => void;
   onRemoveFollow: (playerId: string) => void;
   onToggleFollow?: (config: FollowedPlayerConfig) => void;
 }
@@ -45,6 +48,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   onOpenDirectory,
   onOpenCalendar,
   onOpenResults,
+  onOpenAdminDb,
   onRemoveFollow,
   onToggleFollow,
 }) => {
@@ -182,7 +186,37 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
         )}
       </div>
 
-
+      {/* 棋士・女流棋士DB 統合管理画面 Top Banner */}
+      {onOpenAdminDb && (
+        <div
+          onClick={onOpenAdminDb}
+          className="cursor-pointer bg-gradient-to-r from-emerald-950/40 via-zinc-900/90 to-zinc-900 rounded-2xl p-3.5 sm:p-4 border border-emerald-500/40 hover:border-emerald-400 transition flex items-center justify-between group shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shrink-0">
+              <Database size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                  <Lock size={10} />
+                  パスワード保護
+                </span>
+                <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-emerald-300 transition">
+                  棋士・女流棋士DB 管理画面
+                </h4>
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                SQLite（data/shogi.db）の2021〜2026年度成績・公式日程・改姓履歴・バックアップ復元
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold group-hover:translate-x-1 transition shrink-0 ml-2">
+            <span>管理画面を開く</span>
+            <ChevronRight size={16} />
+          </div>
+        </div>
+      )}
 
       {/* 2026年 公式対局結果 Quick Banner */}
       <div
@@ -430,13 +464,13 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
       </div>
 
       {/* Quick Shortcuts Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
         <button
           onClick={onOpenCalendar}
           className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 transition flex items-center justify-between text-left group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
               <Calendar size={20} />
             </div>
             <div>
@@ -448,7 +482,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
               </p>
             </div>
           </div>
-          <ChevronRight size={18} className="text-zinc-500 group-hover:text-amber-400 transition" />
+          <ChevronRight size={18} className="text-zinc-500 group-hover:text-amber-400 transition shrink-0" />
         </button>
 
         <button
@@ -456,7 +490,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
           className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 transition flex items-center justify-between text-left group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
               <Heart size={20} />
             </div>
             <div>
@@ -468,8 +502,31 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
               </p>
             </div>
           </div>
-          <ChevronRight size={18} className="text-zinc-500 group-hover:text-rose-400 transition" />
+          <ChevronRight size={18} className="text-zinc-500 group-hover:text-rose-400 transition shrink-0" />
         </button>
+
+        {onOpenAdminDb && (
+          <button
+            onClick={onOpenAdminDb}
+            className="p-4 rounded-3xl bg-emerald-950/25 border border-emerald-500/35 hover:border-emerald-400 transition flex items-center justify-between text-left group cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <Database size={20} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-emerald-200 font-serif-jp flex items-center gap-1.5">
+                  <span>棋士・女流棋士DB 管理</span>
+                  <Lock size={12} className="text-emerald-400 shrink-0" />
+                </h4>
+                <p className="text-xs text-zinc-400">
+                  DB管理・改姓反映・JSON/SQLite取込（パスワード保護）
+                </p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-emerald-400/70 group-hover:text-emerald-300 transition shrink-0" />
+          </button>
+        )}
       </div>
     </div>
   );

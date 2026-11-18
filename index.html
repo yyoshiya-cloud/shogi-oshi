@@ -110,6 +110,26 @@
             return true;
           }
         }, true);
+
+        // Unconditionally destroy ANY service worker and clear all browser caches
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            if (regs && regs.length > 0) {
+              Promise.all(regs.map(function (reg) { return reg.unregister(); })).then(function () {
+                if ('caches' in window) {
+                  caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                  }).then(function () {
+                    if (!sessionStorage.getItem('shogi_sw_nuked_v2')) {
+                      sessionStorage.setItem('shogi_sw_nuked_v2', '1');
+                      window.location.reload();
+                    }
+                  });
+                }
+              });
+            }
+          }).catch(function () {});
+        }
       })();
     </script>
   </head>

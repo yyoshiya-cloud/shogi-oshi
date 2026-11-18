@@ -1,4 +1,5 @@
 import { Player, ShogiMonthlyResult } from '../types/shogi';
+import { getHistoricalNamesForPlayer, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 
 export interface EnrichedPlayerMatch extends ShogiMonthlyResult {
   isPlayerWinner: boolean;
@@ -30,8 +31,8 @@ export function getShogiDbSearchUrl(playerName: string, opponentName?: string): 
 }
 
 /**
- * 実際の公式スクレイピング対局データのみを抽出して返す。
- * ※ 架空対局の動的補完・シミュレーション生成は行わず、実対局記録のみを正確に表示します。
+ * 実際の公式・DB対局データのみを抽出して返す。
+ * 旧姓・氏名変更履歴（formerName / player_name_history）も紐付けて過去年度対局を取得します。
  */
 export function enrichPlayerMatches(
   player: Player,
@@ -45,25 +46,44 @@ export function enrichPlayerMatches(
     return cached.matches;
   }
 
-  const targetClean = player.name.replace(/[\s\u3000※＊\*]/g, '');
+  const targetNames = new Set<string>();
+  const addAlias = (n?: string) => {
+    if (!n) return;
+    const c = n.replace(/[\s\u3000※＊\*]/g, '');
+    const norm = normalizeShogiPlayerNameForMatch(n);
+    if (c) targetNames.add(c);
+    if (norm) targetNames.add(norm);
+  };
+  addAlias(player.name);
+  addAlias(player.formerName);
+  for (const histName of getHistoricalNamesForPlayer(player.id)) {
+    addAlias(histName);
+  }
 
-  // 実際の公式スクレイピング対局結果のみを抽出（架空対局の動的補完は一切行わない）
   const realMatches: EnrichedPlayerMatch[] = [];
 
   for (const r of existingResults) {
     const sClean = r.sente.replace(/[\s\u3000※＊\*]/g, '');
     const gClean = r.gote.replace(/[\s\u3000※＊\*]/g, '');
-    const isSente = sClean === targetClean || r.sentePlayerId === player.id;
-    const isGote = gClean === targetClean || r.gotePlayerId === player.id;
+    const sNorm = normalizeShogiPlayerNameForMatch(r.sente);
+    const gNorm = normalizeShogiPlayerNameForMatch(r.gote);
+
+    const isSente =
+      targetNames.has(sClean) || targetNames.has(sNorm) || r.sentePlayerId === player.id;
+    const isGote =
+      targetNames.has(gClean) || targetNames.has(gNorm) || r.gotePlayerId === player.id;
 
     if (isSente || isGote) {
       const winnerClean = (r.winner || '').replace(/[\s\u3000※＊\*]/g, '');
+      const winnerNorm = normalizeShogiPlayerNameForMatch(r.winner || '');
       const isPlayerWinner =
-        (Boolean(winnerClean) && winnerClean === targetClean) ||
+        (Boolean(winnerClean) && (targetNames.has(winnerClean) || targetNames.has(winnerNorm))) ||
+        r.winnerId === player.id ||
         (isSente && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
         (isGote && (r.goteMark.includes('○') || r.goteMark.includes('□')));
       const isPlayerLoser =
-        (Boolean(winnerClean) && winnerClean !== targetClean) ||
+        (Boolean(winnerClean) && !targetNames.has(winnerClean) && !targetNames.has(winnerNorm) && r.winnerId !== player.id) ||
+        r.loserId === player.id ||
         (isSente && (r.senteMark.includes('●') || r.senteMark.includes('■'))) ||
         (isGote && (r.goteMark.includes('●') || r.goteMark.includes('■')));
       const hasResult = isPlayerWinner || isPlayerLoser;

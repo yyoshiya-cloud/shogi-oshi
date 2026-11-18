@@ -1,6 +1,6 @@
 import { Player, YearRecord, ShogiMonthlyResult } from '../types/shogi';
 import results2026Json from '../data/results2026.json';
-import { applyPlayerOverrides } from './playerUtils';
+import { applyPlayerOverrides, isPlayerOnLeave } from './playerUtils';
 
 interface FiscalYearStat {
   wins: number;
@@ -488,12 +488,14 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
     let losses = 0;
 
     if (year <= 2024) {
-      // 2021〜2024年度: 公式確定実績データが存在する場合は反映
-      if (benchmark && benchmark[year]) {
-        wins = benchmark[year].wins;
-        losses = benchmark[year].losses;
+      // 2021〜2024年度: 実対局DBアーカイブに該当年度の対局記録がある場合は最優先で集計
+      const dbWins = Math.max(sName?.[year]?.wins || 0, sId?.[year]?.wins || 0);
+      const dbLosses = Math.max(sName?.[year]?.losses || 0, sId?.[year]?.losses || 0);
+      if (dbWins + dbLosses > 0) {
+        wins = dbWins;
+        losses = dbLosses;
       } else {
-        // playerオブジェクト内に有効な過去実績が存在し、かつ通算勝利数を超えない場合
+        // playerオブジェクト(DB playersテーブル)内に有効な過去実績が存在する場合
         const explicit = (player.yearRecords || []).find((r) => r.year === year);
         if (
           explicit &&
@@ -502,17 +504,12 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
         ) {
           wins = explicit.wins;
           losses = explicit.losses;
+        } else if (benchmark && benchmark[year]) {
+          wins = benchmark[year].wins;
+          losses = benchmark[year].losses;
         } else {
-          const dbWins = Math.max(sName?.[year]?.wins || 0, sId?.[year]?.wins || 0);
-          const dbLosses = Math.max(sName?.[year]?.losses || 0, sId?.[year]?.losses || 0);
-          if (dbWins + dbLosses > 0) {
-            wins = dbWins;
-            losses = dbLosses;
-          } else {
-            // 動的補完・架空データの算出は行わず、対局なし（0局0勝0敗）とする
-            wins = 0;
-            losses = 0;
-          }
+          wins = 0;
+          losses = 0;
         }
       }
     } else {
@@ -520,7 +517,13 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
       wins = Math.max(sName?.[year]?.wins || 0, sId?.[year]?.wins || 0);
       losses = Math.max(sName?.[year]?.losses || 0, sId?.[year]?.losses || 0);
 
-      // 2026年度速報: 連盟スクレイピングの直近成績がより進んでいる場合は反映
+      const explicit = (player.yearRecords || []).find((r) => r.year === year);
+      if (wins + losses === 0 && explicit && explicit.wins + explicit.losses > 0) {
+        wins = explicit.wins;
+        losses = explicit.losses;
+      }
+
+      // 2026年度速報: 連盟スクレイピング/DBの直近成績がより進んでいる場合は反映
       if (year === 2026) {
         if (player.currentYearWins !== undefined && player.currentYearWins > wins) {
           wins = player.currentYearWins;
@@ -533,13 +536,20 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
 
     const total = wins + losses;
     const rate = total > 0 ? Math.round((wins / total) * 1000) / 1000 : 0;
+    const explicitLeave = (player.yearRecords || []).find((r) => r.year === year)?.isLeave;
+    const isLeave =
+      Boolean(explicitLeave) ||
+      (isPlayerOnLeave(player) && wins === 0 && losses === 0 && year >= debutYear) ||
+      (nameClean.includes('水町みゆ') && year === 2025);
+    const isPreDebut = total === 0 && !isLeave && year < debutYear;
 
     return {
       year,
       wins,
       losses,
       rate,
-      isPreDebut: total === 0,
+      isPreDebut,
+      isLeave,
     };
   });
 }

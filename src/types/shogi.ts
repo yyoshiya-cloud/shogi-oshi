@@ -9,6 +9,7 @@ export interface YearRecord {
   losses: number;
   rate: number;
   isPreDebut?: boolean;
+  isLeave?: boolean;
 }
 
 export interface OpeningStat {
@@ -28,6 +29,7 @@ export interface HeadToHeadRecord {
 export interface Player {
   id: string;
   name: string;
+  formerName?: string; // 旧姓・改姓前の氏名
   type: PlayerType;
   affiliation?: PlayerAffiliation; // 日本将棋連盟 | LPSA | 無所属
   rank: string; // 竜王・名人, 九段, 女流五冠, etc.
@@ -159,5 +161,54 @@ export interface ShogiMonthlyResult {
   category: 'タイトル戦' | '順位戦' | '一般棋戦' | '女流タイトル戦' | '女流棋戦';
   links: { title: string; url: string }[];
   sourceUrl: string;
+}
+
+export interface PlayerNameHistoryItem {
+  id: string;
+  playerId: string;
+  oldName: string;
+  newName: string;
+  changedAt: string;
+  note?: string;
+}
+
+export interface SyncLogEntry {
+  id: number;
+  syncType: string;
+  status: 'success' | 'error' | 'partial';
+  message: string;
+  recordsCount: number;
+  createdAt: string;
+}
+
+export interface MatchArchiveSummary {
+  month: string;
+  fiscalYear: number;
+  count: number;
+  source?: string;
+  updatedAt: string;
+}
+
+export interface DbOverview {
+  engine: string;
+  dbPath: string;
+  projectId: string;
+  databaseId: string;
+  fileSizeBytes: number;
+  counts: {
+    players: number;
+    matches: number;
+    match_archives: number;
+    match_results_total: number;
+    player_name_history: number;
+    sync_logs: number;
+  };
+  fiscalYears: {
+    fiscalYear: number;
+    monthsCount: number;
+    matchesCount: number;
+  }[];
+  archiveSummaries: MatchArchiveSummary[];
+  recentLogs: SyncLogEntry[];
 }
 

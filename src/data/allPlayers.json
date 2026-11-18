@@ -14353,6 +14353,7 @@
   {
     "id": "fukuma-kana",
     "name": "福間 香奈",
+    "formerName": "里見 香奈",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四冠",
@@ -18332,9 +18333,9 @@
     "heldTitles": [],
     "totalTitles": 0,
     "titleHistory": "",
-    "careerWins": 74,
+    "careerWins": 75,
     "careerLosses": 74,
-    "careerWinRate": 0.5,
+    "careerWinRate": 0.503,
     "currentYearWins": 4,
     "currentYearLosses": 4,
     "currentYearWinRate": 0.5,
@@ -18342,9 +18343,9 @@
     "rankingInFederation": {},
     "colorAccent": "#ec4899",
     "avatarBg": "linear-gradient(135deg, #18181b 0%, #ec489933 100%)",
-    "shortBio": "",
+    "shortBio": "福岡県福岡市出身。島朗九段門下。2018年女流プロ入り。",
     "highlights": [
-      "日本将棋連盟現役女流棋士 女流初段"
+      "日本将棋連盟所属 女流初段"
     ],
     "yearRecords": [
       {
@@ -18357,7 +18358,8 @@
         "year": 2025,
         "wins": 0,
         "losses": 0,
-        "rate": 0
+        "rate": 0,
+        "isLeave": true
       },
       {
         "year": 2024,
