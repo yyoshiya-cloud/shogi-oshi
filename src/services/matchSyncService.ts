@@ -1,9 +1,10 @@
 import * as cheerio from 'cheerio';
-import { Match, Player, ShogiMonthlyResult } from '../types/shogi';
+import { Match, Player, PlayerNameHistoryItem, ShogiMonthlyResult } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import { scrapeAllActivePlayers } from './playerSyncService';
 import { getTodayDateString } from '../utils/dateUtils';
 import { getTimeControlForTournament } from '../utils/timeControlUtils';
+import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import results2026Json from '../data/results2026.json';
 import {
   enrichMonthlyResultsWithSupplements,
@@ -11,7 +12,51 @@ import {
 } from './matchSupplementService';
 import { mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 
+function buildPlayerLookupMap(
+  players: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
+): Map<string, Player> {
+  const playerMap = new Map<string, Player>();
+  const playerById = new Map<string, Player>();
 
+  const registerAlias = (alias: string | undefined, p: Player) => {
+    if (!alias) return;
+    const trimmed = alias.trim();
+    const compact = trimmed.replace(/[\s\u3000※＊\*]/g, '');
+    const norm = normalizeShogiPlayerNameForMatch(trimmed);
+    if (trimmed && !playerMap.has(trimmed)) playerMap.set(trimmed, p);
+    if (compact && !playerMap.has(compact)) playerMap.set(compact, p);
+    if (norm && !playerMap.has(norm)) playerMap.set(norm, p);
+  };
+
+  for (const p of players) {
+    playerById.set(p.id, p);
+    registerAlias(p.name, p);
+  }
+  for (const p of players) {
+    if (p.formerName) registerAlias(p.formerName, p);
+  }
+  for (const h of nameHistory) {
+    const p = playerById.get(h.playerId);
+    if (p) {
+      registerAlias(h.oldName, p);
+      registerAlias(h.newName, p);
+    }
+  }
+  return playerMap;
+}
+
+function lookupPlayerFromMap(playerMap: Map<string, Player>, rawName: string): Player | undefined {
+  const trimmed = rawName.replace(/[※\*＊]/g, '').trim();
+  const compact = trimmed.replace(/[\s\u3000]/g, '');
+  const norm = normalizeShogiPlayerNameForMatch(trimmed);
+  return (
+    playerMap.get(compact) ||
+    playerMap.get(trimmed) ||
+    playerMap.get(norm) ||
+    playerMap.get(rawName.trim())
+  );
+}
 
 export interface MatchSyncResult {
   success: boolean;
@@ -64,21 +109,25 @@ export function cleanTournamentName(rawName?: string): string {
  * Scrape upcoming match schedule plans from https://www.shogi.or.jp/game/?tab=schedule
  * and convert them to the Match schema for the calendar.
  */
-export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
+export async function scrapeMatchPlan(
+  force = false,
+  knownPlayers?: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
+): Promise<MatchSyncResult> {
   const now = Date.now();
   if (!force && cachedMatchResult && now - lastMatchScrapeTime < MATCH_CACHE_TTL_MS) {
     return cachedMatchResult;
   }
 
   // Ensure we have all current players to map against
-  const playersData = await scrapeAllActivePlayers(false).catch(() => ({ players: PLAYERS_DATA }));
-  const allKnownPlayers = playersData.players && playersData.players.length > 0 ? playersData.players : PLAYERS_DATA;
+  const allKnownPlayers =
+    knownPlayers && knownPlayers.length > 0
+      ? knownPlayers
+      : await scrapeAllActivePlayers(false)
+          .then((r) => (r.players && r.players.length > 0 ? r.players : PLAYERS_DATA))
+          .catch(() => PLAYERS_DATA);
 
-  const playerMap = new Map<string, Player>();
-  for (const p of allKnownPlayers) {
-    playerMap.set(p.name.replace(/\s+/g, ''), p);
-    playerMap.set(p.name, p);
-  }
+  const playerMap = buildPlayerLookupMap(allKnownPlayers, nameHistory);
 
   const html = await fetchWithTimeout('https://www.shogi.or.jp/game/?tab=schedule').catch(() => '');
 
@@ -91,7 +140,7 @@ export async function scrapeMatchPlan(force = false): Promise<MatchSyncResult> {
     const normalizedName = raw.replace(/[※\*＊]/g, '').trim();
     const cleanedRaw = normalizedName.replace(/\s+/g, '');
 
-    const existing = playerMap.get(cleanedRaw) || playerMap.get(normalizedName) || playerMap.get(raw.trim());
+    const existing = lookupPlayerFromMap(playerMap, raw);
     if (existing) {
       return { id: existing.id, name: existing.name, rank: existing.rank || (existing.type === 'women' ? '女流棋士' : '棋士') };
     }
@@ -355,7 +404,9 @@ function buildScrapeResponse(
 export async function scrapeMonthlyResults(
   month: string,
   force = false,
-  sinceDate?: string
+  sinceDate?: string,
+  knownPlayers?: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
 ): Promise<MonthlyScrapeResult> {
   const normalizedMonth = month.replace(/[^0-9]/g, '');
   const now = Date.now();
@@ -372,19 +423,19 @@ export async function scrapeMonthlyResults(
     }
   }
 
-  // Ensure known players map for ID resolution
-  const playersData = await scrapeAllActivePlayers(false).catch(() => ({ players: PLAYERS_DATA }));
-  const allKnownPlayers = playersData.players && playersData.players.length > 0 ? playersData.players : PLAYERS_DATA;
-  const playerMap = new Map<string, Player>();
-  for (const p of allKnownPlayers) {
-    playerMap.set(p.name.replace(/\s+/g, ''), p);
-    playerMap.set(p.name, p);
-  }
+  // Ensure known players map for ID resolution (including formerName & nameHistory)
+  const allKnownPlayers =
+    knownPlayers && knownPlayers.length > 0
+      ? knownPlayers
+      : await scrapeAllActivePlayers(false)
+          .then((r) => (r.players && r.players.length > 0 ? r.players : PLAYERS_DATA))
+          .catch(() => PLAYERS_DATA);
+  const playerMap = buildPlayerLookupMap(allKnownPlayers, nameHistory);
 
   const url = `https://www.shogi.or.jp/game/?month=${normalizedMonth}`;
   let html = '';
   try {
-    html = await fetchWithTimeout(url, 12000);
+    html = await fetchWithTimeout(url, 15000);
   } catch (err) {
     console.warn(`[scrapeMonthlyResults] Failed to fetch upstream for month ${normalizedMonth}, falling back to bundled data`);
   }
@@ -529,8 +580,8 @@ export async function scrapeMonthlyResults(
             category === '女流棋戦' ||
             tournament.includes('女流');
 
-          const p1Obj = playerMap.get(p1Clean.replace(/\s+/g, '')) || playerMap.get(p1Clean);
-          const p2Obj = playerMap.get(p2Clean.replace(/\s+/g, '')) || playerMap.get(p2Clean);
+          const p1Obj = lookupPlayerFromMap(playerMap, p1Raw);
+          const p2Obj = lookupPlayerFromMap(playerMap, p2Raw);
 
           const winnerObj = winner === p1Clean ? p1Obj : winner === p2Clean ? p2Obj : undefined;
           const loserObj = loser === p1Clean ? p1Obj : loser === p2Clean ? p2Obj : undefined;
@@ -579,14 +630,14 @@ export async function scrapeMonthlyResults(
     const enriched = enrichMonthlyResultsWithSupplements(
       normalizedMonth,
       bundled.map((b) => {
-        const p1Obj = playerMap.get(b.sente.replace(/\s+/g, '')) || playerMap.get(b.sente);
-        const p2Obj = playerMap.get(b.gote.replace(/\s+/g, '')) || playerMap.get(b.gote);
+        const p1Obj = lookupPlayerFromMap(playerMap, b.sente);
+        const p2Obj = lookupPlayerFromMap(playerMap, b.gote);
         return {
           ...b,
           sentePlayerId: p1Obj?.id,
           gotePlayerId: p2Obj?.id,
-          winnerId: b.winner === b.sente ? p1Obj?.id : p2Obj?.id,
-          loserId: b.loser === b.sente ? p1Obj?.id : p2Obj?.id,
+          winnerId: b.winner === b.sente ? p1Obj?.id : b.winner === b.gote ? p2Obj?.id : undefined,
+          loserId: b.loser === b.sente ? p1Obj?.id : b.loser === b.gote ? p2Obj?.id : undefined,
         };
       })
     ).sort((a, b) => b.date.localeCompare(a.date));
@@ -631,24 +682,145 @@ export function getFiscalYearMonths(fiscalYear = 2026): string[] {
 }
 
 /**
- * Get results for multiple fiscal years (2025 and 2026),
- * keeping complete historical archive for 2025 and live scraping for 2026.
+ * Returns all months across the given fiscal years up to the current YYYYMM month.
  */
-async function getAllMultiYearResults(years = [2025, 2026], force = false): Promise<Record<string, ShogiMonthlyResult[]>> {
-  const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
-  const res: Record<string, ShogiMonthlyResult[]> = { ...bundled };
-
-  // Dynamically refresh 2026 fiscal year months while preserving protected manual/CSV entries
-  if (years.includes(2026)) {
-    const months2026 = getFiscalYearMonths(2026);
-    for (const m of months2026) {
-      const data = await scrapeMonthlyResults(m, force);
-      if (data.results && data.results.length > 0) {
-        res[m] = mergeProtectedWithOfficialResults(res[m] || [], data.results);
+export function getElapsedFiscalYearMonths(
+  fiscalYears: number[] = [2021, 2022, 2023, 2024, 2025, 2026]
+): string[] {
+  const now = new Date();
+  const maxMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const set = new Set<string>();
+  for (const fy of [...fiscalYears].sort((a, b) => a - b)) {
+    for (const m of getFiscalYearMonths(fy)) {
+      if (m <= maxMonth) {
+        set.add(m);
       }
     }
   }
-  return enrichAllResultsWithSupplements(res);
+  return Array.from(set).sort();
+}
+
+export interface RebuildArchivesResult {
+  archives: Record<string, ShogiMonthlyResult[]>;
+  monthsAttempted: number;
+  monthsUpdated: string[];
+  failedMonths: string[];
+  totalResults: number;
+  fiscalYearCounts: Record<number, { months: number; results: number }>;
+}
+
+/**
+ * Rebuilds official monthly archives across FY2021-FY2026 from shogi.or.jp
+ * while strictly preserving all protected manual-input and CSV-imported entries.
+ */
+export async function rebuildAllFiscalYearArchives(options: {
+  years?: number[];
+  existingData?: Record<string, ShogiMonthlyResult[]>;
+  knownPlayers?: Player[];
+  nameHistory?: PlayerNameHistoryItem[];
+  force?: boolean;
+  concurrency?: number;
+} = {}): Promise<RebuildArchivesResult> {
+  const years = options.years && options.years.length > 0 ? options.years : [2021, 2022, 2023, 2024, 2025, 2026];
+  const existingData = options.existingData || {};
+  const force = options.force !== false;
+  const concurrency = Math.max(1, Math.min(6, options.concurrency || 4));
+  const nameHistory = options.nameHistory || [];
+
+  const resolvedPlayers =
+    options.knownPlayers && options.knownPlayers.length > 0
+      ? options.knownPlayers
+      : await scrapeAllActivePlayers(false)
+          .then((r) => (r.players && r.players.length > 0 ? r.players : PLAYERS_DATA))
+          .catch(() => PLAYERS_DATA);
+
+  const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
+  const archives: Record<string, ShogiMonthlyResult[]> = {};
+
+  // Seed initial map with existing/bundled data so future months or protected entries are preserved
+  for (const m of Object.keys(bundled)) {
+    archives[m] = bundled[m] || [];
+  }
+  for (const m of Object.keys(existingData)) {
+    archives[m] = existingData[m] || [];
+  }
+
+  const targetMonths = getElapsedFiscalYearMonths(years);
+  const monthsUpdated: string[] = [];
+  const failedMonths: string[] = [];
+
+  for (let i = 0; i < targetMonths.length; i += concurrency) {
+    const batch = targetMonths.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map(async (m) => {
+        try {
+          const scraped = await scrapeMonthlyResults(m, force, undefined, resolvedPlayers, nameHistory);
+          return { month: m, scraped };
+        } catch {
+          return { month: m, scraped: null };
+        }
+      })
+    );
+
+    for (const { month, scraped } of batchResults) {
+      if (scraped && scraped.results && scraped.results.length > 0) {
+        const merged = mergeProtectedWithOfficialResults(archives[month] || [], scraped.results);
+        archives[month] = enrichMonthlyResultsWithSupplements(month, merged);
+        monthsUpdated.push(month);
+      } else {
+        failedMonths.push(month);
+      }
+    }
+  }
+
+  const enrichedAll = enrichAllResultsWithSupplements(archives);
+
+  const fiscalYearCounts: Record<number, { months: number; results: number }> = {};
+  for (const y of years) {
+    fiscalYearCounts[y] = { months: 0, results: 0 };
+  }
+  let totalResults = 0;
+  for (const [m, list] of Object.entries(enrichedAll)) {
+    if (!Array.isArray(list)) continue;
+    const yr = parseInt(m.slice(0, 4), 10);
+    const mo = parseInt(m.slice(4, 6), 10);
+    const fy = mo >= 1 && mo <= 3 ? yr - 1 : yr;
+    totalResults += list.length;
+    if (fiscalYearCounts[fy]) {
+      fiscalYearCounts[fy].months += 1;
+      fiscalYearCounts[fy].results += list.length;
+    }
+  }
+
+  return {
+    archives: enrichedAll,
+    monthsAttempted: targetMonths.length,
+    monthsUpdated,
+    failedMonths,
+    totalResults,
+    fiscalYearCounts,
+  };
+}
+
+/**
+ * Get results for multiple fiscal years (defaults to 2021..2026),
+ * refreshing elapsed months while preserving protected manual/CSV entries.
+ */
+async function getAllMultiYearResults(
+  years = [2021, 2022, 2023, 2024, 2025, 2026],
+  force = false,
+  existingData: Record<string, ShogiMonthlyResult[]> = {},
+  knownPlayers?: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
+): Promise<Record<string, ShogiMonthlyResult[]>> {
+  const rebuilt = await rebuildAllFiscalYearArchives({
+    years,
+    existingData,
+    knownPlayers,
+    nameHistory,
+    force,
+  });
+  return rebuilt.archives;
 }
 
 /**
@@ -676,7 +848,9 @@ export function getCurrentAndPrevMonthStrings(): string[] {
  */
 export async function scrapeIncrementalResults(
   existingData: Record<string, ShogiMonthlyResult[]> = {},
-  force = false
+  force = false,
+  knownPlayers?: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
 ): Promise<{ merged: Record<string, ShogiMonthlyResult[]>; updatedMonths: string[] }> {
   const bundled = (results2026Json as Record<string, ShogiMonthlyResult[]>) || {};
   const res: Record<string, ShogiMonthlyResult[]> = { ...bundled, ...existingData };
@@ -685,7 +859,7 @@ export async function scrapeIncrementalResults(
   const updatedMonths: string[] = [];
 
   for (const m of targetMonths) {
-    const scraped = await scrapeMonthlyResults(m, force);
+    const scraped = await scrapeMonthlyResults(m, force, undefined, knownPlayers, nameHistory);
     if (scraped.results && scraped.results.length > 0) {
       const existingList = res[m] || [];
       const mergedMonth = mergeProtectedWithOfficialResults(existingList, scraped.results);
@@ -707,14 +881,20 @@ export async function scrapeIncrementalResults(
 }
 
 /**
- * Get results for fiscal years (includes 2025 and 2026)
+ * Get results for fiscal years (2021..2026)
  */
-export async function getAll2026Results(force = false): Promise<Record<string, ShogiMonthlyResult[]>> {
+export async function getAll2026Results(
+  force = false,
+  existingData: Record<string, ShogiMonthlyResult[]> = {},
+  knownPlayers?: Player[],
+  nameHistory: PlayerNameHistoryItem[] = []
+): Promise<Record<string, ShogiMonthlyResult[]>> {
   if (!force) {
-    const { merged } = await scrapeIncrementalResults({}, false);
+    const { merged } = await scrapeIncrementalResults(existingData, false, knownPlayers, nameHistory);
     return merged;
   }
-  return getAllMultiYearResults([2025, 2026], force);
+  return getAllMultiYearResults([2021, 2022, 2023, 2024, 2025, 2026], force, existingData, knownPlayers, nameHistory);
 }
+
 
 

@@ -385,6 +385,91 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
+  const handleRebuildAllArchives = async (years: number[] = [2021, 2022, 2023, 2024, 2025, 2026]) => {
+    try {
+      setIsBusy(true);
+      showStatus(
+        'success',
+        `${years[0]}〜${years[years.length - 1]}年度の公式対局アーカイブ（手動・CSV保護データは維持）を再構築中...（30〜60秒程度かかります）`
+      );
+      const res = await adminFetch('/api/admin/rebuild-archives', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ years, includePlayersAndMatches: true }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `HTTP ${res.status}`);
+      }
+      await loadAdminData();
+      if (activeTab === 'archives') {
+        await loadArchiveMonth(selectedArchiveMonth);
+      }
+      await onDatabaseUpdated();
+      const s = json.summary;
+      showStatus(
+        'success',
+        `2021〜2026年度 対局情報再構築完了！（${s.monthsUpdatedCount}ヶ月更新 / 収録合計 ${s.totalResults}局）`
+      );
+    } catch (err: any) {
+      showStatus('error', `対局情報再構築エラー: ${err?.message || err}`);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleSyncPlayersOnly = async () => {
+    try {
+      setIsBusy(true);
+      showStatus('success', '日本将棋連盟・LPSAから最新棋士・女流棋士プロフィールを取得中...');
+      const res = await adminFetch('/api/players/sync?force=true');
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus('success', `棋士・女流棋士プロフィールをSQLite DBへ更新しました（${json.players?.length || 0}名）`);
+    } catch (err: any) {
+      showStatus('error', `プロフィール更新エラー: ${err?.message || err}`);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleSyncMatchesOnly = async () => {
+    try {
+      setIsBusy(true);
+      showStatus('success', '日本将棋連盟から最新の公式対局予定を取得中...');
+      const res = await adminFetch('/api/matches/sync?force=true');
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus('success', `公式対局予定をSQLite DBへ更新しました（${json.matches?.length || 0}件）`);
+    } catch (err: any) {
+      showStatus('error', `対局予定更新エラー: ${err?.message || err}`);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleSyncArchiveMonth = async (monthStr: string) => {
+    try {
+      setIsBusy(true);
+      showStatus('success', `${monthStr.slice(0, 4)}年${parseInt(monthStr.slice(4), 10)}月の公式対局結果を取得中...`);
+      const res = await adminFetch(`/api/matches/results?month=${encodeURIComponent(monthStr)}&force=true`);
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      await loadArchiveMonth(monthStr);
+      await loadAdminData();
+      await onDatabaseUpdated();
+      showStatus('success', `${monthStr} の公式対局結果をSQLite DBへ同期しました（${json.count || 0}局・保護データ維持）`);
+    } catch (err: any) {
+      showStatus('error', `月別対局結果同期エラー: ${err?.message || err}`);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const startCreatePlayer = () => {
     const newId = `custom-${Date.now()}`;
     setIsCreatingPlayer(true);
@@ -1430,11 +1515,28 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </div>
                   </div>
 
-                  {/* FY2021-2026 Breakdown */}
-                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-zinc-200">
-                      年度別 対局アーカイブ収録状況（2021年度〜2026年度）
-                    </h4>
+                  {/* FY2021-2026 Breakdown & Rebuild Actions */}
+                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-zinc-100">
+                          年度別 対局アーカイブ収録状況（2021年度〜2026年度）
+                        </h4>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          手動入力・CSVインポート登録対局（保護済み）を保持したまま、連盟公式データを再構築・個別更新できます。
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRebuildAllArchives([2021, 2022, 2023, 2024, 2025, 2026])}
+                        disabled={isBusy}
+                        className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0 shadow-md"
+                      >
+                        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
+                        <span>2021〜2026年度 対局情報を再構築</span>
+                      </button>
+                    </div>
+
                     <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
                       {(overview?.fiscalYears || []).map((fy) => (
                         <div
@@ -1452,6 +1554,40 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           </span>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSyncPlayersOnly}
+                        disabled={isBusy}
+                        className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-amber-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Users size={14} className="text-amber-400" />
+                        <span>棋士・女流プロフィール更新</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const now = new Date();
+                          const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+                          handleSyncArchiveMonth(ym);
+                        }}
+                        disabled={isBusy}
+                        className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-emerald-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Trophy size={14} className="text-emerald-400" />
+                        <span>今月の最新対局結果を更新</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSyncMatchesOnly}
+                        disabled={isBusy}
+                        className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-sky-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Calendar size={14} className="text-sky-400" />
+                        <span>公式対局予定を更新</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1805,14 +1941,25 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           className="w-full bg-transparent text-xs text-zinc-100 focus:outline-none"
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={startCreatePlayer}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
-                      >
-                        <Plus size={14} />
-                        <span>新規棋士を登録</span>
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleSyncPlayersOnly}
+                          disabled={isBusy}
+                          className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw size={13} className={`text-sky-400 ${isBusy ? 'animate-spin' : ''}`} />
+                          <span>公式プロフィール更新</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startCreatePlayer}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          <Plus size={14} />
+                          <span>新規棋士を登録</span>
+                        </button>
+                      </div>
                     </div>
                     <div className="divide-y divide-zinc-800/70 max-h-[340px] overflow-y-auto">
                       {filteredPlayers.map((p) => (
@@ -1900,17 +2047,28 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       ))}
                     </div>
 
-                    <select
-                      value={selectedArchiveMonth}
-                      onChange={(e) => setSelectedArchiveMonth(e.target.value)}
-                      className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-zinc-100"
-                    >
-                      {fiscalYearMonthsList.map((m) => (
-                        <option key={m} value={m}>
-                          {m.slice(0, 4)}年{parseInt(m.slice(4), 10)}月
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        value={selectedArchiveMonth}
+                        onChange={(e) => setSelectedArchiveMonth(e.target.value)}
+                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-zinc-100"
+                      >
+                        {fiscalYearMonthsList.map((m) => (
+                          <option key={m} value={m}>
+                            {m.slice(0, 4)}年{parseInt(m.slice(4), 10)}月
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleSyncArchiveMonth(selectedArchiveMonth)}
+                        disabled={isBusy}
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-bold text-emerald-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw size={13} className={isBusy ? 'animate-spin' : ''} />
+                        <span>選択月を公式同期</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Add / Edit Match Result */}
@@ -2449,15 +2607,26 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       <span className="text-xs font-bold text-zinc-200">
                         登録済み 公式対局予定 ({filteredMatches.length} / {matches.length}件)
                       </span>
-                      <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs">
-                        <Search size={13} className="text-zinc-500" />
-                        <input
-                          type="text"
-                          value={matchQuery}
-                          onChange={(e) => setMatchQuery(e.target.value)}
-                          placeholder="棋戦・対局者・日付で検索"
-                          className="bg-transparent text-zinc-100 focus:outline-none w-44"
-                        />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleSyncMatchesOnly}
+                          disabled={isBusy}
+                          className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-bold text-sky-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw size={12} className={isBusy ? 'animate-spin' : ''} />
+                          <span>対局予定を公式更新</span>
+                        </button>
+                        <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs">
+                          <Search size={13} className="text-zinc-500" />
+                          <input
+                            type="text"
+                            value={matchQuery}
+                            onChange={(e) => setMatchQuery(e.target.value)}
+                            placeholder="棋戦・対局者・日付で検索"
+                            className="bg-transparent text-zinc-100 focus:outline-none w-44"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="divide-y divide-zinc-800/70 max-h-[340px] overflow-y-auto">

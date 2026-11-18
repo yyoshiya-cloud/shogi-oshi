@@ -15,6 +15,7 @@ import { PLAYERS_DATA, MATCHES_DATA } from '../data/shogiDatabase';
 import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
 import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
+import { getTodayDateString } from '../utils/dateUtils';
 
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
@@ -495,6 +496,7 @@ export function upsertMatch(match: Match): Match {
 export function upsertMatchesBulk(matches: Match[], source = 'sync'): number {
   const db = getDb();
   const now = new Date().toISOString();
+  const todayStr = getTodayDateString();
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO matches
     (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
@@ -502,6 +504,31 @@ export function upsertMatchesBulk(matches: Match[], source = 'sync'): number {
   `);
 
   const tx = db.transaction((items: Match[]) => {
+    // Transition any stale past shogiorjp- matches to finished so they don't appear as upcoming/live
+    const pastOfficialRows = db
+      .prepare(`SELECT id, data_json FROM matches WHERE id LIKE 'shogiorjp-%' AND date < ? AND status != 'finished'`)
+      .all(todayStr) as Array<{ id: string; data_json: string }>;
+    for (const row of pastOfficialRows) {
+      const parsed = parseJsonSafe<Match>(row.data_json, {} as Match);
+      if (parsed && parsed.id) {
+        const finishedMatch: Match = { ...parsed, status: 'finished' };
+        stmt.run({
+          id: finishedMatch.id,
+          date: finishedMatch.date || '',
+          time: finishedMatch.time || '',
+          tournament: finishedMatch.tournament || '',
+          category: finishedMatch.category || '一般棋戦',
+          round: finishedMatch.round || '',
+          player1_id: finishedMatch.player1Id || '',
+          player2_id: finishedMatch.player2Id || '',
+          status: 'finished',
+          venue: finishedMatch.venue || '',
+          data_json: JSON.stringify(finishedMatch),
+          updated_at: now,
+        });
+      }
+    }
+
     for (const m of items) {
       if (!m || !m.id) continue;
       stmt.run({

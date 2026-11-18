@@ -6,7 +6,13 @@ import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { scrapeAllActivePlayers, fetchPlayerProfileDetail } from './src/services/playerSyncService';
-import { scrapeMatchPlan, scrapeMonthlyResults, getAll2026Results, scrapeIncrementalResults } from './src/services/matchSyncService';
+import {
+  scrapeMatchPlan,
+  scrapeMonthlyResults,
+  getAll2026Results,
+  scrapeIncrementalResults,
+  rebuildAllFiscalYearArchives,
+} from './src/services/matchSyncService';
 import {
   getDb,
   getAllPlayers,
@@ -426,10 +432,12 @@ async function startServer() {
   app.post('/api/admin/sync/official', requireAdmin, async (req, res) => {
     try {
       const force = req.body?.force !== false;
+      const dbPlayersNow = getAllPlayers();
+      const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
         scrapeAllActivePlayers(force),
-        scrapeMatchPlan(force),
-        scrapeIncrementalResults(getAllMatchArchives(), force),
+        scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
+        scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);
 
       if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
@@ -460,6 +468,64 @@ async function startServer() {
     } catch (error: any) {
       addSyncLog('official_scrape', 'error', error?.message || 'Official sync failed', 0);
       res.status(500).json({ success: false, error: error?.message || 'Official sync failed' });
+    }
+  });
+
+  app.post('/api/admin/rebuild-archives', requireAdmin, async (req, res) => {
+    try {
+      const years =
+        Array.isArray(req.body?.years) && req.body.years.length > 0
+          ? req.body.years.map(Number).filter((n: number) => !isNaN(n))
+          : [2021, 2022, 2023, 2024, 2025, 2026];
+      const includePlayersAndMatches = req.body?.includePlayersAndMatches !== false;
+
+      if (includePlayersAndMatches) {
+        const playersRes = await scrapeAllActivePlayers(true);
+        if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
+          upsertPlayersBulk(playersRes.players, 'rebuild_2021_2026');
+        }
+      }
+
+      const dbPlayers = getAllPlayers();
+      const dbHistory = getNameHistory();
+      const existingArchives = getAllMatchArchives();
+
+      if (includePlayersAndMatches) {
+        const matchesRes = await scrapeMatchPlan(true, dbPlayers, dbHistory);
+        if (matchesRes?.success && Array.isArray(matchesRes.matches) && matchesRes.matches.length > 0) {
+          upsertMatchesBulk(matchesRes.matches, 'rebuild_2021_2026');
+        }
+      }
+
+      const rebuilt = await rebuildAllFiscalYearArchives({
+        years,
+        existingData: existingArchives,
+        knownPlayers: dbPlayers,
+        nameHistory: dbHistory,
+        force: true,
+        concurrency: 4,
+      });
+
+      upsertMatchArchivesBulk(rebuilt.archives, 'rebuild_2021_2026');
+
+      res.json({
+        success: true,
+        summary: {
+          years,
+          monthsAttempted: rebuilt.monthsAttempted,
+          monthsUpdatedCount: rebuilt.monthsUpdated.length,
+          failedMonths: rebuilt.failedMonths,
+          totalResults: rebuilt.totalResults,
+          fiscalYearCounts: rebuilt.fiscalYearCounts,
+        },
+        players: getAllPlayers(),
+        matches: getAllMatches(),
+        fiscalResults: getAllMatchArchives(),
+        overview: getDatabaseOverview(),
+      });
+    } catch (error: any) {
+      addSyncLog('rebuild_2021_2026', 'error', error?.message || 'Rebuild failed', 0);
+      res.status(500).json({ success: false, error: error?.message || 'Failed to rebuild 2021-2026 archives' });
     }
   });
 
@@ -502,6 +568,7 @@ async function startServer() {
       res.json({
         ...result,
         players: getAllPlayers(),
+        overview: getDatabaseOverview(),
       });
     } catch (error: any) {
       console.error('Error in /api/players/sync:', error);
@@ -515,13 +582,14 @@ async function startServer() {
   app.get('/api/matches/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      const result = await scrapeMatchPlan(force);
+      const result = await scrapeMatchPlan(force, getAllPlayers(), getNameHistory());
       if (result?.success && Array.isArray(result.matches) && result.matches.length > 0) {
         upsertMatchesBulk(result.matches, 'api_sync');
       }
       res.json({
         ...result,
         matches: getAllMatches(),
+        overview: getDatabaseOverview(),
       });
     } catch (error: any) {
       console.error('Error in /api/matches/sync:', error);
@@ -538,19 +606,22 @@ async function startServer() {
       const force = req.query.force === 'true';
       const sinceDate = (req.query.sinceDate as string) || undefined;
       const all = req.query.all === 'true';
+      const dbPlayers = getAllPlayers();
+      const dbHistory = getNameHistory();
       if (all) {
         if (!force) {
-          return res.json({ success: true, all: true, data: getAllMatchArchives() });
+          return res.json({ success: true, all: true, data: getAllMatchArchives(), overview: getDatabaseOverview() });
         }
-        const results = await getAll2026Results(force);
+        const results = await getAll2026Results(force, getAllMatchArchives(), dbPlayers, dbHistory);
         upsertMatchArchivesBulk(results, 'api_sync_all');
-        return res.json({ success: true, all: true, data: getAllMatchArchives() });
+        return res.json({ success: true, all: true, data: getAllMatchArchives(), overview: getDatabaseOverview() });
       }
-      const result = await scrapeMonthlyResults(month, force, sinceDate);
+      const result = await scrapeMonthlyResults(month, force, sinceDate, dbPlayers, dbHistory);
       if (result?.success && Array.isArray(result.results) && result.results.length > 0) {
-        upsertMonthArchive(month, result.results, 'api_sync_month');
+        const saved = upsertMonthArchive(month, result.results, 'api_sync_month');
+        return res.json({ ...result, results: saved, count: saved.length, overview: getDatabaseOverview() });
       }
-      res.json(result);
+      res.json({ ...result, overview: getDatabaseOverview() });
     } catch (error: any) {
       console.error('Error in /api/matches/results:', error);
       res.status(500).json({
@@ -565,10 +636,12 @@ async function startServer() {
       const force = req.query.force === 'true';
       console.log(`[Bulk Sync All] Starting data synchronization (force=${force})...`);
 
+      const dbPlayersNow = getAllPlayers();
+      const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
         scrapeAllActivePlayers(force),
-        scrapeMatchPlan(force),
-        scrapeIncrementalResults(getAllMatchArchives(), force),
+        scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
+        scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);
 
       if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
@@ -598,6 +671,7 @@ async function startServer() {
         matches: { ...matchesRes, matches: dbMatches, count: dbMatches.length },
         results2026: dbArchives,
         updatedMonths: incrementalResults.updatedMonths,
+        overview: getDatabaseOverview(),
       });
     } catch (error: any) {
       console.error('Error in /api/sync/all:', error);
