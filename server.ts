@@ -347,7 +347,11 @@ async function startServer() {
         : { ...(bodyClean as Player), id: req.params.id };
 
       if (!bodyClean.formerName || !String(bodyClean.formerName).trim()) {
-        delete player.formerName;
+        if (existing?.formerName && !body.nameChange?.clear) {
+          player.formerName = existing.formerName;
+        } else {
+          delete player.formerName;
+        }
       } else {
         player.formerName = String(bodyClean.formerName).trim();
       }
