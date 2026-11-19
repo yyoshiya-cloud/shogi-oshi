@@ -17,21 +17,24 @@ import {
   RefreshCw,
   AlertCircle,
   X,
-  Database
+  Database,
+  Pencil
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface PlayerDirectoryProps {
   players: Player[];
-  followedList: FollowedPlayerConfig[];
-  onToggleFollow: (config: FollowedPlayerConfig) => void;
-  onRemoveFollow: (playerId: string) => void;
+  followedList?: FollowedPlayerConfig[];
+  onToggleFollow?: (config: FollowedPlayerConfig) => void;
+  onRemoveFollow?: (playerId: string) => void;
   onSelectPlayer: (player: Player) => void;
   onOpenAdminDb?: () => void;
   isSyncingPlayers?: boolean;
   lastSyncTime?: string | null;
   onSyncPlayers?: () => void;
   onRefreshMatches?: () => void;
+  mode?: 'directory' | 'select';
+  selectedPlayerId?: string;
 }
 
 const BADGE_COLORS: Record<OshiBadge, { bg: string; text: string; border: string }> = {
@@ -135,6 +138,8 @@ interface PlayerCardItemProps {
   player: Player;
   isFollowed: boolean;
   followConfig?: FollowedPlayerConfig;
+  mode?: 'directory' | 'select';
+  isSelected?: boolean;
   onSelectPlayer: (player: Player) => void;
   onOpenConfig: (player: Player, config?: FollowedPlayerConfig | null) => void;
 }
@@ -142,7 +147,7 @@ interface PlayerCardItemProps {
 /**
  * Optimized and memoized Player Card component ensuring immediate, efficient rendering of career title badges.
  */
-const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer, onOpenConfig }: PlayerCardItemProps) => {
+const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directory', isSelected = false, onSelectPlayer, onOpenConfig }: PlayerCardItemProps) => {
   const badgeStyle = isFollowed && followConfig ? BADGE_COLORS[followConfig.badge] : null;
   const aff: PlayerAffiliation = player.affiliation || '日本将棋連盟';
   const affStyle = AFFILIATION_COLORS[aff];
@@ -158,9 +163,11 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
     <div
       onClick={() => onSelectPlayer(player)}
       className={`p-4 rounded-2xl border transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group hover:border-amber-500/50 ${
-        isFollowed && followConfig
-          ? 'bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/20 border-amber-500/50 shadow-md'
-          : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700'
+        isSelected
+          ? 'bg-sky-950/30 border-sky-500/70 shadow-md'
+          : isFollowed && followConfig
+            ? 'bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/20 border-amber-500/50 shadow-md'
+            : 'bg-zinc-900/60 border-zinc-800/80 hover:border-zinc-700'
       }`}
     >
       {/* Left Accent Strip */}
@@ -334,7 +341,19 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
         </div>
 
         <div className="flex items-center gap-2">
-          {isFollowed && followConfig ? (
+          {mode === 'select' ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectPlayer(player);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-600/35 border border-sky-500/40 text-sky-300 text-xs font-bold transition cursor-pointer"
+            >
+              <Pencil size={12} />
+              <span>{isSelected ? '編集中' : '編集選択'}</span>
+            </button>
+          ) : isFollowed && followConfig ? (
             <OshiBadgeTag badge={followConfig.badge} size="sm" />
           ) : (
             <button
@@ -358,7 +377,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
 
 export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   players,
-  followedList,
+  followedList = [],
   onToggleFollow,
   onRemoveFollow,
   onSelectPlayer,
@@ -367,6 +386,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   lastSyncTime,
   onSyncPlayers,
   onRefreshMatches,
+  mode = 'directory',
+  selectedPlayerId,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'pro' | 'women'>('all');
@@ -472,29 +493,31 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       {/* Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white font-serif-jp flex items-center gap-2">
-              <Sparkles className="text-amber-400" size={20} />
-              <span>全棋士・女流棋士名鑑</span>
-            </h2>
-            <p className="text-xs text-zinc-400 mt-1">
-              日本将棋連盟・LPSA所属プロの公式戦通算成績、獲得タイトル、戦型データを網羅
-            </p>
+      {mode !== 'select' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-white font-serif-jp flex items-center gap-2">
+                <Sparkles className="text-amber-400" size={20} />
+                <span>全棋士・女流棋士名鑑</span>
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                日本将棋連盟・LPSA所属プロの公式戦通算成績、獲得タイトル、戦型データを網羅
+              </p>
+            </div>
+            {onOpenAdminDb && (
+              <button
+                onClick={onOpenAdminDb}
+                className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition flex items-center gap-2 shrink-0 cursor-pointer shadow-sm active:scale-95"
+                title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
+              >
+                <Database size={15} className="text-emerald-400" />
+                <span>DB管理・氏名変更</span>
+              </button>
+            )}
           </div>
-          {onOpenAdminDb && (
-            <button
-              onClick={onOpenAdminDb}
-              className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition flex items-center gap-2 shrink-0 cursor-pointer shadow-sm active:scale-95"
-              title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
-            >
-              <Database size={15} className="text-emerald-400" />
-              <span>DB管理・氏名変更</span>
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Search & Filtering Toolbar */}
       <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 space-y-4 shadow-lg">
@@ -887,6 +910,8 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 player={player}
                 isFollowed={isFollowed}
                 followConfig={followConfig}
+                mode={mode}
+                isSelected={selectedPlayerId === player.id}
                 onSelectPlayer={onSelectPlayer}
                 onOpenConfig={(p, cfg) => setConfiguringPlayer({ player: p, config: cfg })}
               />
@@ -903,19 +928,22 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 setSearchQuery('');
                 setFilterType('all');
                 setAffiliationFilter('all');
+                setTitleFilter('all');
                 setRankFilter('all');
+                setJunisenFilter('all');
+                setRyuoFilter('all');
               }}
               className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition shadow cursor-pointer"
             >
               <RefreshCw size={13} />
-              <span>フィルターをすべてリセット（全256名を表示）</span>
+              <span>フィルターをすべてリセット（全{players.length}名を表示）</span>
             </button>
           </div>
         )}
       </div>
 
       {/* Oshi Badge & Config Modal */}
-      {configuringPlayer && (
+      {mode !== 'select' && configuringPlayer && onToggleFollow && onRemoveFollow && (
         <OshiConfigModal
           player={configuringPlayer.player}
           currentConfig={configuringPlayer.config}

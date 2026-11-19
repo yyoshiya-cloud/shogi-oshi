@@ -614,6 +614,7 @@ export default function App() {
       {/* Password-Protected Integrated Shogi DB Management Portal */}
       {showAdminDbModal && (
         <AdminDbModal
+          followedList={followedList}
           onClose={() => setShowAdminDbModal(false)}
           onDatabaseUpdated={async () => {
             await hydrateFromSqliteDb(true);

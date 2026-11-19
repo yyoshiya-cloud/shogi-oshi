@@ -29,13 +29,17 @@ import {
   Eraser,
   Save,
   PauseCircle,
+  ArrowLeft,
 } from 'lucide-react';
+import { PlayerDirectory } from './PlayerDirectory';
 import {
   normalizeShogiPlayerNameForMatch,
   isPlayerOnLeave,
   formatPlayerLeavePeriod,
   isPlayerRetired,
   formatPlayerRetirementDate,
+  formatPlayerName,
+  formatPlayerRankAndDan,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -44,11 +48,13 @@ import type {
   ShogiMonthlyResult,
   PlayerNameHistoryItem,
   DbOverview,
+  FollowedPlayerConfig,
 } from '../types/shogi';
 
 interface AdminDbModalProps {
   onClose: () => void;
   onDatabaseUpdated: () => Promise<void> | void;
+  followedList?: FollowedPlayerConfig[];
 }
 
 const ADMIN_TOKEN_STORAGE_KEY = 'shogi_admin_bearer_token_v1';
@@ -87,6 +93,7 @@ async function adminFetch(url: string, options: RequestInit = {}) {
 export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   onClose,
   onDatabaseUpdated,
+  followedList = [],
 }) => {
   const [authChecking, setAuthChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -107,8 +114,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Players tab state
-  const [profileTargetInput, setProfileTargetInput] = useState('');
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Player | null>(null);
   const [profileHeldTitlesInput, setProfileHeldTitlesInput] = useState('');
   const [profileLeaveEnabled, setProfileLeaveEnabled] = useState(false);
@@ -498,8 +503,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   };
 
   const selectPlayerForProfileEdit = (p: Player) => {
-    setProfileTargetInput(p.name);
-    setProfileDropdownOpen(false);
     setEditingProfile({ ...p });
     setProfileHeldTitlesInput((p.heldTitles || []).join('、'));
     const activeLeave = isPlayerOnLeave(p);
@@ -517,8 +520,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   };
 
   const clearProfileSelection = () => {
-    setProfileTargetInput('');
-    setProfileDropdownOpen(false);
     setEditingProfile(null);
     setProfileHeldTitlesInput('');
     setProfileLeaveEnabled(false);
@@ -667,7 +668,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
       const savedPlayer: Player = json.player;
       setEditingProfile(savedPlayer);
-      setProfileTargetInput(savedPlayer.name);
       setProfileClearNameHistory(false);
       await loadAdminData();
       await onDatabaseUpdated();
@@ -1270,54 +1270,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const filterPlayersByPartialQuery = (rawQuery: string): Player[] => {
-    const raw = rawQuery.trim();
-    if (!raw) return [];
-    const qLower = raw.toLowerCase().replace(/\s+/g, '');
-    const qNorm = normalizeShogiPlayerNameForMatch(raw);
-
-    const scored: { player: Player; score: number }[] = [];
-    for (const p of players) {
-      const nameCompact = p.name.toLowerCase().replace(/\s+/g, '');
-      const nameNorm = normalizeShogiPlayerNameForMatch(p.name);
-      const formerCompact = (p.formerName || '').toLowerCase().replace(/\s+/g, '');
-      const formerNorm = p.formerName ? normalizeShogiPlayerNameForMatch(p.formerName) : '';
-      const metaCompact = `${p.rank || ''} ${p.danRank || ''} ${p.type === 'women' ? '女流棋士' : '棋士'}`
-        .toLowerCase()
-        .replace(/\s+/g, '');
-
-      let score = -1;
-      if (nameCompact.startsWith(qLower) || (qNorm && nameNorm.startsWith(qNorm))) {
-        score = 3;
-      } else if (
-        nameCompact.includes(qLower) ||
-        (qNorm && nameNorm.includes(qNorm)) ||
-        (formerCompact && formerCompact.includes(qLower)) ||
-        (qNorm && formerNorm && formerNorm.includes(qNorm))
-      ) {
-        score = 2;
-      } else if (metaCompact.includes(qLower)) {
-        score = 1;
-      }
-
-      if (score > 0) {
-        scored.push({ player: p, score });
-      }
-    }
-
-    scored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.player.name.localeCompare(b.player.name, 'ja');
-    });
-
-    return scored.map((item) => item.player);
-  };
-
-  const profileMatchedPlayers = useMemo(
-    () => filterPlayersByPartialQuery(profileTargetInput),
-    [players, profileTargetInput]
-  );
-
   const filteredMatches = useMemo(() => {
     const q = matchQuery.trim().toLowerCase().replace(/\s+/g, '');
     if (!q) return matches;
@@ -1721,134 +1673,89 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           <span>棋士・女流棋士プロフィール更新処理（改名・休場・引退情報設定）</span>
                         </h3>
                         <p className="text-[11px] text-zinc-400 mt-0.5">
-                          対象の棋士・女流棋士名の一部を入力して選択し、プロフィール・改名記録（旧氏名・新氏名・改正年月日）・休場期間・引退年月日を更新できます
+                          {editingProfile
+                            ? 'プロフィール・改名記録（旧氏名・新氏名・改正年月日）・休場期間・引退年月日を編集して保存できます'
+                            : '更新対象の棋士・女流棋士を全棋士・女流棋士名鑑と同じ検索・絞り込み画面から選択してください'}
                         </p>
                       </div>
                       {editingProfile && (
                         <button
                           type="button"
                           onClick={clearProfileSelection}
-                          className="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700 cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-300 hover:text-white px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/40 cursor-pointer transition"
                         >
-                          選択解除
+                          <ArrowLeft size={13} />
+                          <span>棋士一覧（名鑑）に戻る</span>
                         </button>
                       )}
                     </div>
 
-                    {/* Target Player Search */}
-                    <div className="relative">
-                      <div className="relative flex items-center">
-                        <input
-                          type="text"
-                          value={profileTargetInput}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setProfileTargetInput(val);
-                            if (editingProfile && editingProfile.name !== val) {
-                              setEditingProfile(null);
-                            }
-                            setProfileDropdownOpen(val.trim().length > 0);
-                          }}
-                          onFocus={() => {
-                            if (profileTargetInput.trim().length > 0 && !editingProfile) {
-                              setProfileDropdownOpen(true);
-                            }
-                          }}
-                          onBlur={() => {
-                            setTimeout(() => setProfileDropdownOpen(false), 150);
-                          }}
-                          placeholder="更新対象の棋士・女流棋士名の一部を入力して検索..."
-                          className={`w-full bg-zinc-950 border rounded-xl pl-3 pr-8 py-2 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none ${
-                            editingProfile ? 'border-emerald-500/60' : 'border-zinc-700'
-                          }`}
-                        />
-                        {(profileTargetInput || editingProfile) && (
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              clearProfileSelection();
-                            }}
-                            className="absolute right-2 p-1 rounded-md text-zinc-500 hover:text-zinc-200 cursor-pointer"
-                            title="入力をクリア"
-                          >
-                            <X size={13} />
-                          </button>
-                        )}
-                      </div>
-
-                      {profileDropdownOpen && profileTargetInput.trim().length > 0 && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-sky-500/40 rounded-xl shadow-2xl overflow-hidden">
-                          <div className="px-3 py-1.5 bg-zinc-900/90 border-b border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between">
-                            <span>検索結果: 棋士・女流棋士 ({profileMatchedPlayers.length}名)</span>
-                            <span>クリックして選択</span>
-                          </div>
-                          <div className="max-h-60 overflow-y-auto divide-y divide-zinc-800/70">
-                            {profileMatchedPlayers.length === 0 ? (
-                              <div className="px-3 py-3 text-center text-zinc-500 text-xs">
-                                該当する棋士・女流棋士が見つかりません
-                              </div>
-                            ) : (
-                              profileMatchedPlayers.map((p) => {
-                                const isSelected = editingProfile?.id === p.id;
-                                const onLeaveNow = isPlayerOnLeave(p);
-                                const retiredNow = isPlayerRetired(p);
-                                return (
-                                  <button
-                                    key={p.id}
-                                    type="button"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      selectPlayerForProfileEdit(p);
-                                    }}
-                                    className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition cursor-pointer text-xs ${
-                                      isSelected
-                                        ? 'bg-sky-500/15 text-sky-200'
-                                        : 'hover:bg-zinc-900 text-zinc-200'
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                                      <span
-                                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                          p.type === 'women'
-                                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                                            : 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-                                        }`}
-                                      >
-                                        {p.type === 'women' ? '女流棋士' : '棋士'}
-                                      </span>
-                                      <span className="font-bold text-zinc-100">{p.name}</span>
-                                      <span className="text-amber-300 text-[11px]">{p.rank}</span>
-                                      {retiredNow && (
-                                        <span className="px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80 text-[10px] font-black">
-                                          引退
-                                        </span>
-                                      )}
-                                      {onLeaveNow && (
-                                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black">
-                                          休場
-                                        </span>
-                                      )}
-                                      {p.formerName && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                                          旧姓: {p.formerName}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-zinc-500 font-mono shrink-0">
-                                      No.{p.playerNumber || '-'}
-                                    </span>
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {!editingProfile && (
+                      <PlayerDirectory
+                        players={players}
+                        followedList={followedList}
+                        mode="select"
+                        onSelectPlayer={selectPlayerForProfileEdit}
+                      />
+                    )}
 
                     {editingProfile && (
-                      <form onSubmit={handleSaveProfileUpdate} className="space-y-4 pt-2 border-t border-zinc-800">
+                      <form onSubmit={handleSaveProfileUpdate} className="space-y-4 pt-3 border-t border-zinc-800">
+                        {/* Selected Player Summary Header */}
+                        <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl bg-zinc-950/70 border border-zinc-800">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black font-serif-jp shadow border border-white/20 text-amber-400 shrink-0 overflow-hidden"
+                              style={{ backgroundColor: editingProfile.type === 'women' ? '#ec4899' : '#3b82f6' }}
+                            >
+                              {editingProfile.photoUrl ? (
+                                <img
+                                  src={editingProfile.photoUrl}
+                                  alt={editingProfile.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                editingProfile.name[0]
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    editingProfile.type === 'women'
+                                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                  }`}
+                                >
+                                  {editingProfile.type === 'women' ? '女流棋士' : '棋士'} No.{editingProfile.playerNumber ?? '-'}
+                                </span>
+                                {isPlayerRetired(editingProfile) && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80">
+                                    引退
+                                  </span>
+                                )}
+                                {isPlayerOnLeave(editingProfile) && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                    休場
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-baseline gap-2 flex-wrap mt-0.5">
+                                <span className="text-base font-black text-zinc-100 font-serif-jp">
+                                  {formatPlayerName(editingProfile.name)}
+                                </span>
+                                <span className="text-xs font-bold text-amber-400 font-serif-jp">
+                                  {formatPlayerRankAndDan(editingProfile)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Basic Profile Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                           <div>
