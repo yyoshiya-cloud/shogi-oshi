@@ -30,6 +30,7 @@ import {
   deleteMatchResultFromArchive,
   getNameHistory,
   recordPlayerNameChange,
+  clearPlayerNameHistory,
   getDatabaseOverview,
   addSyncLog,
   exportBackupJson,
@@ -323,20 +324,63 @@ async function startServer() {
   app.put('/api/admin/players/:id', requireAdmin, (req, res) => {
     try {
       const existing = getAllPlayers().find((p) => p.id === req.params.id);
-      const body = req.body as Player;
+      const body = (req.body || {}) as Player & {
+        nameChange?: {
+          clear?: boolean;
+          oldName?: string;
+          newName?: string;
+          changedAt?: string;
+          note?: string;
+        };
+      };
+      const nameChangePayload = body.nameChange;
+      const bodyClean: Record<string, any> = { ...body };
+      delete bodyClean.nameChange;
+
       const player: Player = existing
         ? {
             ...existing,
-            ...body,
+            ...(bodyClean as Partial<Player>),
             id: req.params.id,
           }
-        : { ...body, id: req.params.id };
+        : { ...(bodyClean as Player), id: req.params.id };
+
+      if (!bodyClean.formerName || !String(bodyClean.formerName).trim()) {
+        delete player.formerName;
+      } else {
+        player.formerName = String(bodyClean.formerName).trim();
+      }
+      if (!bodyClean.retirementDate || !String(bodyClean.retirementDate).trim()) {
+        delete player.retirementDate;
+      } else {
+        player.retirementDate = String(bodyClean.retirementDate).trim();
+      }
+
       if (!player.name) {
         return res.status(400).json({ success: false, error: 'player.name が必須です' });
       }
-      const saved = upsertPlayer(player);
+
+      let saved = upsertPlayer(player);
       addSyncLog('player_update', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
-      res.json({ success: true, player: saved });
+
+      if (nameChangePayload?.clear) {
+        const cleared = clearPlayerNameHistory(req.params.id);
+        if (cleared) saved = cleared;
+      } else if (nameChangePayload?.oldName?.trim() && nameChangePayload?.newName?.trim()) {
+        const ncRes = recordPlayerNameChange({
+          playerId: req.params.id,
+          oldName: nameChangePayload.oldName.trim(),
+          newName: nameChangePayload.newName.trim(),
+          changedAt: nameChangePayload.changedAt?.trim(),
+          note: nameChangePayload.note?.trim(),
+        });
+        if (ncRes?.player) {
+          saved = ncRes.player;
+        }
+      }
+
+      const freshPlayer = getAllPlayers().find((p) => p.id === req.params.id) || saved;
+      res.json({ success: true, player: freshPlayer });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to update player' });
     }
@@ -367,6 +411,15 @@ async function startServer() {
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to record name change' });
+    }
+  });
+
+  app.delete('/api/admin/name-history/:playerId', requireAdmin, (req, res) => {
+    try {
+      const updated = clearPlayerNameHistory(req.params.playerId);
+      res.json({ success: true, player: updated });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to clear name history' });
     }
   });
 

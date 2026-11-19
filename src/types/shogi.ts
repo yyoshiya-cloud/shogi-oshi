@@ -82,6 +82,7 @@ export interface Player {
     endDate?: string; // YYYY-MM-DD
     reason?: string;
   };
+  retirementDate?: string; // YYYY-MM-DD (引退年月日)
 }
 
 export interface FollowedPlayerConfig {

@@ -34,6 +34,8 @@ import {
   normalizeShogiPlayerNameForMatch,
   isPlayerOnLeave,
   formatPlayerLeavePeriod,
+  isPlayerRetired,
+  formatPlayerRetirementDate,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -113,14 +115,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [profileLeaveStart, setProfileLeaveStart] = useState('');
   const [profileLeaveEnd, setProfileLeaveEnd] = useState('');
   const [profileLeaveReason, setProfileLeaveReason] = useState('');
-
-  const [nameChangePlayerId, setNameChangePlayerId] = useState('');
-  const [nameChangeTargetInput, setNameChangeTargetInput] = useState('');
-  const [nameChangeDropdownOpen, setNameChangeDropdownOpen] = useState(false);
-  const [nameChangeOld, setNameChangeOld] = useState('');
-  const [nameChangeNew, setNameChangeNew] = useState('');
-  const [nameChangeDate, setNameChangeDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [nameChangeNote, setNameChangeNote] = useState('結婚・改姓等による氏名変更');
+  const [profileOldName, setProfileOldName] = useState('');
+  const [profileNewName, setProfileNewName] = useState('');
+  const [profileNameChangeDate, setProfileNameChangeDate] = useState('');
+  const [profileNameChangeNote, setProfileNameChangeNote] = useState('');
+  const [profileClearNameHistory, setProfileClearNameHistory] = useState(false);
+  const [profileRetirementDate, setProfileRetirementDate] = useState('');
 
   // Archives tab state (FY2021-2026) - initial period derived from system date
   const [selectedArchiveFY, setSelectedArchiveFY] = useState<number>(() => {
@@ -507,6 +507,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     setProfileLeaveStart(p.leaveInfo?.startDate || '');
     setProfileLeaveEnd(p.leaveInfo?.endDate || '');
     setProfileLeaveReason(p.leaveInfo?.reason || '');
+    const existingHist = nameHistory.find((h) => h.playerId === p.id);
+    setProfileOldName(existingHist?.oldName || p.formerName || '');
+    setProfileNewName(existingHist?.newName || (p.formerName ? p.name : ''));
+    setProfileNameChangeDate(existingHist?.changedAt || '');
+    setProfileNameChangeNote(existingHist?.note || '');
+    setProfileClearNameHistory(false);
+    setProfileRetirementDate(p.retirementDate || '');
   };
 
   const clearProfileSelection = () => {
@@ -518,6 +525,51 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     setProfileLeaveStart('');
     setProfileLeaveEnd('');
     setProfileLeaveReason('');
+    setProfileOldName('');
+    setProfileNewName('');
+    setProfileNameChangeDate('');
+    setProfileNameChangeNote('');
+    setProfileClearNameHistory(false);
+    setProfileRetirementDate('');
+  };
+
+  const handleClearEditingNameChange = async () => {
+    if (!editingProfile) return;
+    setProfileOldName('');
+    setProfileNewName('');
+    setProfileNameChangeDate('');
+    setProfileNameChangeNote('');
+    setProfileClearNameHistory(true);
+
+    const hasExistingInDb =
+      Boolean(editingProfile.formerName) ||
+      nameHistory.some((h) => h.playerId === editingProfile.id);
+
+    if (hasExistingInDb) {
+      try {
+        setIsBusy(true);
+        const res = await adminFetch(`/api/admin/name-history/${encodeURIComponent(editingProfile.id)}`, {
+          method: 'DELETE',
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error || '改名情報の消去に失敗しました');
+        const nextEditing: Player = { ...(json.player || editingProfile) };
+        delete nextEditing.formerName;
+        setEditingProfile(nextEditing);
+        setProfileClearNameHistory(false);
+        await loadAdminData();
+        await onDatabaseUpdated();
+        showStatus('success', `${nextEditing.name} の旧氏名・新氏名・改正年月日を消去しました`);
+      } catch (err: any) {
+        showStatus('error', err?.message || '改名情報消去エラー');
+      } finally {
+        setIsBusy(false);
+      }
+    } else {
+      const nextEditing = { ...editingProfile };
+      delete nextEditing.formerName;
+      setEditingProfile(nextEditing);
+    }
   };
 
   const handleSaveProfileUpdate = async (e: React.FormEvent) => {
@@ -528,6 +580,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
     if (profileLeaveStart && profileLeaveEnd && profileLeaveStart > profileLeaveEnd) {
       showStatus('error', '休場開始日は休場終了日以前の日付を指定してください');
+      return;
+    }
+    const trimmedOld = profileOldName.trim();
+    const trimmedNew = profileNewName.trim();
+    if ((trimmedOld && !trimmedNew) || (!trimmedOld && trimmedNew)) {
+      showStatus('error', '改名記録を登録する場合は「旧氏名」と「新氏名」の両方を入力してください');
       return;
     }
 
@@ -568,9 +626,14 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         .replace(/現在は休場中。?/g, '')
         .trim();
 
-      const payload: Player = {
+      const retirementDateClean = profileRetirementDate.trim();
+      const effectiveName = trimmedNew || editingProfile.name.trim();
+
+      const payload: Record<string, any> = {
         ...editingProfile,
-        name: editingProfile.name.trim(),
+        name: effectiveName,
+        formerName: trimmedOld || '',
+        retirementDate: retirementDateClean,
         heldTitles: parsedTitles,
         careerWins: cw,
         careerLosses: cl,
@@ -583,6 +646,17 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         leaveInfo,
       };
 
+      if (trimmedOld && trimmedNew) {
+        payload.nameChange = {
+          oldName: trimmedOld,
+          newName: trimmedNew,
+          changedAt: profileNameChangeDate.trim() || new Date().toISOString().slice(0, 10),
+          note: profileNameChangeNote.trim() || undefined,
+        };
+      } else if (profileClearNameHistory || !trimmedOld) {
+        payload.nameChange = { clear: true };
+      }
+
       const res = await adminFetch(`/api/admin/players/${encodeURIComponent(payload.id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -594,59 +668,23 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const savedPlayer: Player = json.player;
       setEditingProfile(savedPlayer);
       setProfileTargetInput(savedPlayer.name);
+      setProfileClearNameHistory(false);
       await loadAdminData();
       await onDatabaseUpdated();
       const currentlyOnLeave = isPlayerOnLeave(savedPlayer);
+      const currentlyRetired = isPlayerRetired(savedPlayer);
+      const statusBadges: string[] = [];
+      if (currentlyRetired) statusBadges.push('引退バッジ適用中');
+      if (currentlyOnLeave) statusBadges.push('休場バッジ適用中');
+      if (trimmedOld && trimmedNew) statusBadges.push(`改名記録: ${trimmedOld} → ${trimmedNew}`);
       showStatus(
         'success',
         `${savedPlayer.name} のプロフィールを更新しました${
-          currentlyOnLeave ? '（休場バッジ適用中）' : ''
+          statusBadges.length > 0 ? `（${statusBadges.join(' / ')}）` : ''
         }`
       );
     } catch (err: any) {
       showStatus('error', err?.message || 'プロフィール更新エラー');
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleRecordNameChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nameChangePlayerId) {
-      showStatus('error', '対象棋士の項目に棋士名の一部を入力し、一覧から選択してください');
-      return;
-    }
-    if (!nameChangeOld.trim() || !nameChangeNew.trim()) {
-      showStatus('error', '旧姓・変更前氏名と新氏名を入力してください');
-      return;
-    }
-    try {
-      setIsBusy(true);
-      const prevOld = nameChangeOld.trim();
-      const nextNew = nameChangeNew.trim();
-      const res = await adminFetch('/api/admin/name-history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerId: nameChangePlayerId,
-          oldName: prevOld,
-          newName: nextNew,
-          changedAt: nameChangeDate,
-          note: nameChangeNote.trim(),
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error || '登録に失敗しました');
-      setNameChangePlayerId('');
-      setNameChangeTargetInput('');
-      setNameChangeDropdownOpen(false);
-      setNameChangeOld('');
-      setNameChangeNew('');
-      await loadAdminData();
-      await onDatabaseUpdated();
-      showStatus('success', `氏名変更を登録し過去対局との紐付けを維持しました（${prevOld} → ${nextNew}）`);
-    } catch (err: any) {
-      showStatus('error', err?.message || '氏名変更登録エラー');
     } finally {
       setIsBusy(false);
     }
@@ -1280,11 +1318,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     [players, profileTargetInput]
   );
 
-  const nameChangeMatchedPlayers = useMemo(
-    () => filterPlayersByPartialQuery(nameChangeTargetInput),
-    [players, nameChangeTargetInput]
-  );
-
   const filteredMatches = useMemo(() => {
     const q = matchQuery.trim().toLowerCase().replace(/\s+/g, '');
     if (!q) return matches;
@@ -1685,10 +1718,10 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       <div>
                         <h3 className="text-sm font-bold text-sky-300 flex items-center gap-2">
                           <Pencil size={15} />
-                          <span>棋士・女流棋士プロフィール更新処理（休場情報設定）</span>
+                          <span>棋士・女流棋士プロフィール更新処理（改名・休場・引退情報設定）</span>
                         </h3>
                         <p className="text-[11px] text-zinc-400 mt-0.5">
-                          対象の棋士・女流棋士名の一部を入力して選択し、プロフィールや休場期間を更新できます
+                          対象の棋士・女流棋士名の一部を入力して選択し、プロフィール・改名記録（旧氏名・新氏名・改正年月日）・休場期間・引退年月日を更新できます
                         </p>
                       </div>
                       {editingProfile && (
@@ -1759,6 +1792,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                               profileMatchedPlayers.map((p) => {
                                 const isSelected = editingProfile?.id === p.id;
                                 const onLeaveNow = isPlayerOnLeave(p);
+                                const retiredNow = isPlayerRetired(p);
                                 return (
                                   <button
                                     key={p.id}
@@ -1785,6 +1819,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                       </span>
                                       <span className="font-bold text-zinc-100">{p.name}</span>
                                       <span className="text-amber-300 text-[11px]">{p.rank}</span>
+                                      {retiredNow && (
+                                        <span className="px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80 text-[10px] font-black">
+                                          引退
+                                        </span>
+                                      )}
                                       {onLeaveNow && (
                                         <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black">
                                           休場
@@ -1819,20 +1858,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                               required
                               value={editingProfile.name}
                               onChange={(e) => setEditingProfile({ ...editingProfile, name: e.target.value })}
-                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-zinc-400 block mb-0.5">旧姓 (formerName)</label>
-                            <input
-                              type="text"
-                              value={editingProfile.formerName || ''}
-                              onChange={(e) =>
-                                setEditingProfile({
-                                  ...editingProfile,
-                                  formerName: e.target.value || undefined,
-                                })
-                              }
                               className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                             />
                           </div>
@@ -2192,6 +2217,167 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           })()}
                         </div>
 
+                        {/* Name Change History Settings (旧氏名・新氏名・改正年月日) */}
+                        <div className="bg-zinc-950/90 border border-sky-500/35 rounded-xl p-3.5 space-y-3">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <h4 className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+                              <UserCheck size={15} />
+                              <span>改名・氏名変更記録（旧氏名・新氏名・改正年月日／過去対局との紐付け維持）</span>
+                            </h4>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleRelinkNames}
+                                disabled={isBusy}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-sky-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title="改姓前の旧氏名による過去対局記録を現在の棋士IDへ再紐付けします"
+                              >
+                                <RefreshCw size={11} className={isBusy ? 'animate-spin' : ''} />
+                                <span>過去対局ID紐付け再実行</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleClearEditingNameChange}
+                                disabled={isBusy}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-rose-950/60 border border-zinc-700 hover:border-rose-500/40 text-[11px] text-zinc-300 hover:text-rose-200 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              >
+                                <Eraser size={12} />
+                                <span>改名情報を消去</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">旧氏名</label>
+                              <input
+                                type="text"
+                                value={profileOldName}
+                                onChange={(e) => {
+                                  setProfileOldName(e.target.value);
+                                  setProfileClearNameHistory(false);
+                                }}
+                                placeholder="例: 脇田 菜々子"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">新氏名</label>
+                              <input
+                                type="text"
+                                value={profileNewName}
+                                onChange={(e) => {
+                                  setProfileNewName(e.target.value);
+                                  setProfileClearNameHistory(false);
+                                }}
+                                placeholder="例: 萩田 菜々子"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">改正年月日</label>
+                              <input
+                                type="date"
+                                value={profileNameChangeDate}
+                                onChange={(e) => setProfileNameChangeDate(e.target.value)}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">備考（任意）</label>
+                              <input
+                                type="text"
+                                value={profileNameChangeNote}
+                                onChange={(e) => setProfileNameChangeNote(e.target.value)}
+                                placeholder="例: 結婚による改姓"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {(() => {
+                            const playerHist = nameHistory.filter((h) => h.playerId === editingProfile.id);
+                            if (playerHist.length === 0) {
+                              return (
+                                <div className="text-[11px] text-zinc-500">
+                                  登録済みの改名履歴なし（旧氏名・新氏名・改正年月日を入力して保存すると履歴に記録されます）
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                                <span className="text-zinc-400 font-bold">登録済み履歴:</span>
+                                {playerHist.map((h) => (
+                                  <span
+                                    key={h.id}
+                                    className="px-2.5 py-0.5 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-300"
+                                  >
+                                    <strong className="text-zinc-400">{h.oldName}</strong> →{' '}
+                                    <strong className="text-sky-300">{h.newName}</strong>（改正日: {h.changedAt}）
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Retirement Settings (引退年月日) */}
+                        <div className="bg-zinc-950/90 border border-zinc-600/60 rounded-xl p-3.5 space-y-3">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <h4 className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                              <History size={15} className="text-zinc-400" />
+                              <span>引退情報設定（年度途中の引退・プロフィールに「引退」バッジを表示）</span>
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => setProfileRetirementDate('')}
+                              className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-zinc-300 flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eraser size={12} />
+                              <span>引退情報をクリア</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end text-xs">
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">引退年月日</label>
+                              <input
+                                type="date"
+                                value={profileRetirementDate}
+                                onChange={(e) => setProfileRetirementDate(e.target.value)}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-zinc-400 focus:outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 flex items-center gap-2 text-[11px] pb-1.5">
+                              <span className="text-zinc-400">現在の表示判定:</span>
+                              {(() => {
+                                const previewRetiredPlayer: Player = {
+                                  ...editingProfile,
+                                  retirementDate: profileRetirementDate.trim() || undefined,
+                                };
+                                const willShowRetired = isPlayerRetired(previewRetiredPlayer);
+                                if (willShowRetired) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 text-zinc-200 font-bold">
+                                      <span className="px-2 py-0.5 rounded-full bg-zinc-700 border border-zinc-500/80 text-[10px] font-black text-zinc-200">
+                                        引退
+                                      </span>
+                                      <span>バッジを表示（{formatPlayerRetirementDate(previewRetiredPlayer)}）</span>
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span className="text-zinc-400">
+                                    {profileRetirementDate.trim()
+                                      ? `指定日（${profileRetirementDate.trim().replace(/-/g, '/')}）以降に「引退」バッジを表示`
+                                      : '現役表示（引退バッジなし）'}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="flex items-center justify-end">
                           <button
                             type="submit"
@@ -2205,205 +2391,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       </form>
                     )}
                   </div>
-
-                  {/* Name Change History Registration Tool */}
-                  <form
-                    onSubmit={handleRecordNameChange}
-                    className="bg-zinc-900/80 border border-amber-500/30 rounded-2xl p-4 space-y-3"
-                  >
-                    <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
-                      <UserCheck size={16} />
-                      <span>氏名変更・旧姓履歴登録（過去対局との紐付け維持）</span>
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs">
-                      <div className="relative sm:col-span-2">
-                        <div className="relative flex items-center">
-                          <input
-                            type="text"
-                            value={nameChangeTargetInput}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setNameChangeTargetInput(val);
-                              const currentSelected = nameChangePlayerId
-                                ? playerMap.get(nameChangePlayerId)
-                                : undefined;
-                              if (currentSelected && currentSelected.name !== val) {
-                                setNameChangePlayerId('');
-                              }
-                              setNameChangeDropdownOpen(val.trim().length > 0);
-                            }}
-                            onFocus={() => {
-                              if (nameChangeTargetInput.trim().length > 0 && !nameChangePlayerId) {
-                                setNameChangeDropdownOpen(true);
-                              }
-                            }}
-                            onBlur={() => {
-                              setTimeout(() => setNameChangeDropdownOpen(false), 150);
-                            }}
-                            placeholder="対象棋士名の一部を入力（棋士・女流棋士を検索）..."
-                            className={`w-full bg-zinc-950 border rounded-xl pl-3 pr-8 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none ${
-                              nameChangePlayerId
-                                ? 'border-emerald-500/60'
-                                : 'border-zinc-700'
-                            }`}
-                          />
-                          {(nameChangeTargetInput || nameChangePlayerId) && (
-                            <button
-                              type="button"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                setNameChangeTargetInput('');
-                                setNameChangePlayerId('');
-                                setNameChangeOld('');
-                                setNameChangeDropdownOpen(false);
-                              }}
-                              className="absolute right-2 p-1 rounded-md text-zinc-500 hover:text-zinc-200 cursor-pointer"
-                              title="入力をクリア"
-                            >
-                              <X size={13} />
-                            </button>
-                          )}
-                        </div>
-                        {nameChangePlayerId && (
-                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-400 px-1">
-                            <CheckCircle2 size={12} />
-                            <span>
-                              選択中: {playerMap.get(nameChangePlayerId)?.type === 'women' ? '女流棋士' : '棋士'}{' '}
-                              {playerMap.get(nameChangePlayerId)?.name}（{playerMap.get(nameChangePlayerId)?.rank}）
-                            </span>
-                          </div>
-                        )}
-                        {nameChangeDropdownOpen && nameChangeTargetInput.trim().length > 0 && (
-                          <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-amber-500/40 rounded-xl shadow-2xl overflow-hidden">
-                            <div className="px-3 py-1.5 bg-zinc-900/90 border-b border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between">
-                              <span>検索結果: 棋士・女流棋士 ({nameChangeMatchedPlayers.length}名)</span>
-                              <span>クリックして選択</span>
-                            </div>
-                            <div className="max-h-60 overflow-y-auto divide-y divide-zinc-800/70">
-                              {nameChangeMatchedPlayers.length === 0 ? (
-                                <div className="px-3 py-3 text-center text-zinc-500 text-xs">
-                                  該当する棋士・女流棋士が見つかりません
-                                </div>
-                              ) : (
-                                nameChangeMatchedPlayers.map((p) => {
-                                  const isSelected = nameChangePlayerId === p.id;
-                                  return (
-                                    <button
-                                      key={p.id}
-                                      type="button"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        setNameChangePlayerId(p.id);
-                                        setNameChangeTargetInput(p.name);
-                                        setNameChangeOld(p.formerName || p.name);
-                                        setNameChangeDropdownOpen(false);
-                                      }}
-                                      className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition cursor-pointer ${
-                                        isSelected
-                                          ? 'bg-amber-500/15 text-amber-200'
-                                          : 'hover:bg-zinc-900 text-zinc-200'
-                                      }`}
-                                    >
-                                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                                        <span
-                                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                            p.type === 'women'
-                                              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                                              : 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-                                          }`}
-                                        >
-                                          {p.type === 'women' ? '女流棋士' : '棋士'}
-                                        </span>
-                                        <span className="font-bold text-zinc-100">{p.name}</span>
-                                        <span className="text-amber-300 text-[11px]">{p.rank}</span>
-                                        {p.formerName && (
-                                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                                            旧姓: {p.formerName}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-[10px] text-zinc-500 font-mono shrink-0">
-                                        No.{p.playerNumber || '-'}
-                                      </span>
-                                    </button>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <input
-                        type="text"
-                        value={nameChangeOld}
-                        onChange={(e) => setNameChangeOld(e.target.value)}
-                        placeholder="旧姓・変更前氏名"
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        value={nameChangeNew}
-                        onChange={(e) => setNameChangeNew(e.target.value)}
-                        placeholder="新氏名（スペース有推奨）"
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={isBusy}
-                        className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold transition cursor-pointer disabled:opacity-50"
-                      >
-                        改姓をDB反映
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                      <input
-                        type="date"
-                        value={nameChangeDate}
-                        onChange={(e) => setNameChangeDate(e.target.value)}
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-zinc-200 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        value={nameChangeNote}
-                        onChange={(e) => setNameChangeNote(e.target.value)}
-                        placeholder="備考（結婚による改姓など）"
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-zinc-200 focus:outline-none sm:col-span-2"
-                      />
-                    </div>
-
-                    {nameHistory.length > 0 && (
-                      <div className="pt-2.5 border-t border-zinc-800 space-y-2">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[11px] font-bold text-zinc-400 block">
-                            登録済み 氏名変更履歴 ({nameHistory.length}件)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleRelinkNames}
-                            disabled={isBusy}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-                            title="改姓前の旧姓による過去対局記録を現在の棋士IDへ再紐付けします"
-                          >
-                            <RefreshCw size={12} className={isBusy ? 'animate-spin' : ''} />
-                            <span>改姓・旧姓の対局ID紐付けを再実行</span>
-                          </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {nameHistory.map((h) => (
-                            <span
-                              key={h.id}
-                              className="px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] text-zinc-300"
-                            >
-                              <strong className="text-zinc-400">{h.oldName}</strong> →{' '}
-                              <strong className="text-amber-300">{h.newName}</strong> ({h.changedAt})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </form>
                 </div>
               )}
 

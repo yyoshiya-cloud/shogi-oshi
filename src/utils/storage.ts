@@ -237,6 +237,8 @@ export function saveStoredPlayers(data: Player[]): void {
       photoUrl: p.photoUrl,
       shortBio: p.shortBio,
       highlights: p.highlights,
+      leaveInfo: p.leaveInfo,
+      retirementDate: p.retirementDate,
     }));
     localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(slim));
   } catch {

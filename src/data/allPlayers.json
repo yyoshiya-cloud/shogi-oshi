@@ -14353,7 +14353,6 @@
   {
     "id": "fukuma-kana",
     "name": "福間 香奈",
-    "formerName": "里見 香奈",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四冠",
@@ -14871,7 +14870,6 @@
   {
     "id": "lady-ryoko_chiba",
     "name": "千葉 涼子",
-    "formerName": "碓井 涼子",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -15033,7 +15031,6 @@
   {
     "id": "lady-sayuri_takebe",
     "name": "竹部 さゆり",
-    "formerName": "木村 さゆり",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15482,7 +15479,6 @@
   {
     "id": "lady-sayuri_honda",
     "name": "本田 小百合",
-    "formerName": "植村 小百合",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15720,7 +15716,6 @@
   {
     "id": "lady-yuki_muroya",
     "name": "室谷 由紀",
-    "formerName": "谷口 由紀",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16390,7 +16385,6 @@
   {
     "id": "lady-sumie_ishitaka",
     "name": "石高 澄恵",
-    "formerName": "横山 澄恵",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -18483,7 +18477,6 @@
   {
     "id": "lady-nanako_hagita",
     "name": "萩田 菜々子",
-    "formerName": "脇田 菜々子",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -20639,12 +20632,12 @@
     },
     "motto": "思い立ったが吉日",
     "favPiece": "と金",
-    "achievements": "女流名人位戦A級在位：2003年度、2005年度、2007年度。LPSA1dayトーナメント優勝：第4回・第5回（2007年）、第8回・第10回（2008年）、第34回（2010年）、第44回（2011年）、第54回・第55回（2013年）、第57回（2014年）、第60回（2015年）、65回（2017年）"
+    "achievements": "女流名人位戦A級在位：2003年度、2005年度、2007年度。LPSA1dayトーナメント優勝：第4回・第5回（2007年）、第8回・第10回（2008年）、第34回（2010年）、第44回（2011年）、第54回・第55回（2013年）、第57回（2014年）、第60回（2015年）、65回（2017年）",
+    "retirementDate": "2026-07-06"
   },
   {
     "id": "uekawa-kaori",
     "name": "上川 香織",
-    "formerName": "藤森 香織",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",
@@ -21244,5 +21237,414 @@
     "eiseiTitles": [
       "クイーン名人"
     ]
+  },
+  {
+    "id": "pro-naoya_fujiwara",
+    "name": "藤原 直哉",
+    "type": "pro",
+    "affiliation": "日本将棋連盟",
+    "rank": "七段",
+    "danRank": "七段",
+    "playerNumber": 190,
+    "photoUrl": "https://www.shogi.or.jp/images/pro/190.jpg",
+    "birthDate": "1965-05-27",
+    "birthPlace": "兵庫県神戸市",
+    "master": "若松政和八段",
+    "style": "居飛車",
+    "ryuoClass": "引退",
+    "junisenClass": "引退",
+    "heldTitles": [],
+    "totalTitles": 0,
+    "titleHistory": "",
+    "eiseiTitles": [],
+    "careerWins": 486,
+    "careerLosses": 566,
+    "careerWinRate": 0.4619,
+    "currentYearWins": 0,
+    "currentYearLosses": 1,
+    "currentYearWinRate": 0,
+    "currentYearStreak": 0,
+    "rankingInFederation": {},
+    "colorAccent": "#64748b",
+    "avatarBg": "linear-gradient(135deg, #18181b 0%, #64748b33 100%)",
+    "shortBio": "日本将棋連盟所属の引退棋士（七段）。2026年4月22日付で引退。",
+    "highlights": [
+      "棋士番号 190",
+      "2026年4月22日付で引退"
+    ],
+    "yearRecords": [
+      {
+        "year": 2026,
+        "wins": 0,
+        "losses": 1,
+        "rate": 0
+      },
+      {
+        "year": 2025,
+        "wins": 3,
+        "losses": 12,
+        "rate": 0.2
+      },
+      {
+        "year": 2024,
+        "wins": 6,
+        "losses": 12,
+        "rate": 0.3333
+      },
+      {
+        "year": 2023,
+        "wins": 10,
+        "losses": 14,
+        "rate": 0.4167
+      },
+      {
+        "year": 2022,
+        "wins": 8,
+        "losses": 9,
+        "rate": 0.4706
+      },
+      {
+        "year": 2021,
+        "wins": 7,
+        "losses": 11,
+        "rate": 0.3889
+      }
+    ],
+    "senteWinRate": 0.48,
+    "goteWinRate": 0.44,
+    "openingStats": [],
+    "headToHead": [],
+    "externalLinks": {
+      "officialProfile": "https://www.shogi.or.jp/player/naoya_fujiwara",
+      "kifuDatabase": "https://shogidb2.com/search?q=%E8%97%A4%E5%8E%9F%E7%9B%B4%E5%93%89",
+      "wikipedia": "https://ja.wikipedia.org/wiki/%E8%97%A4%E5%8E%9F%E7%9B%B4%E5%93%89"
+    },
+    "retirementDate": "2026-04-22"
+  },
+  {
+    "id": "pro-hisashi_ogura",
+    "name": "小倉 久史",
+    "type": "pro",
+    "affiliation": "日本将棋連盟",
+    "rank": "八段",
+    "danRank": "八段",
+    "playerNumber": 188,
+    "photoUrl": "https://www.shogi.or.jp/images/pro/188.jpg",
+    "birthDate": "1968-05-15",
+    "birthPlace": "東京都大田区",
+    "master": "（故）中原誠十六世名人",
+    "style": "振り飛車",
+    "ryuoClass": "引退",
+    "junisenClass": "引退",
+    "heldTitles": [],
+    "totalTitles": 0,
+    "titleHistory": "",
+    "eiseiTitles": [],
+    "careerWins": 570,
+    "careerLosses": 565,
+    "careerWinRate": 0.5022,
+    "currentYearWins": 0,
+    "currentYearLosses": 1,
+    "currentYearWinRate": 0,
+    "currentYearStreak": 0,
+    "rankingInFederation": {},
+    "colorAccent": "#64748b",
+    "avatarBg": "linear-gradient(135deg, #18181b 0%, #64748b33 100%)",
+    "shortBio": "日本将棋連盟所属の引退棋士（八段）。2026年4月30日付で引退。",
+    "highlights": [
+      "棋士番号 188",
+      "2026年4月30日付で引退"
+    ],
+    "yearRecords": [
+      {
+        "year": 2026,
+        "wins": 0,
+        "losses": 1,
+        "rate": 0
+      },
+      {
+        "year": 2025,
+        "wins": 7,
+        "losses": 12,
+        "rate": 0.3684
+      },
+      {
+        "year": 2024,
+        "wins": 5,
+        "losses": 12,
+        "rate": 0.2941
+      },
+      {
+        "year": 2023,
+        "wins": 4,
+        "losses": 12,
+        "rate": 0.25
+      },
+      {
+        "year": 2022,
+        "wins": 9,
+        "losses": 10,
+        "rate": 0.4737
+      },
+      {
+        "year": 2021,
+        "wins": 12,
+        "losses": 11,
+        "rate": 0.5217
+      }
+    ],
+    "senteWinRate": 0.52,
+    "goteWinRate": 0.48,
+    "openingStats": [],
+    "headToHead": [],
+    "externalLinks": {
+      "officialProfile": "https://www.shogi.or.jp/player/hisashi_ogura",
+      "kifuDatabase": "https://shogidb2.com/search?q=%E5%B0%8F%E5%80%89%E4%B9%85%E5%8F%B2",
+      "wikipedia": "https://ja.wikipedia.org/wiki/%E5%B0%8F%E5%80%89%E4%B9%85%E5%8F%B2"
+    },
+    "retirementDate": "2026-04-30"
+  },
+  {
+    "id": "pro-kenji_waki",
+    "name": "脇 謙二",
+    "type": "pro",
+    "affiliation": "日本将棋連盟",
+    "rank": "九段",
+    "danRank": "九段",
+    "playerNumber": 138,
+    "photoUrl": "https://www.shogi.or.jp/images/pro/138.jpg",
+    "birthDate": "1960-08-10",
+    "birthPlace": "大阪府大阪市",
+    "master": "（故）高島一岐代九段",
+    "style": "居飛車",
+    "ryuoClass": "引退",
+    "junisenClass": "引退",
+    "heldTitles": [],
+    "totalTitles": 0,
+    "titleHistory": "",
+    "eiseiTitles": [],
+    "careerWins": 661,
+    "careerLosses": 754,
+    "careerWinRate": 0.4671,
+    "currentYearWins": 0,
+    "currentYearLosses": 1,
+    "currentYearWinRate": 0,
+    "currentYearStreak": 0,
+    "rankingInFederation": {},
+    "colorAccent": "#64748b",
+    "avatarBg": "linear-gradient(135deg, #18181b 0%, #64748b33 100%)",
+    "shortBio": "日本将棋連盟所属の引退棋士（九段）。2026年5月1日付で引退。",
+    "highlights": [
+      "棋士番号 138",
+      "2026年5月1日付で引退"
+    ],
+    "yearRecords": [
+      {
+        "year": 2026,
+        "wins": 0,
+        "losses": 1,
+        "rate": 0
+      },
+      {
+        "year": 2025,
+        "wins": 2,
+        "losses": 12,
+        "rate": 0.1429
+      },
+      {
+        "year": 2024,
+        "wins": 4,
+        "losses": 12,
+        "rate": 0.25
+      },
+      {
+        "year": 2023,
+        "wins": 7,
+        "losses": 12,
+        "rate": 0.3684
+      },
+      {
+        "year": 2022,
+        "wins": 1,
+        "losses": 11,
+        "rate": 0.0833
+      },
+      {
+        "year": 2021,
+        "wins": 2,
+        "losses": 11,
+        "rate": 0.1538
+      }
+    ],
+    "senteWinRate": 0.48,
+    "goteWinRate": 0.45,
+    "openingStats": [],
+    "headToHead": [],
+    "externalLinks": {
+      "officialProfile": "https://www.shogi.or.jp/player/kenji_waki",
+      "kifuDatabase": "https://shogidb2.com/search?q=%E8%84%87%E8%AC%99%E4%BA%8C",
+      "wikipedia": "https://ja.wikipedia.org/wiki/%E8%84%87%E8%AC%99%E4%BA%8C"
+    },
+    "retirementDate": "2026-05-01"
+  },
+  {
+    "id": "pro-kazuharu_shoshi",
+    "name": "所司 和晴",
+    "type": "pro",
+    "affiliation": "日本将棋連盟",
+    "rank": "八段",
+    "danRank": "八段",
+    "playerNumber": 172,
+    "photoUrl": "https://www.shogi.or.jp/images/pro/172.jpg",
+    "birthDate": "1961-10-23",
+    "birthPlace": "東京都江東区",
+    "master": "（故）平野広吉七段",
+    "style": "居飛車",
+    "ryuoClass": "引退",
+    "junisenClass": "引退",
+    "heldTitles": [],
+    "totalTitles": 0,
+    "titleHistory": "",
+    "eiseiTitles": [],
+    "careerWins": 405,
+    "careerLosses": 585,
+    "careerWinRate": 0.4091,
+    "currentYearWins": 0,
+    "currentYearLosses": 1,
+    "currentYearWinRate": 0,
+    "currentYearStreak": 0,
+    "rankingInFederation": {},
+    "colorAccent": "#64748b",
+    "avatarBg": "linear-gradient(135deg, #18181b 0%, #64748b33 100%)",
+    "shortBio": "日本将棋連盟所属の引退棋士（八段）。2026年5月13日付で引退。",
+    "highlights": [
+      "棋士番号 172",
+      "2026年5月13日付で引退"
+    ],
+    "yearRecords": [
+      {
+        "year": 2026,
+        "wins": 0,
+        "losses": 1,
+        "rate": 0
+      },
+      {
+        "year": 2025,
+        "wins": 3,
+        "losses": 12,
+        "rate": 0.2
+      },
+      {
+        "year": 2024,
+        "wins": 2,
+        "losses": 12,
+        "rate": 0.1429
+      },
+      {
+        "year": 2023,
+        "wins": 3,
+        "losses": 12,
+        "rate": 0.2
+      },
+      {
+        "year": 2022,
+        "wins": 3,
+        "losses": 10,
+        "rate": 0.2308
+      },
+      {
+        "year": 2021,
+        "wins": 2,
+        "losses": 12,
+        "rate": 0.1429
+      }
+    ],
+    "senteWinRate": 0.42,
+    "goteWinRate": 0.39,
+    "openingStats": [],
+    "headToHead": [],
+    "externalLinks": {
+      "officialProfile": "https://www.shogi.or.jp/player/kazuharu_shoshi",
+      "kifuDatabase": "https://shogidb2.com/search?q=%E6%89%80%E5%8F%B8%E5%92%8C%E6%99%B4",
+      "wikipedia": "https://ja.wikipedia.org/wiki/%E6%89%80%E5%8F%B8%E5%92%8C%E6%99%B4"
+    },
+    "retirementDate": "2026-05-13"
+  },
+  {
+    "id": "lady-nana_sakaki",
+    "name": "榊 菜吟",
+    "type": "women",
+    "affiliation": "日本将棋連盟",
+    "rank": "女流1級",
+    "danRank": "女流1級",
+    "playerNumber": 77,
+    "photoUrl": "https://www.shogi.or.jp/images/lady/77.jpg",
+    "birthDate": "2003-11-12",
+    "birthPlace": "大阪府大阪市",
+    "master": "久保利明九段",
+    "style": "振り飛車",
+    "ryuoClass": "-",
+    "junisenClass": "引退",
+    "heldTitles": [],
+    "totalTitles": 0,
+    "titleHistory": "",
+    "eiseiTitles": [],
+    "careerWins": 26,
+    "careerLosses": 49,
+    "careerWinRate": 0.3467,
+    "currentYearWins": 2,
+    "currentYearLosses": 2,
+    "currentYearWinRate": 0.5,
+    "currentYearStreak": 0,
+    "rankingInFederation": {},
+    "colorAccent": "#64748b",
+    "avatarBg": "linear-gradient(135deg, #18181b 0%, #64748b33 100%)",
+    "shortBio": "日本将棋連盟所属の引退女流棋士（女流1級）。2026年7月7日付で引退。",
+    "highlights": [
+      "女流棋士番号 77",
+      "2026年7月7日付で引退"
+    ],
+    "yearRecords": [
+      {
+        "year": 2026,
+        "wins": 2,
+        "losses": 2,
+        "rate": 0.5
+      },
+      {
+        "year": 2025,
+        "wins": 10,
+        "losses": 10,
+        "rate": 0.5
+      },
+      {
+        "year": 2024,
+        "wins": 6,
+        "losses": 13,
+        "rate": 0.3158
+      },
+      {
+        "year": 2023,
+        "wins": 6,
+        "losses": 14,
+        "rate": 0.3
+      },
+      {
+        "year": 2022,
+        "wins": 2,
+        "losses": 10,
+        "rate": 0.1667
+      }
+    ],
+    "senteWinRate": 0.36,
+    "goteWinRate": 0.33,
+    "openingStats": [],
+    "headToHead": [],
+    "externalLinks": {
+      "officialProfile": "https://www.shogi.or.jp/player/nana_sakaki",
+      "kifuDatabase": "https://shogidb2.com/search?q=%E6%A6%8A%E8%8F%9C%E5%90%9F",
+      "wikipedia": "https://ja.wikipedia.org/wiki/%E6%A6%8A%E8%8F%9C%E5%90%9F"
+    },
+    "retirementDate": "2026-07-07"
   }
 ]

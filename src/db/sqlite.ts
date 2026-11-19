@@ -21,72 +21,7 @@ import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
 
-export const DEFAULT_INITIAL_NAME_HISTORY: PlayerNameHistoryItem[] = [
-  {
-    id: 'nh-fukuma-kana-2024',
-    playerId: 'fukuma-kana',
-    oldName: '里見 香奈',
-    newName: '福間 香奈',
-    changedAt: '2024-01-01',
-    note: '改姓（旧姓：里見 香奈）',
-  },
-  {
-    id: 'nh-hagita-nanako-2026',
-    playerId: 'lady-nanako_hagita',
-    oldName: '脇田 菜々子',
-    newName: '萩田 菜々子',
-    changedAt: '2026-07-14',
-    note: '改姓（旧姓：脇田 菜々子）',
-  },
-  {
-    id: 'nh-muroya-yuki-2020',
-    playerId: 'lady-yuki_muroya',
-    oldName: '谷口 由紀',
-    newName: '室谷 由紀',
-    changedAt: '2020-12-31',
-    note: '改姓（旧姓：谷口 由紀）',
-  },
-  {
-    id: 'nh-chiba-ryoko-2003',
-    playerId: 'lady-ryoko_chiba',
-    oldName: '碓井 涼子',
-    newName: '千葉 涼子',
-    changedAt: '2003-05-01',
-    note: '改姓（旧姓：碓井 涼子）',
-  },
-  {
-    id: 'nh-honda-sayuri-2005',
-    playerId: 'lady-sayuri_honda',
-    oldName: '植村 小百合',
-    newName: '本田 小百合',
-    changedAt: '2005-04-01',
-    note: '改姓（旧姓：植村 小百合）',
-  },
-  {
-    id: 'nh-ishitaka-sumie-1994',
-    playerId: 'lady-sumie_ishitaka',
-    oldName: '横山 澄恵',
-    newName: '石高 澄恵',
-    changedAt: '1994-04-01',
-    note: '改姓（旧姓：横山 澄恵）',
-  },
-  {
-    id: 'nh-takebe-sayuri-2008',
-    playerId: 'lady-sayuri_takebe',
-    oldName: '木村 さゆり',
-    newName: '竹部 さゆり',
-    changedAt: '2008-04-01',
-    note: '改姓（旧姓：木村 さゆり）',
-  },
-  {
-    id: 'nh-uekawa-kaori-2004',
-    playerId: 'uekawa-kaori',
-    oldName: '藤森 香織',
-    newName: '上川 香織',
-    changedAt: '2004-04-01',
-    note: '改姓（旧姓：藤森 香織）',
-  },
-];
+export const DEFAULT_INITIAL_NAME_HISTORY: PlayerNameHistoryItem[] = [];
 
 export function getDbPath(): string {
   return path.join(process.cwd(), 'data', 'shogi.db');
@@ -387,34 +322,21 @@ export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): 
   let relinkedArchiveMatchesCount = 0;
   let relinkedUpcomingMatchesCount = 0;
 
-  // 1. Sync default name history records
-  const insertHistory = db.prepare(`
-    INSERT OR IGNORE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
-    VALUES (@id, @playerId, @oldName, @newName, @changedAt, @note)
-  `);
-
-  for (const h of DEFAULT_INITIAL_NAME_HISTORY) {
-    const res = insertHistory.run({
-      id: h.id,
-      playerId: h.playerId,
-      oldName: h.oldName,
-      newName: h.newName,
-      changedAt: h.changedAt,
-      note: h.note || '',
-    });
-    if (res.changes > 0) {
-      insertedHistoryCount++;
-    }
-  }
-
-  // 2. Ensure former_name is populated in players table & data_json for all renamed players
+  // 1. Sync former_name ONLY from actual existing rows in player_name_history
   const selectPlayer = db.prepare('SELECT id, name, former_name, data_json FROM players WHERE id = ?');
   const updatePlayerFormer = db.prepare(`
     UPDATE players SET former_name = ?, data_json = ?, updated_at = ? WHERE id = ?
   `);
 
-  for (const h of DEFAULT_INITIAL_NAME_HISTORY) {
-    const row = selectPlayer.get(h.playerId) as {
+  const currentHistRows = db
+    .prepare('SELECT player_id, old_name, new_name FROM player_name_history ORDER BY changed_at DESC, id DESC')
+    .all() as Array<{ player_id: string; old_name: string; new_name: string }>;
+
+  const seenPlayerHist = new Set<string>();
+  for (const h of currentHistRows) {
+    if (seenPlayerHist.has(h.player_id)) continue;
+    seenPlayerHist.add(h.player_id);
+    const row = selectPlayer.get(h.player_id) as {
       id: string;
       name: string;
       former_name: string | null;
@@ -424,33 +346,17 @@ export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): 
     if (row) {
       const playerObj = parseJsonSafe<Player>(row.data_json, {} as Player);
       let needsUpdate = false;
-      if (!row.former_name || row.former_name !== h.oldName) {
+      if (row.former_name !== h.old_name) {
         needsUpdate = true;
       }
-      if (playerObj.formerName !== h.oldName) {
-        playerObj.formerName = h.oldName;
+      if (playerObj.formerName !== h.old_name) {
+        playerObj.formerName = h.old_name;
         needsUpdate = true;
       }
       if (needsUpdate) {
-        updatePlayerFormer.run(h.oldName, JSON.stringify(playerObj), now, h.playerId);
+        updatePlayerFormer.run(h.old_name, JSON.stringify(playerObj), now, h.player_id);
         updatedPlayersCount++;
       }
-    }
-  }
-
-  for (const p of PLAYERS_DATA) {
-    if (!p.formerName) continue;
-    const row = selectPlayer.get(p.id) as {
-      id: string;
-      name: string;
-      former_name: string | null;
-      data_json: string;
-    } | undefined;
-    if (row && (!row.former_name || row.former_name !== p.formerName)) {
-      const playerObj = parseJsonSafe<Player>(row.data_json, {} as Player);
-      playerObj.formerName = p.formerName;
-      updatePlayerFormer.run(p.formerName, JSON.stringify(playerObj), now, p.id);
-      updatedPlayersCount++;
     }
   }
 
@@ -678,24 +584,35 @@ export function getAllPlayers(): Player[] {
 export function upsertPlayer(player: Player): Player {
   const db = getDb();
   const now = new Date().toISOString();
+  const cleanPlayer: Player = { ...player };
+  if (!cleanPlayer.formerName || !cleanPlayer.formerName.trim()) {
+    delete cleanPlayer.formerName;
+  } else {
+    cleanPlayer.formerName = cleanPlayer.formerName.trim();
+  }
+  if (!cleanPlayer.retirementDate || !cleanPlayer.retirementDate.trim()) {
+    delete cleanPlayer.retirementDate;
+  } else {
+    cleanPlayer.retirementDate = cleanPlayer.retirementDate.trim();
+  }
   db.prepare(`
     INSERT OR REPLACE INTO players
     (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
     VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
   `).run({
-    id: player.id,
-    name: player.name,
-    former_name: player.formerName || null,
-    type: player.type || 'pro',
-    affiliation: player.affiliation || '日本将棋連盟',
-    rank: player.rank || '',
-    dan_rank: player.danRank || null,
-    player_number: player.playerNumber ?? null,
-    photo_url: player.photoUrl || null,
-    data_json: JSON.stringify(player),
+    id: cleanPlayer.id,
+    name: cleanPlayer.name,
+    former_name: cleanPlayer.formerName || null,
+    type: cleanPlayer.type || 'pro',
+    affiliation: cleanPlayer.affiliation || '日本将棋連盟',
+    rank: cleanPlayer.rank || '',
+    dan_rank: cleanPlayer.danRank || null,
+    player_number: cleanPlayer.playerNumber ?? null,
+    photo_url: cleanPlayer.photoUrl || null,
+    data_json: JSON.stringify(cleanPlayer),
     updated_at: now,
   });
-  return player;
+  return cleanPlayer;
 }
 
 export function upsertPlayersBulk(players: Player[], source = 'sync'): number {
@@ -749,6 +666,35 @@ export function deletePlayerById(id: string): boolean {
   return info.changes > 0;
 }
 
+export function clearPlayerNameHistory(playerId: string): Player | null {
+  const db = getDb();
+  const existingRow = db.prepare('SELECT data_json FROM players WHERE id = ?').get(playerId) as
+    | { data_json: string }
+    | undefined;
+  let updatedPlayer: Player | null = null;
+
+  const tx = db.transaction(() => {
+    const delInfo = db.prepare('DELETE FROM player_name_history WHERE player_id = ?').run(playerId);
+    if (existingRow) {
+      const currentPlayer = parseJsonSafe<Player>(existingRow.data_json, {} as Player);
+      const nextPlayer: Player = { ...currentPlayer };
+      delete nextPlayer.formerName;
+      updatedPlayer = upsertPlayer(nextPlayer);
+    }
+    if (delInfo.changes > 0 || existingRow) {
+      addSyncLog(
+        'name_change_clear',
+        'success',
+        `氏名変更履歴（旧氏名・新氏名・改正年月日）を消去: ${updatedPlayer?.name || playerId}`,
+        1
+      );
+    }
+  });
+
+  tx();
+  return updatedPlayer;
+}
+
 export function recordPlayerNameChange(params: {
   playerId: string;
   oldName: string;
@@ -763,24 +709,27 @@ export function recordPlayerNameChange(params: {
   if (!existingRow) return null;
 
   const currentPlayer = parseJsonSafe<Player>(existingRow.data_json, {} as Player);
-  const changedAt = params.changedAt || new Date().toISOString().slice(0, 10);
+  const changedAt = params.changedAt?.trim() || new Date().toISOString().slice(0, 10);
+  const oldTrim = params.oldName.trim();
+  const newTrim = params.newName.trim();
   const historyItem: PlayerNameHistoryItem = {
     id: `nh-${params.playerId}-${Date.now()}`,
     playerId: params.playerId,
-    oldName: params.oldName.trim(),
-    newName: params.newName.trim(),
+    oldName: oldTrim,
+    newName: newTrim,
     changedAt,
     note: params.note?.trim() || '氏名変更・改姓反映',
   };
 
   const updatedPlayer: Player = {
     ...currentPlayer,
-    name: params.newName.trim(),
-    formerName: params.oldName.trim(),
+    name: newTrim,
+    formerName: oldTrim,
   };
 
   const tx = db.transaction(() => {
     upsertPlayer(updatedPlayer);
+    db.prepare('DELETE FROM player_name_history WHERE player_id = ?').run(params.playerId);
     db.prepare(`
       INSERT INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
       VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
@@ -795,7 +744,7 @@ export function recordPlayerNameChange(params: {
     addSyncLog(
       'name_change',
       'success',
-      `氏名変更登録: ${historyItem.oldName} → ${historyItem.newName}`,
+      `氏名変更登録: ${historyItem.oldName} → ${historyItem.newName}（${historyItem.changedAt}）`,
       1
     );
   });
@@ -1194,6 +1143,8 @@ function normalizePlayerRecord(raw: any): Player | null {
     goteWinRate: Number(src.goteWinRate ?? src.gote_win_rate ?? 0.5),
     openingStats: parseJsonSafe(src.openingStats ?? src.opening_stats, []),
     headToHead: parseJsonSafe(src.headToHead ?? src.head_to_head, []),
+    ...(src.leaveInfo ? { leaveInfo: src.leaveInfo } : {}),
+    ...(src.retirementDate || src.retirement_date ? { retirementDate: String(src.retirementDate || src.retirement_date) } : {}),
     externalLinks: externalLinksRaw && typeof externalLinksRaw === 'object'
       ? externalLinksRaw
       : {

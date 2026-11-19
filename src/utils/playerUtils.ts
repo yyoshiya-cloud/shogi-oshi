@@ -243,8 +243,24 @@ export function formatPlayerLeavePeriod(player: Partial<Player>): string {
  * Checks if a player is officially retired.
  * Correctly ignores lifetime title notes like "就位は原則引退後" or "引退後に就位".
  */
-export function isPlayerRetired(player: { rank?: string; shortBio?: string; titleHistory?: string; highlights?: string[] }): boolean {
+export function isPlayerRetired(
+  player: {
+    rank?: string;
+    shortBio?: string;
+    titleHistory?: string;
+    highlights?: string[];
+    retirementDate?: string;
+  },
+  referenceDate?: string
+): boolean {
   if (!player) return false;
+
+  // 0. Explicit retirementDate check
+  const retDate = (player.retirementDate || '').trim();
+  if (retDate) {
+    const today = referenceDate || getTodayDateString();
+    return today >= retDate;
+  }
 
   // 1. Explicit rank check (e.g. "引退", "引退九段", "引退棋士", "引退女流...")
   if (player.rank && player.rank.includes('引退')) {
@@ -254,7 +270,16 @@ export function isPlayerRetired(player: { rank?: string; shortBio?: string; titl
   // 2. ShortBio check: look for explicit retirement statements, excluding "就位は原則引退後" / "引退後"
   if (player.shortBio) {
     const cleanBio = player.shortBio.replace(/就位は原則引退後|引退後に就位|引退後/g, '');
-    if (cleanBio.includes('引退棋士') || cleanBio.includes('引退女流棋士') || cleanBio.includes('現役引退') || cleanBio.includes('引退発表') || cleanBio.includes('正式に引退')) {
+    if (
+      cleanBio.includes('引退棋士') ||
+      cleanBio.includes('引退女流棋士') ||
+      cleanBio.includes('現役引退') ||
+      cleanBio.includes('引退発表') ||
+      cleanBio.includes('正式に引退') ||
+      cleanBio.includes('日付で引退') ||
+      cleanBio.includes('引退規定') ||
+      /\d{4}年\d{1,2}月\d{1,2}日(?:付で)?引退/.test(cleanBio)
+    ) {
       return true;
     }
   }
@@ -263,13 +288,26 @@ export function isPlayerRetired(player: { rank?: string; shortBio?: string; titl
   if (player.highlights && player.highlights.length > 0) {
     for (const h of player.highlights) {
       const cleanH = h.replace(/就位は原則引退後|引退後に就位|引退後/g, '');
-      if (cleanH.includes('現役引退') || cleanH.includes('引退決定') || cleanH.includes('引退表明')) {
+      if (
+        cleanH.includes('現役引退') ||
+        cleanH.includes('引退決定') ||
+        cleanH.includes('引退表明') ||
+        /\d{4}年\d{1,2}月\d{1,2}日(?:付で)?引退/.test(cleanH)
+      ) {
         return true;
       }
     }
   }
 
   return false;
+}
+
+export function formatPlayerRetirementDate(player: Partial<Player>): string {
+  const retDate = (player.retirementDate || '').trim();
+  if (retDate) {
+    return `${retDate.replace(/-/g, '/')} 引退`;
+  }
+  return '引退';
 }
 
 export function isBoilerplateBio(bio?: string | null): boolean {

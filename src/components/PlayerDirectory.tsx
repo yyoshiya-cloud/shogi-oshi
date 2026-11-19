@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -209,7 +209,10 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             </span>
 
             {isPlayerRetired(player) && (
-              <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-300 border border-zinc-600">
+              <span
+                className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80"
+                title={formatPlayerRetirementDate(player)}
+              >
                 引退
               </span>
             )}

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import { getTodayDateString } from '../utils/dateUtils';
 import results2026Json from '../data/results2026.json';
@@ -348,7 +348,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               {activePlayer.affiliation || '日本将棋連盟'}
             </span>
             {isPlayerRetired(activePlayer) && (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300 border border-zinc-600">
+              <span
+                className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-200 border border-zinc-500/80"
+                title={formatPlayerRetirementDate(activePlayer)}
+              >
                 引退
               </span>
             )}
@@ -684,6 +687,21 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     </>
                   )}
                 </div>
+
+                {isPlayerRetired(activePlayer) && (
+                  <div className="mt-3 px-3 py-2 rounded-xl bg-zinc-800/70 border border-zinc-600/60 flex items-center justify-between gap-2 flex-wrap text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-200 border border-zinc-500/80">
+                        引退
+                      </span>
+                      <span className="font-bold text-zinc-200">
+                        {activePlayer.retirementDate
+                          ? `引退年月日: ${activePlayer.retirementDate.replace(/-/g, '/')}`
+                          : '現役引退'}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {isPlayerOnLeave(activePlayer) && (
                   <div className="mt-3 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2 flex-wrap text-xs">

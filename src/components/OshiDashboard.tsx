@@ -1,7 +1,7 @@
 import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
-import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod } from '../utils/playerUtils';
+import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
@@ -315,6 +315,14 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <OshiBadgeTag badge={config.badge} size="xs" />
+                        {isPlayerRetired(player) && (
+                          <span
+                            className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80"
+                            title={formatPlayerRetirementDate(player)}
+                          >
+                            引退
+                          </span>
+                        )}
                         {isPlayerOnLeave(player) && (
                           <span
                             className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40"
