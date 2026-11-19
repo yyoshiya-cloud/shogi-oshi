@@ -100,12 +100,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Players tab state
-  const [playerQuery, setPlayerQuery] = useState('');
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isCreatingPlayer, setIsCreatingPlayer] = useState(false);
   const [editingHeldTitlesInput, setEditingHeldTitlesInput] = useState('');
   const [confirmDeletePlayerId, setConfirmDeletePlayerId] = useState<string | null>(null);
   const [nameChangePlayerId, setNameChangePlayerId] = useState('');
+  const [nameChangeTargetInput, setNameChangeTargetInput] = useState('');
+  const [nameChangeDropdownOpen, setNameChangeDropdownOpen] = useState(false);
   const [nameChangeOld, setNameChangeOld] = useState('');
   const [nameChangeNew, setNameChangeNew] = useState('');
   const [nameChangeDate, setNameChangeDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -602,26 +603,39 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleRecordNameChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nameChangePlayerId || !nameChangeOld.trim() || !nameChangeNew.trim()) return;
+    if (!nameChangePlayerId) {
+      showStatus('error', '対象棋士の項目に棋士名の一部を入力し、一覧から選択してください');
+      return;
+    }
+    if (!nameChangeOld.trim() || !nameChangeNew.trim()) {
+      showStatus('error', '旧姓・変更前氏名と新氏名を入力してください');
+      return;
+    }
     try {
       setIsBusy(true);
+      const prevOld = nameChangeOld.trim();
+      const nextNew = nameChangeNew.trim();
       const res = await adminFetch('/api/admin/name-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerId: nameChangePlayerId,
-          oldName: nameChangeOld.trim(),
-          newName: nameChangeNew.trim(),
+          oldName: prevOld,
+          newName: nextNew,
           changedAt: nameChangeDate,
           note: nameChangeNote.trim(),
         }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || '登録に失敗しました');
+      setNameChangePlayerId('');
+      setNameChangeTargetInput('');
+      setNameChangeDropdownOpen(false);
+      setNameChangeOld('');
       setNameChangeNew('');
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', `氏名変更を登録し過去対局との紐付けを維持しました（${nameChangeOld} → ${nameChangeNew}）`);
+      showStatus('success', `氏名変更を登録し過去対局との紐付けを維持しました（${prevOld} → ${nextNew}）`);
     } catch (err: any) {
       showStatus('error', err?.message || '氏名変更登録エラー');
     } finally {
@@ -1189,18 +1203,48 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const filteredPlayers = useMemo(() => {
-    const q = playerQuery.trim().toLowerCase().replace(/\s+/g, '');
-    if (!q) return players.slice(0, 60);
-    return players
-      .filter((p) => {
-        const str = `${p.name} ${p.formerName || ''} ${p.id} ${p.rank} ${p.affiliation || ''}`
-          .toLowerCase()
-          .replace(/\s+/g, '');
-        return str.includes(q);
-      })
-      .slice(0, 80);
-  }, [players, playerQuery]);
+  const nameChangeMatchedPlayers = useMemo(() => {
+    const raw = nameChangeTargetInput.trim();
+    if (!raw) return [];
+    const qLower = raw.toLowerCase().replace(/\s+/g, '');
+    const qNorm = normalizeShogiPlayerNameForMatch(raw);
+
+    const scored: { player: Player; score: number }[] = [];
+    for (const p of players) {
+      const nameCompact = p.name.toLowerCase().replace(/\s+/g, '');
+      const nameNorm = normalizeShogiPlayerNameForMatch(p.name);
+      const formerCompact = (p.formerName || '').toLowerCase().replace(/\s+/g, '');
+      const formerNorm = p.formerName ? normalizeShogiPlayerNameForMatch(p.formerName) : '';
+      const metaCompact = `${p.rank || ''} ${p.danRank || ''} ${p.type === 'women' ? '女流棋士' : '棋士'}`
+        .toLowerCase()
+        .replace(/\s+/g, '');
+
+      let score = -1;
+      if (nameCompact.startsWith(qLower) || (qNorm && nameNorm.startsWith(qNorm))) {
+        score = 3;
+      } else if (
+        nameCompact.includes(qLower) ||
+        (qNorm && nameNorm.includes(qNorm)) ||
+        (formerCompact && formerCompact.includes(qLower)) ||
+        (qNorm && formerNorm && formerNorm.includes(qNorm))
+      ) {
+        score = 2;
+      } else if (metaCompact.includes(qLower)) {
+        score = 1;
+      }
+
+      if (score > 0) {
+        scored.push({ player: p, score });
+      }
+    }
+
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.player.name.localeCompare(b.player.name, 'ja');
+    });
+
+    return scored.map((item) => item.player);
+  }, [players, nameChangeTargetInput]);
 
   const filteredMatches = useMemo(() => {
     const q = matchQuery.trim().toLowerCase().replace(/\s+/g, '');
@@ -1606,24 +1650,123 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       <span>氏名変更・旧姓履歴登録（過去対局との紐付け維持）</span>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs">
-                      <select
-                        value={nameChangePlayerId}
-                        onChange={(e) => {
-                          const pid = e.target.value;
-                          setNameChangePlayerId(pid);
-                          const p = playerMap.get(pid);
-                          if (p) setNameChangeOld(p.formerName || p.name);
-                        }}
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none sm:col-span-2"
-                      >
-                        <option value="">対象棋士を選択...</option>
-                        {players.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name} ({p.rank})
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative sm:col-span-2">
+                        <div className="relative flex items-center">
+                          <input
+                            type="text"
+                            value={nameChangeTargetInput}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setNameChangeTargetInput(val);
+                              const currentSelected = nameChangePlayerId
+                                ? playerMap.get(nameChangePlayerId)
+                                : undefined;
+                              if (currentSelected && currentSelected.name !== val) {
+                                setNameChangePlayerId('');
+                              }
+                              setNameChangeDropdownOpen(val.trim().length > 0);
+                            }}
+                            onFocus={() => {
+                              if (nameChangeTargetInput.trim().length > 0 && !nameChangePlayerId) {
+                                setNameChangeDropdownOpen(true);
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setNameChangeDropdownOpen(false), 150);
+                            }}
+                            placeholder="対象棋士名の一部を入力（棋士・女流棋士を検索）..."
+                            className={`w-full bg-zinc-950 border rounded-xl pl-3 pr-8 py-2 text-zinc-100 focus:border-amber-500 focus:outline-none ${
+                              nameChangePlayerId
+                                ? 'border-emerald-500/60'
+                                : 'border-zinc-700'
+                            }`}
+                          />
+                          {(nameChangeTargetInput || nameChangePlayerId) && (
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setNameChangeTargetInput('');
+                                setNameChangePlayerId('');
+                                setNameChangeOld('');
+                                setNameChangeDropdownOpen(false);
+                              }}
+                              className="absolute right-2 p-1 rounded-md text-zinc-500 hover:text-zinc-200 cursor-pointer"
+                              title="入力をクリア"
+                            >
+                              <X size={13} />
+                            </button>
+                          )}
+                        </div>
+                        {nameChangePlayerId && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-400 px-1">
+                            <CheckCircle2 size={12} />
+                            <span>
+                              選択中: {playerMap.get(nameChangePlayerId)?.type === 'women' ? '女流棋士' : '棋士'}{' '}
+                              {playerMap.get(nameChangePlayerId)?.name}（{playerMap.get(nameChangePlayerId)?.rank}）
+                            </span>
+                          </div>
+                        )}
+                        {nameChangeDropdownOpen && nameChangeTargetInput.trim().length > 0 && (
+                          <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-amber-500/40 rounded-xl shadow-2xl overflow-hidden">
+                            <div className="px-3 py-1.5 bg-zinc-900/90 border-b border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between">
+                              <span>検索結果: 棋士・女流棋士 ({nameChangeMatchedPlayers.length}名)</span>
+                              <span>クリックして選択</span>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto divide-y divide-zinc-800/70">
+                              {nameChangeMatchedPlayers.length === 0 ? (
+                                <div className="px-3 py-3 text-center text-zinc-500 text-xs">
+                                  該当する棋士・女流棋士が見つかりません
+                                </div>
+                              ) : (
+                                nameChangeMatchedPlayers.map((p) => {
+                                  const isSelected = nameChangePlayerId === p.id;
+                                  return (
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        setNameChangePlayerId(p.id);
+                                        setNameChangeTargetInput(p.name);
+                                        setNameChangeOld(p.formerName || p.name);
+                                        setNameChangeDropdownOpen(false);
+                                      }}
+                                      className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-amber-500/15 text-amber-200'
+                                          : 'hover:bg-zinc-900 text-zinc-200'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                        <span
+                                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                            p.type === 'women'
+                                              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                                              : 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                                          }`}
+                                        >
+                                          {p.type === 'women' ? '女流棋士' : '棋士'}
+                                        </span>
+                                        <span className="font-bold text-zinc-100">{p.name}</span>
+                                        <span className="text-amber-300 text-[11px]">{p.rank}</span>
+                                        {p.formerName && (
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                                            旧姓: {p.formerName}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                                        No.{p.playerNumber || '-'}
+                                      </span>
+                                    </button>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={nameChangeOld}
@@ -1928,18 +2071,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </form>
                   )}
 
-                  {/* Player Search & List */}
+                  {/* Player List */}
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl overflow-hidden">
                     <div className="p-3 border-b border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                        <Search size={15} className="text-zinc-400" />
-                        <input
-                          type="text"
-                          value={playerQuery}
-                          onChange={(e) => setPlayerQuery(e.target.value)}
-                          placeholder="棋士名・旧姓・ID・段位で検索..."
-                          className="w-full bg-transparent text-xs text-zinc-100 focus:outline-none"
-                        />
+                      <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
+                        <Users size={15} className="text-amber-400" />
+                        <span>登録 棋士・女流棋士一覧 ({players.length}名)</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
@@ -1962,7 +2099,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       </div>
                     </div>
                     <div className="divide-y divide-zinc-800/70 max-h-[340px] overflow-y-auto">
-                      {filteredPlayers.map((p) => (
+                      {players.map((p) => (
                         <div
                           key={p.id}
                           className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs hover:bg-zinc-900"
