@@ -48,21 +48,8 @@ export function getFiscalYearFromMonth(monthStr: string): number {
   return m >= 1 && m <= 3 ? y - 1 : y;
 }
 
-export function getDb(): Database.Database {
-  if (dbInstance) return dbInstance;
-
-  const dbPath = getDbPath();
-  const dir = path.dirname(dbPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  const db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('synchronous = NORMAL');
-  db.pragma('foreign_keys = ON');
-
-  db.exec(`
+function createSchemaSql(): string {
+  return `
     CREATE TABLE IF NOT EXISTS players (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -128,7 +115,185 @@ export function getDb(): Database.Database {
       records_count INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
-  `);
+  `;
+}
+
+function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Database {
+  console.warn(`[SQLite] Detected corrupted DB (${reason}). Rebuilding healthy database at ${dbPath}...`);
+
+  let salvagedPlayers: any[] = [];
+  let salvagedMatches: any[] = [];
+  let salvagedHistory: any[] = [];
+  const salvagedArchives = new Map<string, { month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>();
+
+  try {
+    const ro = new Database(dbPath, { readonly: true });
+    try {
+      salvagedPlayers = ro.prepare('SELECT * FROM players').all();
+    } catch {}
+    try {
+      salvagedMatches = ro.prepare('SELECT * FROM matches').all();
+    } catch {}
+    try {
+      salvagedHistory = ro.prepare('SELECT * FROM player_name_history').all();
+    } catch {}
+    try {
+      const mRows = ro.prepare('SELECT month FROM match_archives').all() as Array<{ month: string }>;
+      for (const { month } of mRows) {
+        try {
+          const row = ro
+            .prepare('SELECT month, fiscal_year, count, results_json, source, updated_at FROM match_archives WHERE month = ?')
+            .get(month) as any;
+          const parsed = JSON.parse(row.results_json);
+          if (Array.isArray(parsed)) {
+            salvagedArchives.set(month, {
+              month: row.month,
+              fiscal_year: row.fiscal_year ?? getFiscalYearFromMonth(month),
+              count: parsed.length,
+              results_json: JSON.stringify(parsed),
+              source: typeof row.source === 'string' && /^[a-zA-Z0-9_-]+$/.test(row.source) ? row.source : 'recovered',
+              updated_at: row.updated_at || new Date().toISOString(),
+            });
+          }
+        } catch {}
+      }
+    } catch {}
+    try {
+      ro.close();
+    } catch {}
+  } catch {}
+
+  const ts = Date.now();
+  try {
+    if (fs.existsSync(dbPath)) {
+      fs.renameSync(dbPath, `${dbPath}.corrupt-${ts}`);
+    }
+  } catch {
+    try {
+      fs.unlinkSync(dbPath);
+    } catch {}
+  }
+  for (const suffix of ['-wal', '-shm', '-journal']) {
+    try {
+      if (fs.existsSync(`${dbPath}${suffix}`)) fs.unlinkSync(`${dbPath}${suffix}`);
+    } catch {}
+  }
+
+  const fresh = new Database(dbPath);
+  fresh.pragma('journal_mode = DELETE');
+  fresh.pragma('synchronous = FULL');
+  fresh.pragma('busy_timeout = 5000');
+  fresh.pragma('foreign_keys = ON');
+  fresh.exec(createSchemaSql());
+
+  const now = new Date().toISOString();
+  const tx = fresh.transaction(() => {
+    if (salvagedPlayers.length > 0) {
+      const insP = fresh.prepare(`
+        INSERT OR REPLACE INTO players
+        (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+        VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
+      `);
+      for (const p of salvagedPlayers) {
+        try {
+          insP.run(p);
+        } catch {}
+      }
+    }
+    if (salvagedMatches.length > 0) {
+      const insM = fresh.prepare(`
+        INSERT OR REPLACE INTO matches
+        (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
+        VALUES (@id, @date, @time, @tournament, @category, @round, @player1_id, @player2_id, @status, @venue, @data_json, @updated_at)
+      `);
+      for (const m of salvagedMatches) {
+        try {
+          insM.run(m);
+        } catch {}
+      }
+    }
+    if (salvagedHistory.length > 0) {
+      const insH = fresh.prepare(`
+        INSERT OR REPLACE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
+        VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
+      `);
+      for (const h of salvagedHistory) {
+        try {
+          insH.run(h);
+        } catch {}
+      }
+    }
+    const insA = fresh.prepare(`
+      INSERT OR REPLACE INTO match_archives
+      (month, fiscal_year, count, results_json, source, updated_at)
+      VALUES (@month, @fiscal_year, @count, @results_json, @source, @updated_at)
+    `);
+    for (const arch of salvagedArchives.values()) {
+      insA.run(arch);
+    }
+    const bundled = enrichAllResultsWithSupplements(results2026Json as Record<string, ShogiMonthlyResult[]>);
+    for (const [month, list] of Object.entries(bundled)) {
+      if (!Array.isArray(list) || salvagedArchives.has(month)) continue;
+      insA.run({
+        month,
+        fiscal_year: getFiscalYearFromMonth(month),
+        count: list.length,
+        results_json: JSON.stringify(list),
+        source: 'auto_recovery_seed',
+        updated_at: now,
+      });
+    }
+    fresh
+      .prepare('INSERT INTO sync_logs (sync_type, status, message, records_count, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(
+        'auto_recovery',
+        'success',
+        `SQLite破損検出により自動修復を実行 (${reason})`,
+        salvagedPlayers.length + salvagedArchives.size,
+        now
+      );
+  });
+  tx();
+  return fresh;
+}
+
+export function getDb(): Database.Database {
+  if (dbInstance) return dbInstance;
+
+  const dbPath = getDbPath();
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  let db: Database.Database;
+  try {
+    db = new Database(dbPath);
+    db.pragma('busy_timeout = 5000');
+    const qc = db.pragma('quick_check') as Array<{ quick_check: string }>;
+    const qcVal = qc?.[0]?.quick_check;
+    if (qcVal && qcVal !== 'ok') {
+      try {
+        db.close();
+      } catch {}
+      db = recoverCorruptedDatabase(dbPath, `quick_check=${qcVal}`);
+    } else {
+      // Checkpoint any legacy WAL data and enforce single-file DELETE journal mode
+      // so git/deployment snapshots never lose uncommitted WAL pages
+      try {
+        const curMode = (db.pragma('journal_mode', { simple: true }) as string || '').toLowerCase();
+        if (curMode === 'wal') {
+          db.pragma('wal_checkpoint(TRUNCATE)');
+        }
+      } catch {}
+      db.pragma('journal_mode = DELETE');
+      db.pragma('synchronous = FULL');
+      db.pragma('foreign_keys = ON');
+      db.exec(createSchemaSql());
+    }
+  } catch (err: any) {
+    db = recoverCorruptedDatabase(dbPath, err?.message || 'open_failed');
+  }
 
   dbInstance = db;
   seedDatabaseIfEmpty(db);
@@ -422,19 +587,29 @@ export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): 
     return undefined;
   };
 
-  // 4. Re-link match_archives
-  const archiveRows = db.prepare('SELECT month, results_json FROM match_archives').all() as Array<{
+  // 4. Re-link match_archives (read month keys safely per row)
+  const archiveMonthKeys = db.prepare('SELECT month FROM match_archives ORDER BY month ASC').all() as Array<{
     month: string;
-    results_json: string;
   }>;
 
+  const selectArchiveStmt = db.prepare('SELECT results_json FROM match_archives WHERE month = ?');
   const updateArchiveStmt = db.prepare(`
     UPDATE match_archives SET results_json = ?, updated_at = ? WHERE month = ?
   `);
 
   const archiveTx = db.transaction(() => {
-    for (const arch of archiveRows) {
-      const results = parseJsonSafe<ShogiMonthlyResult[]>(arch.results_json, []);
+    for (const { month } of archiveMonthKeys) {
+      let rawResultsJson: string;
+      try {
+        const arch = selectArchiveStmt.get(month) as { results_json: string } | undefined;
+        if (!arch) continue;
+        rawResultsJson = arch.results_json;
+      } catch (readErr: any) {
+        console.warn(`[SQLite] Skipping unreadable match_archives row (${month}):`, readErr?.message);
+        continue;
+      }
+
+      const results = parseJsonSafe<ShogiMonthlyResult[]>(rawResultsJson, []);
       let monthModified = false;
 
       for (const m of results) {
@@ -478,7 +653,7 @@ export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): 
       }
 
       if (monthModified) {
-        updateArchiveStmt.run(JSON.stringify(results), now, arch.month);
+        updateArchiveStmt.run(JSON.stringify(results), now, month);
       }
     }
   });
@@ -1036,7 +1211,7 @@ export function getDatabaseOverview(): DbOverview {
     }));
 
   return {
-    engine: 'SQLite 3 (better-sqlite3, WAL)',
+    engine: 'SQLite 3 (better-sqlite3)',
     dbPath: 'data/shogi.db',
     projectId: DB_PROJECT_ID,
     databaseId: DB_DATABASE_ID,
