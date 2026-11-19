@@ -40,6 +40,10 @@ import {
   formatPlayerRetirementDate,
   formatPlayerName,
   formatPlayerRankAndDan,
+  autoFormatDateOnChange,
+  normalizeDateToYyyyMmDd,
+  isValidYyyyMmDd,
+  calculateAgeFromBirthDateString,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -115,6 +119,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   // Players tab state
   const [editingProfile, setEditingProfile] = useState<Player | null>(null);
+  const [profileAge, setProfileAge] = useState('');
   const [profileHeldTitlesInput, setProfileHeldTitlesInput] = useState('');
   const [profileLeaveEnabled, setProfileLeaveEnabled] = useState(false);
   const [profileLeaveStart, setProfileLeaveStart] = useState('');
@@ -503,24 +508,27 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   };
 
   const selectPlayerForProfileEdit = (p: Player) => {
-    setEditingProfile({ ...p });
+    const normalizedBirthDate = normalizeDateToYyyyMmDd(p.birthDate || '');
+    const computedAge = calculateAgeFromBirthDateString(normalizedBirthDate);
+    setEditingProfile({ ...p, birthDate: normalizedBirthDate });
+    setProfileAge(computedAge !== null ? String(computedAge) : '');
     setProfileHeldTitlesInput((p.heldTitles || []).join('、'));
     const activeLeave = isPlayerOnLeave(p);
     setProfileLeaveEnabled(p.leaveInfo?.isOnLeave ?? activeLeave);
-    setProfileLeaveStart(p.leaveInfo?.startDate || '');
-    setProfileLeaveEnd(p.leaveInfo?.endDate || '');
+    setProfileLeaveStart(normalizeDateToYyyyMmDd(p.leaveInfo?.startDate || ''));
+    setProfileLeaveEnd(normalizeDateToYyyyMmDd(p.leaveInfo?.endDate || ''));
     setProfileLeaveReason(p.leaveInfo?.reason || '');
-    const existingHist = nameHistory.find((h) => h.playerId === p.id);
-    setProfileOldName(existingHist?.oldName || p.formerName || '');
-    setProfileNewName(existingHist?.newName || (p.formerName ? p.name : ''));
-    setProfileNameChangeDate(existingHist?.changedAt || '');
-    setProfileNameChangeNote(existingHist?.note || '');
+    setProfileOldName('');
+    setProfileNewName('');
+    setProfileNameChangeDate('');
+    setProfileNameChangeNote('');
     setProfileClearNameHistory(false);
-    setProfileRetirementDate(p.retirementDate || '');
+    setProfileRetirementDate(normalizeDateToYyyyMmDd(p.retirementDate || ''));
   };
 
   const clearProfileSelection = () => {
     setEditingProfile(null);
+    setProfileAge('');
     setProfileHeldTitlesInput('');
     setProfileLeaveEnabled(false);
     setProfileLeaveStart('');
@@ -553,7 +561,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
           method: 'DELETE',
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || '改名情報の消去に失敗しました');
+        if (!res.ok || !json.success) throw new Error(json.error || '氏名変更情報の消去に失敗しました');
         const nextEditing: Player = { ...(json.player || editingProfile) };
         delete nextEditing.formerName;
         setEditingProfile(nextEditing);
@@ -562,7 +570,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         await onDatabaseUpdated();
         showStatus('success', `${nextEditing.name} の旧氏名・新氏名・改正年月日を消去しました`);
       } catch (err: any) {
-        showStatus('error', err?.message || '改名情報消去エラー');
+        showStatus('error', err?.message || '氏名変更情報消去エラー');
       } finally {
         setIsBusy(false);
       }
@@ -579,14 +587,42 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       showStatus('error', '更新対象の棋士・女流棋士を検索して選択してください');
       return;
     }
-    if (profileLeaveStart && profileLeaveEnd && profileLeaveStart > profileLeaveEnd) {
+
+    const birthDateNorm = normalizeDateToYyyyMmDd(editingProfile.birthDate || '');
+    const leaveStartNorm = normalizeDateToYyyyMmDd(profileLeaveStart);
+    const leaveEndNorm = normalizeDateToYyyyMmDd(profileLeaveEnd);
+    const nameChangeDateNorm = normalizeDateToYyyyMmDd(profileNameChangeDate);
+    const retirementDateNorm = normalizeDateToYyyyMmDd(profileRetirementDate);
+
+    if (birthDateNorm && (/^\d{4}/.test(birthDateNorm) || /^\d{8}$/.test(birthDateNorm)) && !isValidYyyyMmDd(birthDateNorm)) {
+      showStatus('error', '生年月日は YYYY-MM-DD 形式で正しい日付を入力してください');
+      return;
+    }
+    if (leaveStartNorm && !isValidYyyyMmDd(leaveStartNorm)) {
+      showStatus('error', '休場開始日は YYYY-MM-DD 形式で正しい日付を入力してください');
+      return;
+    }
+    if (leaveEndNorm && !isValidYyyyMmDd(leaveEndNorm)) {
+      showStatus('error', '休場終了日は YYYY-MM-DD 形式で正しい日付を入力してください');
+      return;
+    }
+    if (leaveStartNorm && leaveEndNorm && leaveStartNorm > leaveEndNorm) {
       showStatus('error', '休場開始日は休場終了日以前の日付を指定してください');
       return;
     }
+    if (nameChangeDateNorm && !isValidYyyyMmDd(nameChangeDateNorm)) {
+      showStatus('error', '改正年月日は YYYY-MM-DD 形式で正しい日付を入力してください');
+      return;
+    }
+    if (retirementDateNorm && !isValidYyyyMmDd(retirementDateNorm)) {
+      showStatus('error', '引退年月日は YYYY-MM-DD 形式で正しい日付を入力してください');
+      return;
+    }
+
     const trimmedOld = profileOldName.trim();
     const trimmedNew = profileNewName.trim();
     if ((trimmedOld && !trimmedNew) || (!trimmedOld && trimmedNew)) {
-      showStatus('error', '改名記録を登録する場合は「旧氏名」と「新氏名」の両方を入力してください');
+      showStatus('error', '氏名変更記録を登録する場合は「旧氏名」と「新氏名」の両方を入力してください');
       return;
     }
 
@@ -607,15 +643,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
       const hasLeaveInput =
         profileLeaveEnabled ||
-        Boolean(profileLeaveStart.trim()) ||
-        Boolean(profileLeaveEnd.trim()) ||
+        Boolean(leaveStartNorm) ||
+        Boolean(leaveEndNorm) ||
         Boolean(profileLeaveReason.trim());
 
       const leaveInfo: Player['leaveInfo'] = hasLeaveInput
         ? {
             isOnLeave: profileLeaveEnabled,
-            ...(profileLeaveStart.trim() ? { startDate: profileLeaveStart.trim() } : {}),
-            ...(profileLeaveEnd.trim() ? { endDate: profileLeaveEnd.trim() } : {}),
+            ...(leaveStartNorm ? { startDate: leaveStartNorm } : {}),
+            ...(leaveEndNorm ? { endDate: leaveEndNorm } : {}),
             ...(profileLeaveReason.trim() ? { reason: profileLeaveReason.trim() } : {}),
           }
         : { isOnLeave: false };
@@ -627,14 +663,16 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         .replace(/現在は休場中。?/g, '')
         .trim();
 
-      const retirementDateClean = profileRetirementDate.trim();
       const effectiveName = trimmedNew || editingProfile.name.trim();
+      const effectiveFormerName =
+        trimmedOld || (profileClearNameHistory ? '' : editingProfile.formerName || '');
 
       const payload: Record<string, any> = {
         ...editingProfile,
         name: effectiveName,
-        formerName: trimmedOld || '',
-        retirementDate: retirementDateClean,
+        formerName: effectiveFormerName,
+        birthDate: birthDateNorm,
+        retirementDate: retirementDateNorm,
         heldTitles: parsedTitles,
         careerWins: cw,
         careerLosses: cl,
@@ -651,10 +689,10 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         payload.nameChange = {
           oldName: trimmedOld,
           newName: trimmedNew,
-          changedAt: profileNameChangeDate.trim() || new Date().toISOString().slice(0, 10),
+          changedAt: nameChangeDateNorm || new Date().toISOString().slice(0, 10),
           note: profileNameChangeNote.trim() || undefined,
         };
-      } else if (profileClearNameHistory || !trimmedOld) {
+      } else if (profileClearNameHistory) {
         payload.nameChange = { clear: true };
       }
 
@@ -667,7 +705,19 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       if (!res.ok || !json.success) throw new Error(json.error || 'プロフィール更新に失敗しました');
 
       const savedPlayer: Player = json.player;
-      setEditingProfile(savedPlayer);
+      const savedBirthDateNorm = normalizeDateToYyyyMmDd(savedPlayer.birthDate || '');
+      const savedAge = calculateAgeFromBirthDateString(savedBirthDateNorm);
+      setEditingProfile({ ...savedPlayer, birthDate: savedBirthDateNorm });
+      setProfileAge(savedAge !== null ? String(savedAge) : '');
+      setProfileLeaveStart(normalizeDateToYyyyMmDd(savedPlayer.leaveInfo?.startDate || ''));
+      setProfileLeaveEnd(normalizeDateToYyyyMmDd(savedPlayer.leaveInfo?.endDate || ''));
+      setProfileRetirementDate(normalizeDateToYyyyMmDd(savedPlayer.retirementDate || ''));
+      if (trimmedOld && trimmedNew) {
+        setProfileOldName('');
+        setProfileNewName('');
+        setProfileNameChangeDate('');
+        setProfileNameChangeNote('');
+      }
       setProfileClearNameHistory(false);
       await loadAdminData();
       await onDatabaseUpdated();
@@ -676,7 +726,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const statusBadges: string[] = [];
       if (currentlyRetired) statusBadges.push('引退バッジ適用中');
       if (currentlyOnLeave) statusBadges.push('休場バッジ適用中');
-      if (trimmedOld && trimmedNew) statusBadges.push(`改名記録: ${trimmedOld} → ${trimmedNew}`);
+      if (trimmedOld && trimmedNew) statusBadges.push(`氏名変更記録: ${trimmedOld} → ${trimmedNew}`);
       showStatus(
         'success',
         `${savedPlayer.name} のプロフィールを更新しました${
@@ -1956,10 +2006,39 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             <input
                               type="text"
                               value={editingProfile.birthDate || ''}
-                              onChange={(e) =>
-                                setEditingProfile({ ...editingProfile, birthDate: e.target.value })
-                              }
+                              placeholder="YYYY-MM-DD"
+                              onChange={(e) => {
+                                const formatted = autoFormatDateOnChange(e.target.value);
+                                setEditingProfile({ ...editingProfile, birthDate: formatted });
+                                if (!formatted.trim()) {
+                                  setProfileAge('');
+                                } else {
+                                  const computed = calculateAgeFromBirthDateString(formatted);
+                                  if (computed !== null) {
+                                    setProfileAge(String(computed));
+                                  }
+                                }
+                              }}
+                              onBlur={() => {
+                                const normalized = normalizeDateToYyyyMmDd(editingProfile.birthDate || '');
+                                if (normalized !== (editingProfile.birthDate || '')) {
+                                  setEditingProfile({ ...editingProfile, birthDate: normalized });
+                                }
+                                const computed = calculateAgeFromBirthDateString(normalized);
+                                setProfileAge(computed !== null ? String(computed) : '');
+                              }}
                               className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">年齢</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={profileAge ? `${profileAge}歳` : ''}
+                              placeholder="-"
+                              title="生年月日から自動計算されます"
+                              className="w-full bg-zinc-950/70 border border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none cursor-default"
                             />
                           </div>
                           <div>
@@ -2046,30 +2125,34 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                             <div>
-                              <label className="text-[10px] text-zinc-400 block mb-0.5">休場開始日</label>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">休場開始日 (YYYY-MM-DD)</label>
                               <input
-                                type="date"
+                                type="text"
                                 value={profileLeaveStart}
+                                placeholder="YYYY-MM-DD"
                                 onChange={(e) => {
-                                  const v = e.target.value;
+                                  const v = autoFormatDateOnChange(e.target.value);
                                   setProfileLeaveStart(v);
-                                  if (v) setProfileLeaveEnabled(true);
+                                  if (v.trim()) setProfileLeaveEnabled(true);
                                 }}
+                                onBlur={() => setProfileLeaveStart((prev) => normalizeDateToYyyyMmDd(prev))}
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-amber-500 focus:outline-none"
                               />
                             </div>
                             <div>
                               <label className="text-[10px] text-zinc-400 block mb-0.5">
-                                休場終了日（未入力で継続中扱い）
+                                休場終了日 (YYYY-MM-DD・未入力で継続中扱い)
                               </label>
                               <input
-                                type="date"
+                                type="text"
                                 value={profileLeaveEnd}
+                                placeholder="YYYY-MM-DD"
                                 onChange={(e) => {
-                                  const v = e.target.value;
+                                  const v = autoFormatDateOnChange(e.target.value);
                                   setProfileLeaveEnd(v);
-                                  if (v) setProfileLeaveEnabled(true);
+                                  if (v.trim()) setProfileLeaveEnabled(true);
                                 }}
+                                onBlur={() => setProfileLeaveEnd((prev) => normalizeDateToYyyyMmDd(prev))}
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-amber-500 focus:outline-none"
                               />
                             </div>
@@ -2129,7 +2212,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <h4 className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
                               <UserCheck size={15} />
-                              <span>改名・氏名変更記録（旧氏名・新氏名・改正年月日／過去対局との紐付け維持）</span>
+                              <span>氏名変更記録（旧氏名・新氏名・改正年月日／過去対局との紐付け維持）</span>
                             </h4>
                             <div className="flex items-center gap-2">
                               <button
@@ -2149,7 +2232,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                 className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-rose-950/60 border border-zinc-700 hover:border-rose-500/40 text-[11px] text-zinc-300 hover:text-rose-200 flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               >
                                 <Eraser size={12} />
-                                <span>改名情報を消去</span>
+                                <span>氏名変更情報を消去</span>
                               </button>
                             </div>
                           </div>
@@ -2164,7 +2247,6 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                   setProfileOldName(e.target.value);
                                   setProfileClearNameHistory(false);
                                 }}
-                                placeholder="例: 脇田 菜々子"
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                               />
                             </div>
@@ -2177,16 +2259,17 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                   setProfileNewName(e.target.value);
                                   setProfileClearNameHistory(false);
                                 }}
-                                placeholder="例: 萩田 菜々子"
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] text-zinc-400 block mb-0.5">改正年月日</label>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">改正年月日 (YYYY-MM-DD)</label>
                               <input
-                                type="date"
+                                type="text"
                                 value={profileNameChangeDate}
-                                onChange={(e) => setProfileNameChangeDate(e.target.value)}
+                                placeholder="YYYY-MM-DD"
+                                onChange={(e) => setProfileNameChangeDate(autoFormatDateOnChange(e.target.value))}
+                                onBlur={() => setProfileNameChangeDate((prev) => normalizeDateToYyyyMmDd(prev))}
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                               />
                             </div>
@@ -2207,7 +2290,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             if (playerHist.length === 0) {
                               return (
                                 <div className="text-[11px] text-zinc-500">
-                                  登録済みの改名履歴なし（旧氏名・新氏名・改正年月日を入力して保存すると履歴に記録されます）
+                                  登録済みの氏名変更履歴なし（旧氏名・新氏名・改正年月日を入力して保存すると履歴に記録されます）
                                 </div>
                               );
                             }
@@ -2247,11 +2330,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end text-xs">
                             <div>
-                              <label className="text-[10px] text-zinc-400 block mb-0.5">引退年月日</label>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">引退年月日 (YYYY-MM-DD)</label>
                               <input
-                                type="date"
+                                type="text"
                                 value={profileRetirementDate}
-                                onChange={(e) => setProfileRetirementDate(e.target.value)}
+                                placeholder="YYYY-MM-DD"
+                                onChange={(e) => setProfileRetirementDate(autoFormatDateOnChange(e.target.value))}
+                                onBlur={() => setProfileRetirementDate((prev) => normalizeDateToYyyyMmDd(prev))}
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-zinc-400 focus:outline-none"
                               />
                             </div>

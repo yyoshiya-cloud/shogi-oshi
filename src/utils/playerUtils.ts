@@ -124,13 +124,112 @@ function calculateAge(year: number, month: number, day: number): number {
 }
 
 /**
+ * Converts full-width ASCII digits/separators to half-width and automatically converts YYYYMMDD to YYYY-MM-DD on input.
+ */
+export function autoFormatDateOnChange(raw: string): string {
+  if (!raw) return '';
+  const half = raw
+    .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[－ー−]/g, '-');
+  const trimmed = half.trim();
+
+  const compactMatch = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compactMatch) {
+    return `${compactMatch[1]}-${compactMatch[2]}-${compactMatch[3]}`;
+  }
+
+  const slashMatch = trimmed.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if (slashMatch) {
+    return `${slashMatch[1]}-${slashMatch[2]}-${slashMatch[3]}`;
+  }
+
+  return half;
+}
+
+/**
+ * Checks whether a string is a valid YYYY-MM-DD calendar date.
+ */
+export function isValidYyyyMmDd(dateStr?: string | null): boolean {
+  if (!dateStr) return false;
+  const m = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(y, mo - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() + 1 === mo && dt.getDate() === d;
+}
+
+/**
+ * Normalizes YYYYMMDD, YYYY/M/D, YYYY.M.D, YYYY-M-D, and YYYY年M月D日 strings into YYYY-MM-DD.
+ * Keeps strings without a year (e.g. "6月26日(かに座)") or empty strings as-is (trimmed).
+ */
+export function normalizeDateToYyyyMmDd(raw?: string | null): string {
+  if (!raw) return '';
+  const clean = raw
+    .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[－ー−]/g, '-')
+    .trim();
+  if (!clean) return '';
+
+  const compact = clean.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) {
+    return `${compact[1]}-${compact[2]}-${compact[3]}`;
+  }
+
+  const isoLike = clean.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:$|[\s(（])/);
+  if (isoLike) {
+    const mm = isoLike[2].padStart(2, '0');
+    const dd = isoLike[3].padStart(2, '0');
+    return `${isoLike[1]}-${mm}-${dd}`;
+  }
+
+  const jp = clean.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (jp) {
+    const mm = jp[2].padStart(2, '0');
+    const dd = jp[3].padStart(2, '0');
+    return `${jp[1]}-${mm}-${dd}`;
+  }
+
+  return clean;
+}
+
+/**
+ * Calculates age from any supported birthDate string (YYYY-MM-DD, YYYYMMDD, YYYY/M/D, YYYY年M月D日).
+ * Returns null if no valid full date is present.
+ */
+export function calculateAgeFromBirthDateString(birthDateStr?: string | null): number | null {
+  if (!birthDateStr) return null;
+  const normalized = normalizeDateToYyyyMmDd(birthDateStr);
+  if (!isValidYyyyMmDd(normalized)) return null;
+  const [yStr, mStr, dStr] = normalized.split('-');
+  const y = parseInt(yStr, 10);
+  const m = parseInt(mStr, 10);
+  const d = parseInt(dStr, 10);
+  const age = calculateAge(y, m, d);
+  if (age < 0 || age > 130) return null;
+  return age;
+}
+
+/**
  * Formats a birthdate string into "YYYY年MM月DD日\n（XX歳）".
- * Handles YYYY-MM-DD, YYYY/MM/DD, and YYYY年MM月DD日 formats.
+ * Handles YYYY-MM-DD, YYYY/MM/DD, YYYYMMDD, and YYYY年MM月DD日 formats.
  */
 export function formatBirthDateWithAge(birthDateStr?: string | null): string {
   if (!birthDateStr) return '公式名鑑参照';
 
   const clean = birthDateStr.trim();
+
+  // Pattern 0: YYYYMMDD
+  const matchCompact = clean.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (matchCompact) {
+    const y = parseInt(matchCompact[1], 10);
+    const m = parseInt(matchCompact[2], 10);
+    const d = parseInt(matchCompact[3], 10);
+    const age = calculateAge(y, m, d);
+    return `${y}年${matchCompact[2]}月${matchCompact[3]}日\n（${age}歳）`;
+  }
 
   // Pattern 1: YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
   const matchIso = clean.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
