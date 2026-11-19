@@ -33,6 +33,7 @@ interface PlayerProfileModalProps {
 }
 
 function formatWomenJunisenClass(player: Player): string {
+  if (isPlayerRetired(player)) return '';
   if (player.heldTitles && player.heldTitles.includes('白玲')) {
     return '白玲（タイトル保持）';
   }
@@ -47,6 +48,7 @@ function formatWomenJunisenClass(player: Player): string {
 }
 
 export function formatProRyuoClass(player: Player): string {
+  if (isPlayerRetired(player)) return '';
   if (player.type === 'women') return '未参加';
   if (player.ryuoClass && player.ryuoClass !== '-' && player.ryuoClass !== '参加棋戦' && player.ryuoClass !== '竜王戦参加') {
     return player.ryuoClass;
@@ -55,6 +57,7 @@ export function formatProRyuoClass(player: Player): string {
 }
 
 export function formatProJunisenClass(player: Player): string {
+  if (isPlayerRetired(player)) return '';
   if (player.type === 'women') return '未参加';
   if (player.junisenClass && player.junisenClass !== '-' && player.junisenClass !== '参加棋戦' && player.junisenClass !== '順位戦参加') {
     return player.junisenClass;
@@ -627,7 +630,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       </div>
                       <div>
                         <span className="text-zinc-500 block">女流順位戦クラス</span>
-                        <span className="font-semibold text-amber-300 font-serif-jp">
+                        <span className="font-semibold text-amber-300 font-serif-jp min-h-[1rem] block">
                           {formatWomenJunisenClass(activePlayer)}
                         </span>
                       </div>
@@ -674,13 +677,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       </div>
                       <div>
                         <span className="text-zinc-500 block">竜王戦クラス</span>
-                        <span className="font-semibold text-zinc-200">
+                        <span className="font-semibold text-zinc-200 min-h-[1rem] block">
                           {formatProRyuoClass(activePlayer)}
                         </span>
                       </div>
                       <div>
                         <span className="text-zinc-500 block">順位戦クラス</span>
-                        <span className="font-semibold text-zinc-200">
+                        <span className="font-semibold text-zinc-200 min-h-[1rem] block">
                           {formatProJunisenClass(activePlayer)}
                         </span>
                       </div>

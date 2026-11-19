@@ -16,7 +16,7 @@ import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
 import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 import { getTodayDateString } from '../utils/dateUtils';
-import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import { normalizeShogiPlayerNameForMatch, isPlayerRetired } from '../utils/playerUtils';
 
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
@@ -747,12 +747,17 @@ export function getAllPlayers(): Player[] {
     } as Player);
     const hist = historyByPlayer.get(row.id);
     const formerName = row.former_name || parsed.formerName || hist?.[0]?.oldName || undefined;
-    return {
+    const playerObj: Player = {
       ...parsed,
       id: parsed.id || row.id,
       name: parsed.name || row.name,
       ...(formerName ? { formerName } : {}),
     };
+    if (isPlayerRetired(playerObj)) {
+      playerObj.junisenClass = '';
+      playerObj.ryuoClass = '';
+    }
+    return playerObj;
   });
 }
 
@@ -769,6 +774,10 @@ export function upsertPlayer(player: Player): Player {
     delete cleanPlayer.retirementDate;
   } else {
     cleanPlayer.retirementDate = cleanPlayer.retirementDate.trim();
+  }
+  if (isPlayerRetired(cleanPlayer)) {
+    cleanPlayer.junisenClass = '';
+    cleanPlayer.ryuoClass = '';
   }
   db.prepare(`
     INSERT OR REPLACE INTO players
@@ -1291,8 +1300,8 @@ function normalizePlayerRecord(raw: any): Player | null {
     birthPlace: String(src.birthPlace || src.birth_place || ''),
     master: String(src.master || ''),
     style: (src.style || '居飛車') as Player['style'],
-    ryuoClass: String(src.ryuoClass || src.ryuo_class || '-'),
-    junisenClass: String(src.junisenClass || src.junisen_class || '-'),
+    ryuoClass: String(src.ryuoClass ?? src.ryuo_class ?? '-'),
+    junisenClass: String(src.junisenClass ?? src.junisen_class ?? '-'),
     bloodType: src.bloodType || src.blood_type || undefined,
     motto: src.motto || undefined,
     favPiece: src.favPiece || src.fav_piece || undefined,

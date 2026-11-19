@@ -38,6 +38,7 @@ import {
   importFromSqliteBuffer,
   syncNameHistoryAndRelinkArchives,
 } from './src/db/sqlite';
+import { isPlayerRetired } from './src/utils/playerUtils';
 import type { Player, Match, ShogiMonthlyResult } from './src/types/shogi';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -358,6 +359,10 @@ async function startServer() {
 
       if (!player.name) {
         return res.status(400).json({ success: false, error: 'player.name が必須です' });
+      }
+      if (isPlayerRetired(player)) {
+        player.junisenClass = '';
+        player.ryuoClass = '';
       }
 
       let saved = upsertPlayer(player);

@@ -96,6 +96,7 @@ function matchesRankFilter(playerOrRank: Player | string, filter: string): boole
 
 function matchJunisenFilter(p: Player, filter: string): boolean {
   if (filter === 'all') return true;
+  if (isPlayerRetired(p)) return false;
   if (p.type === 'women') {
     const jc = p.junisenClass || '';
     if (filter === '白玲') return jc.includes('白玲') || (p.heldTitles && p.heldTitles.includes('白玲'));
@@ -121,7 +122,7 @@ function matchJunisenFilter(p: Player, filter: string): boolean {
 
 function matchRyuoFilter(p: Player, filter: string): boolean {
   if (filter === 'all') return true;
-  if (p.type === 'women') return false;
+  if (p.type === 'women' || isPlayerRetired(p)) return false;
   const formatted = formatProRyuoClass(p);
   if (filter === '竜王') return formatted.includes('竜王') && !formatted.includes('組');
   if (['1組', '2組', '3組', '4組', '5組', '6組'].includes(filter)) {
@@ -238,8 +239,8 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
             )}
           </div>
 
-          {/* 竜王戦・順位戦クラスバッジ（棋士番号の直下行に独立配置） */}
-          {player.type !== 'women' && (
+          {/* 竜王戦・順位戦クラスバッジ（引退棋士・引退女流棋士は非表示） */}
+          {!isPlayerRetired(player) && player.type !== 'women' && (
             <div className="flex items-center gap-1.5 flex-wrap my-1">
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-600/40">
                 竜王戦 {formatProRyuoClass(player)}
@@ -249,7 +250,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
               </span>
             </div>
           )}
-          {player.type === 'women' && player.junisenClass && player.junisenClass !== '-' && (
+          {!isPlayerRetired(player) && player.type === 'women' && player.junisenClass && player.junisenClass !== '-' && (
             <div className="flex items-center gap-1.5 flex-wrap my-1">
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800/90 text-zinc-300 border border-zinc-700">
                 女流順位戦 {player.junisenClass}

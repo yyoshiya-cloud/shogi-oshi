@@ -510,7 +510,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const selectPlayerForProfileEdit = (p: Player) => {
     const normalizedBirthDate = normalizeDateToYyyyMmDd(p.birthDate || '');
     const computedAge = calculateAgeFromBirthDateString(normalizedBirthDate);
-    setEditingProfile({ ...p, birthDate: normalizedBirthDate });
+    const retired = isPlayerRetired(p);
+    setEditingProfile({
+      ...p,
+      birthDate: normalizedBirthDate,
+      ...(retired ? { junisenClass: '', ryuoClass: '' } : {}),
+    });
     setProfileAge(computedAge !== null ? String(computedAge) : '');
     setProfileHeldTitlesInput((p.heldTitles || []).join('、'));
     const activeLeave = isPlayerOnLeave(p);
@@ -684,6 +689,10 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         shortBio: cleanedShortBio,
         leaveInfo,
       };
+      if (isPlayerRetired(payload as Player)) {
+        payload.junisenClass = '';
+        payload.ryuoClass = '';
+      }
 
       if (trimmedOld && trimmedNew) {
         payload.nameChange = {
@@ -1900,10 +1909,19 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             </select>
                           </div>
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-0.5">順位戦クラス</label>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">
+                              {editingProfile.type === 'women' ? '女流順位戦クラス' : '順位戦クラス'}
+                            </label>
                             <input
                               type="text"
-                              value={editingProfile.junisenClass}
+                              value={
+                                isPlayerRetired({
+                                  ...editingProfile,
+                                  retirementDate: profileRetirementDate.trim() || editingProfile.retirementDate,
+                                })
+                                  ? ''
+                                  : editingProfile.junisenClass
+                              }
                               onChange={(e) =>
                                 setEditingProfile({ ...editingProfile, junisenClass: e.target.value })
                               }
@@ -1914,7 +1932,14 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             <label className="text-[10px] text-zinc-400 block mb-0.5">竜王戦クラス</label>
                             <input
                               type="text"
-                              value={editingProfile.ryuoClass}
+                              value={
+                                isPlayerRetired({
+                                  ...editingProfile,
+                                  retirementDate: profileRetirementDate.trim() || editingProfile.retirementDate,
+                                })
+                                  ? ''
+                                  : editingProfile.ryuoClass
+                              }
                               onChange={(e) =>
                                 setEditingProfile({ ...editingProfile, ryuoClass: e.target.value })
                               }
