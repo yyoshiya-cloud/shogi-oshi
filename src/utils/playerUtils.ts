@@ -1,3 +1,5 @@
+import { getTodayDateString } from './dateUtils';
+
 const KNOWN_NO_SPACE_NAMES: Record<string, string> = {
   // Active / notable players whose names on official sites lack spaces
   '岩村凛太朗': '岩村 凛太朗',
@@ -185,12 +187,56 @@ export function getHistoricalNamesForPlayer(playerId: string): string[] {
   return set ? Array.from(set) : [];
 }
 
-export function isPlayerOnLeave(player: { highlights?: string[]; shortBio?: string; name?: string }): boolean {
-  if (player.highlights && player.highlights.some(h => h.includes('休場'))) return true;
+export function isPlayerOnLeave(
+  player: {
+    leaveInfo?: Player['leaveInfo'];
+    highlights?: string[];
+    shortBio?: string;
+    name?: string;
+  },
+  referenceDate?: string
+): boolean {
+  if (!player) return false;
+
+  if (player.leaveInfo) {
+    if (player.leaveInfo.isOnLeave === false) {
+      return false;
+    }
+    const start = (player.leaveInfo.startDate || '').trim();
+    const end = (player.leaveInfo.endDate || '').trim();
+    if (start || end) {
+      const today = referenceDate || getTodayDateString();
+      const afterStart = !start || today >= start;
+      const beforeEnd = !end || today <= end;
+      return afterStart && beforeEnd;
+    }
+    if (player.leaveInfo.isOnLeave === true) {
+      return true;
+    }
+  }
+
+  if (player.highlights && player.highlights.some((h) => h.includes('休場'))) return true;
   if (player.shortBio && player.shortBio.includes('休場中')) return true;
   const nameClean = player.name ? player.name.replace(/[\s\u3000※＊\*]/g, '') : '';
   if (nameClean.includes('山田朱未') || nameClean.includes('早水千紗') || nameClean.includes('井道千尋')) return true;
   return false;
+}
+
+export function formatPlayerLeavePeriod(player: Partial<Player>): string {
+  const start = (player.leaveInfo?.startDate || '').trim();
+  const end = (player.leaveInfo?.endDate || '').trim();
+  const reason = (player.leaveInfo?.reason || '').trim();
+  let period = '';
+  if (start && end) {
+    period = `${start.replace(/-/g, '/')} 〜 ${end.replace(/-/g, '/')}`;
+  } else if (start) {
+    period = `${start.replace(/-/g, '/')} 〜 継続中`;
+  } else if (end) {
+    period = `〜 ${end.replace(/-/g, '/')}`;
+  } else {
+    period = '公式戦休場中';
+  }
+  return reason ? `${period}（${reason}）` : period;
 }
 
 /**
@@ -249,7 +295,8 @@ export function isBoilerplateBio(bio?: string | null): boolean {
 
 export function applyPlayerOverrides(p: Player): Player {
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
-  if (nameClean.includes('山田朱未')) {
+  const hasExplicitLeave = p.leaveInfo !== undefined;
+  if (nameClean.includes('山田朱未') && !hasExplicitLeave) {
     return {
       ...p,
       careerWins: 104,
@@ -263,7 +310,7 @@ export function applyPlayerOverrides(p: Player): Player {
       shortBio: '現在は休場中。',
     };
   }
-  if (nameClean.includes('早水千紗')) {
+  if (nameClean.includes('早水千紗') && !hasExplicitLeave) {
     return {
       ...p,
       careerWins: 195,
@@ -277,7 +324,7 @@ export function applyPlayerOverrides(p: Player): Player {
       shortBio: '現在は休場中。',
     };
   }
-  if (nameClean.includes('井道千尋')) {
+  if (nameClean.includes('井道千尋') && !hasExplicitLeave) {
     return {
       ...p,
       careerWins: 125,
@@ -590,6 +637,14 @@ export function resolvePlayer(id: string | undefined, players: Player[]): Player
   const KNOWN_NAME_CHANGES: Record<string, string> = {
     '里見香奈': '福間香奈',
     '里見': '福間',
+    '脇田菜々子': '萩田菜々子',
+    '脇田': '萩田',
+    '谷口由紀': '室谷由紀',
+    '碓井涼子': '千葉涼子',
+    '植村小百合': '本田小百合',
+    '横山澄恵': '石高澄恵',
+    '木村さゆり': '竹部さゆり',
+    '藤森香織': '上川香織',
   };
   const mappedName = KNOWN_NAME_CHANGES[clean] || KNOWN_NAME_CHANGES[normTarget];
   if (mappedName) {

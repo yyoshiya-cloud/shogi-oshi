@@ -16,9 +16,77 @@ import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
 import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 import { getTodayDateString } from '../utils/dateUtils';
+import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
+
+export const DEFAULT_INITIAL_NAME_HISTORY: PlayerNameHistoryItem[] = [
+  {
+    id: 'nh-fukuma-kana-2024',
+    playerId: 'fukuma-kana',
+    oldName: '里見 香奈',
+    newName: '福間 香奈',
+    changedAt: '2024-01-01',
+    note: '改姓（旧姓：里見 香奈）',
+  },
+  {
+    id: 'nh-hagita-nanako-2026',
+    playerId: 'lady-nanako_hagita',
+    oldName: '脇田 菜々子',
+    newName: '萩田 菜々子',
+    changedAt: '2026-07-14',
+    note: '改姓（旧姓：脇田 菜々子）',
+  },
+  {
+    id: 'nh-muroya-yuki-2020',
+    playerId: 'lady-yuki_muroya',
+    oldName: '谷口 由紀',
+    newName: '室谷 由紀',
+    changedAt: '2020-12-31',
+    note: '改姓（旧姓：谷口 由紀）',
+  },
+  {
+    id: 'nh-chiba-ryoko-2003',
+    playerId: 'lady-ryoko_chiba',
+    oldName: '碓井 涼子',
+    newName: '千葉 涼子',
+    changedAt: '2003-05-01',
+    note: '改姓（旧姓：碓井 涼子）',
+  },
+  {
+    id: 'nh-honda-sayuri-2005',
+    playerId: 'lady-sayuri_honda',
+    oldName: '植村 小百合',
+    newName: '本田 小百合',
+    changedAt: '2005-04-01',
+    note: '改姓（旧姓：植村 小百合）',
+  },
+  {
+    id: 'nh-ishitaka-sumie-1994',
+    playerId: 'lady-sumie_ishitaka',
+    oldName: '横山 澄恵',
+    newName: '石高 澄恵',
+    changedAt: '1994-04-01',
+    note: '改姓（旧姓：横山 澄恵）',
+  },
+  {
+    id: 'nh-takebe-sayuri-2008',
+    playerId: 'lady-sayuri_takebe',
+    oldName: '木村 さゆり',
+    newName: '竹部 さゆり',
+    changedAt: '2008-04-01',
+    note: '改姓（旧姓：木村 さゆり）',
+  },
+  {
+    id: 'nh-uekawa-kaori-2004',
+    playerId: 'uekawa-kaori',
+    oldName: '藤森 香織',
+    newName: '上川 香織',
+    changedAt: '2004-04-01',
+    note: '改姓（旧姓：藤森 香織）',
+  },
+];
 
 export function getDbPath(): string {
   return path.join(process.cwd(), 'data', 'shogi.db');
@@ -129,6 +197,7 @@ export function getDb(): Database.Database {
 
   dbInstance = db;
   seedDatabaseIfEmpty(db);
+  syncNameHistoryAndRelinkArchives(db);
   return db;
 }
 
@@ -210,19 +279,21 @@ function seedDatabaseIfEmpty(db: Database.Database): void {
       }
     }
 
-    if (historyCount === 0) {
+    if (historyCount < DEFAULT_INITIAL_NAME_HISTORY.length) {
       const insertHistory = db.prepare(`
         INSERT OR IGNORE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
         VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
       `);
-      insertHistory.run({
-        id: 'nh-fukuma-kana-2024',
-        player_id: 'fukuma-kana',
-        old_name: '里見 香奈',
-        new_name: '福間 香奈',
-        changed_at: '2024-01-01',
-        note: '改姓（旧姓：里見 香奈）',
-      });
+      for (const h of DEFAULT_INITIAL_NAME_HISTORY) {
+        insertHistory.run({
+          id: h.id,
+          player_id: h.playerId,
+          old_name: h.oldName,
+          new_name: h.newName,
+          changed_at: h.changedAt,
+          note: h.note || '',
+        });
+      }
     }
 
     const logCount = (db.prepare('SELECT COUNT(*) AS cnt FROM sync_logs').get() as { cnt: number }).cnt;
@@ -302,6 +373,278 @@ export function getNameHistory(): PlayerNameHistoryItem[] {
   }));
 }
 
+export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): {
+  insertedHistoryCount: number;
+  updatedPlayersCount: number;
+  relinkedArchiveMatchesCount: number;
+  relinkedUpcomingMatchesCount: number;
+} {
+  const db = targetDb || getDb();
+  const now = new Date().toISOString();
+
+  let insertedHistoryCount = 0;
+  let updatedPlayersCount = 0;
+  let relinkedArchiveMatchesCount = 0;
+  let relinkedUpcomingMatchesCount = 0;
+
+  // 1. Sync default name history records
+  const insertHistory = db.prepare(`
+    INSERT OR IGNORE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
+    VALUES (@id, @playerId, @oldName, @newName, @changedAt, @note)
+  `);
+
+  for (const h of DEFAULT_INITIAL_NAME_HISTORY) {
+    const res = insertHistory.run({
+      id: h.id,
+      playerId: h.playerId,
+      oldName: h.oldName,
+      newName: h.newName,
+      changedAt: h.changedAt,
+      note: h.note || '',
+    });
+    if (res.changes > 0) {
+      insertedHistoryCount++;
+    }
+  }
+
+  // 2. Ensure former_name is populated in players table & data_json for all renamed players
+  const selectPlayer = db.prepare('SELECT id, name, former_name, data_json FROM players WHERE id = ?');
+  const updatePlayerFormer = db.prepare(`
+    UPDATE players SET former_name = ?, data_json = ?, updated_at = ? WHERE id = ?
+  `);
+
+  for (const h of DEFAULT_INITIAL_NAME_HISTORY) {
+    const row = selectPlayer.get(h.playerId) as {
+      id: string;
+      name: string;
+      former_name: string | null;
+      data_json: string;
+    } | undefined;
+
+    if (row) {
+      const playerObj = parseJsonSafe<Player>(row.data_json, {} as Player);
+      let needsUpdate = false;
+      if (!row.former_name || row.former_name !== h.oldName) {
+        needsUpdate = true;
+      }
+      if (playerObj.formerName !== h.oldName) {
+        playerObj.formerName = h.oldName;
+        needsUpdate = true;
+      }
+      if (needsUpdate) {
+        updatePlayerFormer.run(h.oldName, JSON.stringify(playerObj), now, h.playerId);
+        updatedPlayersCount++;
+      }
+    }
+  }
+
+  for (const p of PLAYERS_DATA) {
+    if (!p.formerName) continue;
+    const row = selectPlayer.get(p.id) as {
+      id: string;
+      name: string;
+      former_name: string | null;
+      data_json: string;
+    } | undefined;
+    if (row && (!row.former_name || row.former_name !== p.formerName)) {
+      const playerObj = parseJsonSafe<Player>(row.data_json, {} as Player);
+      playerObj.formerName = p.formerName;
+      updatePlayerFormer.run(p.formerName, JSON.stringify(playerObj), now, p.id);
+      updatedPlayersCount++;
+    }
+  }
+
+  // 3. Build comprehensive Name-to-Player mapping
+  const allDbPlayers = db.prepare('SELECT id, name, former_name FROM players').all() as Array<{
+    id: string;
+    name: string;
+    former_name: string | null;
+  }>;
+
+  const nameToId = new Map<string, string>();
+
+  const registerName = (nameStr: string | null | undefined, playerId: string) => {
+    if (!nameStr) return;
+    const clean = nameStr.replace(/[\s\u3000※＊\*]/g, '').trim();
+    if (clean) nameToId.set(clean, playerId);
+    const norm = normalizeShogiPlayerNameForMatch(nameStr);
+    if (norm) nameToId.set(norm, playerId);
+  };
+
+  for (const p of allDbPlayers) {
+    nameToId.set(p.id, p.id);
+    registerName(p.name, p.id);
+    registerName(p.former_name, p.id);
+  }
+
+  const allHist = db.prepare('SELECT player_id, old_name, new_name FROM player_name_history').all() as Array<{
+    player_id: string;
+    old_name: string;
+    new_name: string;
+  }>;
+
+  for (const h of allHist) {
+    registerName(h.old_name, h.player_id);
+    registerName(h.new_name, h.player_id);
+  }
+
+  const ALIAS_MAP: Record<string, string> = {
+    '里見香奈': 'fukuma-kana',
+    '里見': 'fukuma-kana',
+    '脇田菜々子': 'lady-nanako_hagita',
+    '脇田': 'lady-nanako_hagita',
+    '谷口由紀': 'lady-yuki_muroya',
+    '碓井涼子': 'lady-ryoko_chiba',
+    '植村小百合': 'lady-sayuri_honda',
+    '横山澄恵': 'lady-sumie_ishitaka',
+    '木村さゆり': 'lady-sayuri_takebe',
+    '藤森香織': 'uekawa-kaori',
+  };
+
+  for (const [k, id] of Object.entries(ALIAS_MAP)) {
+    registerName(k, id);
+  }
+
+  const resolvePlayerId = (rawName?: string): string | undefined => {
+    if (!rawName) return undefined;
+    const clean = rawName.replace(/[\s\u3000※＊\*]/g, '').trim();
+    if (!clean) return undefined;
+    if (nameToId.has(clean)) return nameToId.get(clean);
+    const norm = normalizeShogiPlayerNameForMatch(rawName);
+    if (nameToId.has(norm)) return nameToId.get(norm);
+    if (ALIAS_MAP[clean]) return ALIAS_MAP[clean];
+    return undefined;
+  };
+
+  // 4. Re-link match_archives
+  const archiveRows = db.prepare('SELECT month, results_json FROM match_archives').all() as Array<{
+    month: string;
+    results_json: string;
+  }>;
+
+  const updateArchiveStmt = db.prepare(`
+    UPDATE match_archives SET results_json = ?, updated_at = ? WHERE month = ?
+  `);
+
+  const archiveTx = db.transaction(() => {
+    for (const arch of archiveRows) {
+      const results = parseJsonSafe<ShogiMonthlyResult[]>(arch.results_json, []);
+      let monthModified = false;
+
+      for (const m of results) {
+        let matchChanged = false;
+
+        const resolvedSenteId = resolvePlayerId(m.sente);
+        if (resolvedSenteId && m.sentePlayerId !== resolvedSenteId) {
+          m.sentePlayerId = resolvedSenteId;
+          matchChanged = true;
+        }
+
+        const resolvedGoteId = resolvePlayerId(m.gote);
+        if (resolvedGoteId && m.gotePlayerId !== resolvedGoteId) {
+          m.gotePlayerId = resolvedGoteId;
+          matchChanged = true;
+        }
+
+        if (m.winner) {
+          const wId = resolvePlayerId(m.winner);
+          if (wId && m.winnerId !== wId) {
+            m.winnerId = wId;
+            matchChanged = true;
+          }
+        }
+        if (!m.winnerId) {
+          if (m.senteMark && (m.senteMark.includes('○') || m.senteMark.includes('□')) && m.sentePlayerId) {
+            m.winnerId = m.sentePlayerId;
+            if (m.gotePlayerId) m.loserId = m.gotePlayerId;
+            matchChanged = true;
+          } else if (m.goteMark && (m.goteMark.includes('○') || m.goteMark.includes('□')) && m.gotePlayerId) {
+            m.winnerId = m.gotePlayerId;
+            if (m.sentePlayerId) m.loserId = m.sentePlayerId;
+            matchChanged = true;
+          }
+        }
+
+        if (matchChanged) {
+          relinkedArchiveMatchesCount++;
+          monthModified = true;
+        }
+      }
+
+      if (monthModified) {
+        updateArchiveStmt.run(JSON.stringify(results), now, arch.month);
+      }
+    }
+  });
+
+  archiveTx();
+
+  // 5. Re-link upcoming/recent matches in matches table
+  const matchRows = db.prepare('SELECT id, player1_id, player2_id, data_json FROM matches').all() as Array<{
+    id: string;
+    player1_id: string;
+    player2_id: string;
+    data_json: string;
+  }>;
+
+  const updateMatchStmt = db.prepare(`
+    UPDATE matches SET player1_id = ?, player2_id = ?, data_json = ?, updated_at = ? WHERE id = ?
+  `);
+
+  const matchTx = db.transaction(() => {
+    for (const row of matchRows) {
+      const matchObj = parseJsonSafe<Match>(row.data_json, {} as Match);
+      let matchChanged = false;
+
+      if (matchObj.player1Id && nameToId.has(matchObj.player1Id)) {
+        const canonicalId = nameToId.get(matchObj.player1Id)!;
+        if (matchObj.player1Id !== canonicalId) {
+          matchObj.player1Id = canonicalId;
+          matchObj.sentePlayerId = canonicalId;
+          matchChanged = true;
+        }
+      }
+      if (matchObj.player2Id && nameToId.has(matchObj.player2Id)) {
+        const canonicalId = nameToId.get(matchObj.player2Id)!;
+        if (matchObj.player2Id !== canonicalId) {
+          matchObj.player2Id = canonicalId;
+          matchObj.gotePlayerId = canonicalId;
+          matchChanged = true;
+        }
+      }
+
+      if (matchChanged) {
+        relinkedUpcomingMatchesCount++;
+        updateMatchStmt.run(
+          matchObj.player1Id || row.player1_id,
+          matchObj.player2Id || row.player2_id,
+          JSON.stringify(matchObj),
+          now,
+          row.id
+        );
+      }
+    }
+  });
+
+  matchTx();
+
+  if (insertedHistoryCount > 0 || updatedPlayersCount > 0 || relinkedArchiveMatchesCount > 0) {
+    addSyncLog(
+      'relink_name_history',
+      'success',
+      `改姓履歴・旧姓の反映と過去対局ID再紐付け完了 (改姓履歴追加: ${insertedHistoryCount}件, 棋士更新: ${updatedPlayersCount}名, 対局結果再紐付け: ${relinkedArchiveMatchesCount}局, 公式対局予定: ${relinkedUpcomingMatchesCount}件)`,
+      relinkedArchiveMatchesCount
+    );
+  }
+
+  return {
+    insertedHistoryCount,
+    updatedPlayersCount,
+    relinkedArchiveMatchesCount,
+    relinkedUpcomingMatchesCount,
+  };
+}
+
 export function getAllPlayers(): Player[] {
   const db = getDb();
   const rows = db
@@ -376,6 +719,7 @@ export function upsertPlayersBulk(players: Player[], source = 'sync'): number {
         ...prev,
         ...p,
         formerName: p.formerName || prev?.formerName,
+        leaveInfo: p.leaveInfo || prev?.leaveInfo,
         yearRecords: p.yearRecords && p.yearRecords.length > 0 ? p.yearRecords : (prev?.yearRecords || []),
       };
       stmt.run({
@@ -457,6 +801,7 @@ export function recordPlayerNameChange(params: {
   });
 
   tx();
+  syncNameHistoryAndRelinkArchives(db);
   return { player: updatedPlayer, history: historyItem };
 }
 

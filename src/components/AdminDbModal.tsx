@@ -27,8 +27,14 @@ import {
   PlusCircle,
   FileSpreadsheet,
   Eraser,
+  Save,
+  PauseCircle,
 } from 'lucide-react';
-import { normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import {
+  normalizeShogiPlayerNameForMatch,
+  isPlayerOnLeave,
+  formatPlayerLeavePeriod,
+} from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
   Player,
@@ -99,6 +105,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Players tab state
+  const [profileTargetInput, setProfileTargetInput] = useState('');
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<Player | null>(null);
+  const [profileHeldTitlesInput, setProfileHeldTitlesInput] = useState('');
+  const [profileLeaveEnabled, setProfileLeaveEnabled] = useState(false);
+  const [profileLeaveStart, setProfileLeaveStart] = useState('');
+  const [profileLeaveEnd, setProfileLeaveEnd] = useState('');
+  const [profileLeaveReason, setProfileLeaveReason] = useState('');
+
   const [nameChangePlayerId, setNameChangePlayerId] = useState('');
   const [nameChangeTargetInput, setNameChangeTargetInput] = useState('');
   const [nameChangeDropdownOpen, setNameChangeDropdownOpen] = useState(false);
@@ -107,14 +122,30 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [nameChangeDate, setNameChangeDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [nameChangeNote, setNameChangeNote] = useState('結婚・改姓等による氏名変更');
 
-  // Archives tab state (FY2021-2026)
-  const [selectedArchiveFY, setSelectedArchiveFY] = useState<number>(2026);
-  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string>('202610');
+  // Archives tab state (FY2021-2026) - initial period derived from system date
+  const [selectedArchiveFY, setSelectedArchiveFY] = useState<number>(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthNum = now.getMonth() + 1;
+    const fy = monthNum >= 4 ? year : year - 1;
+    if (fy > 2026) return 2026;
+    if (fy < 2021) return 2021;
+    return fy;
+  });
+  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string>(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthNum = now.getMonth() + 1;
+    const fy = monthNum >= 4 ? year : year - 1;
+    if (fy > 2026) return '202703';
+    if (fy < 2021) return '202104';
+    return `${year}${String(monthNum).padStart(2, '0')}`;
+  });
   const [archiveMonthResults, setArchiveMonthResults] = useState<ShogiMonthlyResult[]>([]);
   const [editingArchiveResult, setEditingArchiveResult] = useState<ShogiMonthlyResult | null>(null);
   const [editingArchiveOrigMonth, setEditingArchiveOrigMonth] = useState<string | null>(null);
   const [confirmDeleteResultId, setConfirmDeleteResultId] = useState<string | null>(null);
-  const [newResDate, setNewResDate] = useState('2026-10-15');
+  const [newResDate, setNewResDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newResTournament, setNewResTournament] = useState('公式戦');
   const [newResSente, setNewResSente] = useState('');
   const [newResGote, setNewResGote] = useState('');
@@ -466,6 +497,119 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
+  const selectPlayerForProfileEdit = (p: Player) => {
+    setProfileTargetInput(p.name);
+    setProfileDropdownOpen(false);
+    setEditingProfile({ ...p });
+    setProfileHeldTitlesInput((p.heldTitles || []).join('、'));
+    const activeLeave = isPlayerOnLeave(p);
+    setProfileLeaveEnabled(p.leaveInfo?.isOnLeave ?? activeLeave);
+    setProfileLeaveStart(p.leaveInfo?.startDate || '');
+    setProfileLeaveEnd(p.leaveInfo?.endDate || '');
+    setProfileLeaveReason(p.leaveInfo?.reason || '');
+  };
+
+  const clearProfileSelection = () => {
+    setProfileTargetInput('');
+    setProfileDropdownOpen(false);
+    setEditingProfile(null);
+    setProfileHeldTitlesInput('');
+    setProfileLeaveEnabled(false);
+    setProfileLeaveStart('');
+    setProfileLeaveEnd('');
+    setProfileLeaveReason('');
+  };
+
+  const handleSaveProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProfile || !editingProfile.name.trim()) {
+      showStatus('error', '更新対象の棋士・女流棋士を検索して選択してください');
+      return;
+    }
+    if (profileLeaveStart && profileLeaveEnd && profileLeaveStart > profileLeaveEnd) {
+      showStatus('error', '休場開始日は休場終了日以前の日付を指定してください');
+      return;
+    }
+
+    try {
+      setIsBusy(true);
+      const calcRate = (w: number, l: number) =>
+        w + l > 0 ? Math.round((w / (w + l)) * 10000) / 10000 : 0;
+
+      const parsedTitles = profileHeldTitlesInput
+        .split(/[,、\s]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const cw = Number(editingProfile.careerWins) || 0;
+      const cl = Number(editingProfile.careerLosses) || 0;
+      const yw = Number(editingProfile.currentYearWins) || 0;
+      const yl = Number(editingProfile.currentYearLosses) || 0;
+
+      const hasLeaveInput =
+        profileLeaveEnabled ||
+        Boolean(profileLeaveStart.trim()) ||
+        Boolean(profileLeaveEnd.trim()) ||
+        Boolean(profileLeaveReason.trim());
+
+      const leaveInfo: Player['leaveInfo'] = hasLeaveInput
+        ? {
+            isOnLeave: profileLeaveEnabled,
+            ...(profileLeaveStart.trim() ? { startDate: profileLeaveStart.trim() } : {}),
+            ...(profileLeaveEnd.trim() ? { endDate: profileLeaveEnd.trim() } : {}),
+            ...(profileLeaveReason.trim() ? { reason: profileLeaveReason.trim() } : {}),
+          }
+        : { isOnLeave: false };
+
+      const cleanedHighlights = (editingProfile.highlights || []).filter(
+        (h) => !h.includes('休場')
+      );
+      const cleanedShortBio = (editingProfile.shortBio || '')
+        .replace(/現在は休場中。?/g, '')
+        .trim();
+
+      const payload: Player = {
+        ...editingProfile,
+        name: editingProfile.name.trim(),
+        heldTitles: parsedTitles,
+        careerWins: cw,
+        careerLosses: cl,
+        careerWinRate: calcRate(cw, cl),
+        currentYearWins: yw,
+        currentYearLosses: yl,
+        currentYearWinRate: calcRate(yw, yl),
+        highlights: cleanedHighlights,
+        shortBio: cleanedShortBio,
+        leaveInfo,
+      };
+
+      const res = await adminFetch(`/api/admin/players/${encodeURIComponent(payload.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'プロフィール更新に失敗しました');
+
+      const savedPlayer: Player = json.player;
+      setEditingProfile(savedPlayer);
+      setProfileTargetInput(savedPlayer.name);
+      await loadAdminData();
+      await onDatabaseUpdated();
+      const currentlyOnLeave = isPlayerOnLeave(savedPlayer);
+      showStatus(
+        'success',
+        `${savedPlayer.name} のプロフィールを更新しました${
+          currentlyOnLeave ? '（休場バッジ適用中）' : ''
+        }`
+      );
+    } catch (err: any) {
+      showStatus('error', err?.message || 'プロフィール更新エラー');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   const handleRecordNameChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nameChangePlayerId) {
@@ -503,6 +647,26 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       showStatus('success', `氏名変更を登録し過去対局との紐付けを維持しました（${prevOld} → ${nextNew}）`);
     } catch (err: any) {
       showStatus('error', err?.message || '氏名変更登録エラー');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleRelinkNames = async () => {
+    try {
+      setIsBusy(true);
+      const res = await adminFetch('/api/admin/relink-names', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || '再紐付けに失敗しました');
+      await loadAdminData();
+      await onDatabaseUpdated();
+      const s = json.summary;
+      showStatus(
+        'success',
+        `改姓・旧姓データの反映と過去対局IDの再紐付けが完了しました（アーカイブ対局: ${s.relinkedArchiveMatchesCount}局, 公式対局予定: ${s.relinkedUpcomingMatchesCount}件）`
+      );
+    } catch (err: any) {
+      showStatus('error', err?.message || '再紐付けエラー');
     } finally {
       setIsBusy(false);
     }
@@ -1068,8 +1232,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const nameChangeMatchedPlayers = useMemo(() => {
-    const raw = nameChangeTargetInput.trim();
+  const filterPlayersByPartialQuery = (rawQuery: string): Player[] => {
+    const raw = rawQuery.trim();
     if (!raw) return [];
     const qLower = raw.toLowerCase().replace(/\s+/g, '');
     const qNorm = normalizeShogiPlayerNameForMatch(raw);
@@ -1109,7 +1273,17 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     });
 
     return scored.map((item) => item.player);
-  }, [players, nameChangeTargetInput]);
+  };
+
+  const profileMatchedPlayers = useMemo(
+    () => filterPlayersByPartialQuery(profileTargetInput),
+    [players, profileTargetInput]
+  );
+
+  const nameChangeMatchedPlayers = useMemo(
+    () => filterPlayersByPartialQuery(nameChangeTargetInput),
+    [players, nameChangeTargetInput]
+  );
 
   const filteredMatches = useMemo(() => {
     const q = matchQuery.trim().toLowerCase().replace(/\s+/g, '');
@@ -1274,7 +1448,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
             <div className="flex overflow-x-auto border-b border-zinc-800 bg-zinc-900/60 px-3 sm:px-5 pt-2 gap-1 shrink-0">
               {[
                 { id: 'overview', label: 'DB概要・復元', icon: HardDrive },
-                { id: 'players', label: '棋士・改姓履歴', icon: Users },
+                { id: 'players', label: '棋士プロフィール・改姓', icon: Users },
                 { id: 'archives', label: '2021-2026 対局結果', icon: Trophy },
                 { id: 'manual_input', label: '対局手動入力', icon: PlusCircle },
                 { id: 'csv_import', label: 'CSVインポート', icon: FileSpreadsheet },
@@ -1505,6 +1679,533 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               {/* PLAYERS & NAME HISTORY */}
               {activeTab === 'players' && (
                 <div className="space-y-5 min-h-[340px]">
+                  {/* Player Profile & Leave Update Tool */}
+                  <div className="bg-zinc-900/80 border border-sky-500/30 rounded-2xl p-4 space-y-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <h3 className="text-sm font-bold text-sky-300 flex items-center gap-2">
+                          <Pencil size={15} />
+                          <span>棋士・女流棋士プロフィール更新処理（休場情報設定）</span>
+                        </h3>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          対象の棋士・女流棋士名の一部を入力して選択し、プロフィールや休場期間を更新できます
+                        </p>
+                      </div>
+                      {editingProfile && (
+                        <button
+                          type="button"
+                          onClick={clearProfileSelection}
+                          className="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700 cursor-pointer"
+                        >
+                          選択解除
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Target Player Search */}
+                    <div className="relative">
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          value={profileTargetInput}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setProfileTargetInput(val);
+                            if (editingProfile && editingProfile.name !== val) {
+                              setEditingProfile(null);
+                            }
+                            setProfileDropdownOpen(val.trim().length > 0);
+                          }}
+                          onFocus={() => {
+                            if (profileTargetInput.trim().length > 0 && !editingProfile) {
+                              setProfileDropdownOpen(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => setProfileDropdownOpen(false), 150);
+                          }}
+                          placeholder="更新対象の棋士・女流棋士名の一部を入力して検索..."
+                          className={`w-full bg-zinc-950 border rounded-xl pl-3 pr-8 py-2 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none ${
+                            editingProfile ? 'border-emerald-500/60' : 'border-zinc-700'
+                          }`}
+                        />
+                        {(profileTargetInput || editingProfile) && (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              clearProfileSelection();
+                            }}
+                            className="absolute right-2 p-1 rounded-md text-zinc-500 hover:text-zinc-200 cursor-pointer"
+                            title="入力をクリア"
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      {profileDropdownOpen && profileTargetInput.trim().length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-zinc-950 border border-sky-500/40 rounded-xl shadow-2xl overflow-hidden">
+                          <div className="px-3 py-1.5 bg-zinc-900/90 border-b border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between">
+                            <span>検索結果: 棋士・女流棋士 ({profileMatchedPlayers.length}名)</span>
+                            <span>クリックして選択</span>
+                          </div>
+                          <div className="max-h-60 overflow-y-auto divide-y divide-zinc-800/70">
+                            {profileMatchedPlayers.length === 0 ? (
+                              <div className="px-3 py-3 text-center text-zinc-500 text-xs">
+                                該当する棋士・女流棋士が見つかりません
+                              </div>
+                            ) : (
+                              profileMatchedPlayers.map((p) => {
+                                const isSelected = editingProfile?.id === p.id;
+                                const onLeaveNow = isPlayerOnLeave(p);
+                                return (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      selectPlayerForProfileEdit(p);
+                                    }}
+                                    className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition cursor-pointer text-xs ${
+                                      isSelected
+                                        ? 'bg-sky-500/15 text-sky-200'
+                                        : 'hover:bg-zinc-900 text-zinc-200'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                          p.type === 'women'
+                                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                                            : 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                                        }`}
+                                      >
+                                        {p.type === 'women' ? '女流棋士' : '棋士'}
+                                      </span>
+                                      <span className="font-bold text-zinc-100">{p.name}</span>
+                                      <span className="text-amber-300 text-[11px]">{p.rank}</span>
+                                      {onLeaveNow && (
+                                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black">
+                                          休場
+                                        </span>
+                                      )}
+                                      {p.formerName && (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                                          旧姓: {p.formerName}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                                      No.{p.playerNumber || '-'}
+                                    </span>
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {editingProfile && (
+                      <form onSubmit={handleSaveProfileUpdate} className="space-y-4 pt-2 border-t border-zinc-800">
+                        {/* Basic Profile Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">氏名 *</label>
+                            <input
+                              type="text"
+                              required
+                              value={editingProfile.name}
+                              onChange={(e) => setEditingProfile({ ...editingProfile, name: e.target.value })}
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">旧姓 (formerName)</label>
+                            <input
+                              type="text"
+                              value={editingProfile.formerName || ''}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  formerName: e.target.value || undefined,
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">区分</label>
+                            <select
+                              value={editingProfile.type}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  type: e.target.value as 'pro' | 'women',
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            >
+                              <option value="pro">棋士</option>
+                              <option value="women">女流棋士</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">所属</label>
+                            <select
+                              value={editingProfile.affiliation || '日本将棋連盟'}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  affiliation: e.target.value as any,
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            >
+                              <option value="日本将棋連盟">日本将棋連盟</option>
+                              <option value="LPSA">LPSA</option>
+                              <option value="無所属">無所属</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">称号・表示段位</label>
+                            <input
+                              type="text"
+                              value={editingProfile.rank}
+                              onChange={(e) => setEditingProfile({ ...editingProfile, rank: e.target.value })}
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">公式段位 (danRank)</label>
+                            <input
+                              type="text"
+                              value={editingProfile.danRank || ''}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, danRank: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">棋士番号 / 女流番号</label>
+                            <input
+                              type="number"
+                              value={editingProfile.playerNumber ?? ''}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  playerNumber: e.target.value ? Number(e.target.value) : undefined,
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">戦型</label>
+                            <select
+                              value={editingProfile.style || '居飛車'}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, style: e.target.value as any })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            >
+                              <option value="居飛車">居飛車</option>
+                              <option value="振り飛車">振り飛車</option>
+                              <option value="オールラウンダー">オールラウンダー</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">順位戦クラス</label>
+                            <input
+                              type="text"
+                              value={editingProfile.junisenClass}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, junisenClass: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">竜王戦クラス</label>
+                            <input
+                              type="text"
+                              value={editingProfile.ryuoClass}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, ryuoClass: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">保持タイトル (読点区切り)</label>
+                            <input
+                              type="text"
+                              value={profileHeldTitlesInput}
+                              onChange={(e) => setProfileHeldTitlesInput(e.target.value)}
+                              placeholder="例: 竜王、名人"
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">タイトル獲得合計</label>
+                            <input
+                              type="number"
+                              value={editingProfile.totalTitles}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  totalTitles: Number(e.target.value),
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">今年度 勝</label>
+                            <input
+                              type="number"
+                              value={editingProfile.currentYearWins}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  currentYearWins: Number(e.target.value),
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">今年度 敗</label>
+                            <input
+                              type="number"
+                              value={editingProfile.currentYearLosses}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  currentYearLosses: Number(e.target.value),
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">通算 勝</label>
+                            <input
+                              type="number"
+                              value={editingProfile.careerWins}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  careerWins: Number(e.target.value),
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">通算 敗</label>
+                            <input
+                              type="number"
+                              value={editingProfile.careerLosses}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  careerLosses: Number(e.target.value),
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">生年月日 (YYYY-MM-DD)</label>
+                            <input
+                              type="text"
+                              value={editingProfile.birthDate || ''}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, birthDate: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">出身地</label>
+                            <input
+                              type="text"
+                              value={editingProfile.birthPlace || ''}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, birthPlace: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">師匠</label>
+                            <input
+                              type="text"
+                              value={editingProfile.master || ''}
+                              onChange={(e) =>
+                                setEditingProfile({ ...editingProfile, master: e.target.value })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">顔写真URL (photoUrl)</label>
+                            <input
+                              type="text"
+                              value={editingProfile.photoUrl || ''}
+                              onChange={(e) =>
+                                setEditingProfile({
+                                  ...editingProfile,
+                                  photoUrl: e.target.value || undefined,
+                                })
+                              }
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-0.5">短評・プロフィール紹介</label>
+                          <input
+                            type="text"
+                            value={editingProfile.shortBio}
+                            onChange={(e) =>
+                              setEditingProfile({ ...editingProfile, shortBio: e.target.value })
+                            }
+                            className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 focus:border-sky-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Leave Period Settings (休場情報) */}
+                        <div className="bg-zinc-950/90 border border-amber-500/35 rounded-xl p-3.5 space-y-3">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                              <PauseCircle size={15} />
+                              <span>休場情報設定（休場期間中はプロフィールに「休場」バッジを表示）</span>
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfileLeaveEnabled(false);
+                                setProfileLeaveStart('');
+                                setProfileLeaveEnd('');
+                                setProfileLeaveReason('');
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-zinc-300 flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eraser size={12} />
+                              <span>休場情報をクリア</span>
+                            </button>
+                          </div>
+
+                          <label className="flex items-center gap-2 text-xs text-zinc-200 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={profileLeaveEnabled}
+                              onChange={(e) => setProfileLeaveEnabled(e.target.checked)}
+                              className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                            />
+                            <span className="font-semibold">休場設定を有効にする</span>
+                          </label>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">休場開始日</label>
+                              <input
+                                type="date"
+                                value={profileLeaveStart}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setProfileLeaveStart(v);
+                                  if (v) setProfileLeaveEnabled(true);
+                                }}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">
+                                休場終了日（未入力で継続中扱い）
+                              </label>
+                              <input
+                                type="date"
+                                value={profileLeaveEnd}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setProfileLeaveEnd(v);
+                                  if (v) setProfileLeaveEnabled(true);
+                                }}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-zinc-400 block mb-0.5">休場理由・備考（任意）</label>
+                              <input
+                                type="text"
+                                value={profileLeaveReason}
+                                onChange={(e) => setProfileLeaveReason(e.target.value)}
+                                placeholder="例: 体調不良のため公式戦休場"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-amber-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {(() => {
+                            const previewPlayer: Player = {
+                              ...editingProfile,
+                              leaveInfo:
+                                profileLeaveEnabled ||
+                                profileLeaveStart ||
+                                profileLeaveEnd ||
+                                profileLeaveReason.trim()
+                                  ? {
+                                      isOnLeave: profileLeaveEnabled,
+                                      startDate: profileLeaveStart || undefined,
+                                      endDate: profileLeaveEnd || undefined,
+                                      reason: profileLeaveReason.trim() || undefined,
+                                    }
+                                  : { isOnLeave: false },
+                            };
+                            const willShowBadge = isPlayerOnLeave(previewPlayer);
+                            return (
+                              <div className="flex items-center gap-2 text-[11px] pt-1">
+                                <span className="text-zinc-400">現在の表示判定:</span>
+                                {willShowBadge ? (
+                                  <span className="inline-flex items-center gap-1.5 text-amber-300 font-bold">
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-400/40 text-[10px] font-black">
+                                      休場
+                                    </span>
+                                    <span>バッジを表示（{formatPlayerLeavePeriod(previewPlayer)}）</span>
+                                  </span>
+                                ) : profileLeaveEnabled && (profileLeaveStart || profileLeaveEnd) ? (
+                                  <span className="text-zinc-400">
+                                    指定期間外のため現在は通常表示（期間中のみ「休場」バッジ表示）
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-400">通常表示（休場バッジなし）</span>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="flex items-center justify-end">
+                          <button
+                            type="submit"
+                            disabled={isBusy}
+                            className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Save size={14} />
+                            <span>プロフィールをSQLite DBに更新保存</span>
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+
                   {/* Name Change History Registration Tool */}
                   <form
                     onSubmit={handleRecordNameChange}
@@ -1673,10 +2374,22 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </div>
 
                     {nameHistory.length > 0 && (
-                      <div className="pt-2 border-t border-zinc-800 space-y-1.5">
-                        <span className="text-[11px] font-bold text-zinc-400 block">
-                          登録済み 氏名変更履歴 ({nameHistory.length}件)
-                        </span>
+                      <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] font-bold text-zinc-400 block">
+                            登録済み 氏名変更履歴 ({nameHistory.length}件)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRelinkNames}
+                            disabled={isBusy}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                            title="改姓前の旧姓による過去対局記録を現在の棋士IDへ再紐付けします"
+                          >
+                            <RefreshCw size={12} className={isBusy ? 'animate-spin' : ''} />
+                            <span>改姓・旧姓の対局ID紐付けを再実行</span>
+                          </button>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {nameHistory.map((h) => (
                             <span
@@ -1739,23 +2452,19 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Add / Edit Match Result */}
-                  <form
-                    onSubmit={handleSaveArchiveResult}
-                    className={`bg-zinc-900/80 border rounded-2xl p-4 space-y-3 ${
-                      editingArchiveResult ? 'border-sky-500/50' : 'border-zinc-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className={`text-xs font-bold flex items-center gap-1.5 ${editingArchiveResult ? 'text-sky-300' : 'text-amber-300'}`}>
-                        {editingArchiveResult ? <Pencil size={14} /> : <Plus size={14} />}
-                        <span>
-                          {editingArchiveResult
-                            ? `対局結果を編集中 (${editingArchiveResult.date} ${editingArchiveResult.sente} vs ${editingArchiveResult.gote})`
-                            : '対局結果を追加（2021〜2026年度対応）'}
-                        </span>
-                      </h4>
-                      {editingArchiveResult && (
+                  {/* Edit Existing Match Result (only shown when editing a row) */}
+                  {editingArchiveResult && (
+                    <form
+                      onSubmit={handleSaveArchiveResult}
+                      className="bg-zinc-900/80 border border-sky-500/50 rounded-2xl p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold flex items-center gap-1.5 text-sky-300">
+                          <Pencil size={14} />
+                          <span>
+                            {`対局結果を編集中 (${editingArchiveResult.date} ${editingArchiveResult.sente} vs ${editingArchiveResult.gote})`}
+                          </span>
+                        </h4>
                         <button
                           type="button"
                           onClick={resetArchiveResultForm}
@@ -1763,71 +2472,67 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         >
                           キャンセル
                         </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
-                      <input
-                        type="date"
-                        value={newResDate}
-                        onChange={(e) => setNewResDate(e.target.value)}
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
-                      />
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
+                        <input
+                          type="date"
+                          value={newResDate}
+                          onChange={(e) => setNewResDate(e.target.value)}
+                          required
+                          className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        />
+                        <input
+                          type="text"
+                          value={newResTournament}
+                          onChange={(e) => setNewResTournament(e.target.value)}
+                          placeholder="棋戦名"
+                          required
+                          className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        />
+                        <input
+                          type="text"
+                          list="admin-players-datalist"
+                          value={newResSente}
+                          onChange={(e) => setNewResSente(e.target.value)}
+                          placeholder="先手氏名"
+                          required
+                          className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        />
+                        <input
+                          type="text"
+                          list="admin-players-datalist"
+                          value={newResGote}
+                          onChange={(e) => setNewResGote(e.target.value)}
+                          placeholder="後手氏名"
+                          required
+                          className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        />
+                        <select
+                          value={newResWinner}
+                          onChange={(e) => setNewResWinner(e.target.value as any)}
+                          className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        >
+                          <option value="sente">先手勝ち</option>
+                          <option value="gote">後手勝ち</option>
+                          <option value="undecided">勝敗未定</option>
+                        </select>
+                        <button
+                          type="submit"
+                          disabled={isBusy}
+                          className="font-bold rounded-xl px-3 py-1.5 cursor-pointer disabled:opacity-50 bg-sky-500 hover:bg-sky-400 text-zinc-950"
+                        >
+                          更新保存
+                        </button>
+                      </div>
                       <input
                         type="text"
-                        value={newResTournament}
-                        onChange={(e) => setNewResTournament(e.target.value)}
-                        placeholder="棋戦名"
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
+                        value={newResNote}
+                        onChange={(e) => setNewResNote(e.target.value)}
+                        placeholder="備考・手数・千日手・詳細メモ（任意）"
+                        className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs"
                       />
-                      <input
-                        type="text"
-                        list="admin-players-datalist"
-                        value={newResSente}
-                        onChange={(e) => setNewResSente(e.target.value)}
-                        placeholder="先手氏名"
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        list="admin-players-datalist"
-                        value={newResGote}
-                        onChange={(e) => setNewResGote(e.target.value)}
-                        placeholder="後手氏名"
-                        required
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
-                      />
-                      <select
-                        value={newResWinner}
-                        onChange={(e) => setNewResWinner(e.target.value as any)}
-                        className="bg-zinc-950 border border-zinc-700 rounded-xl px-2.5 py-1.5"
-                      >
-                        <option value="sente">先手勝ち</option>
-                        <option value="gote">後手勝ち</option>
-                        <option value="undecided">勝敗未定</option>
-                      </select>
-                      <button
-                        type="submit"
-                        disabled={isBusy}
-                        className={`font-bold rounded-xl px-3 py-1.5 cursor-pointer disabled:opacity-50 ${
-                          editingArchiveResult
-                            ? 'bg-sky-500 hover:bg-sky-400 text-zinc-950'
-                            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950'
-                        }`}
-                      >
-                        {editingArchiveResult ? '更新保存' : 'DB登録'}
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={newResNote}
-                      onChange={(e) => setNewResNote(e.target.value)}
-                      placeholder="備考・手数・千日手・詳細メモ（任意）"
-                      className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs"
-                    />
-                  </form>
+                    </form>
+                  )}
 
                   {/* Month Archive List */}
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl overflow-hidden">
@@ -1841,7 +2546,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         この月の対局データはまだDBに登録されていません
                       </div>
                     ) : (
-                      <div className="divide-y divide-zinc-800/70 max-h-[300px] overflow-y-auto">
+                      <div className="divide-y divide-zinc-800/70 max-h-[460px] overflow-y-auto">
                         {archiveMonthResults.map((r) => (
                           <div
                             key={r.id}

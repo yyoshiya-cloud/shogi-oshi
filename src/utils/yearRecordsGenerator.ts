@@ -455,8 +455,7 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
   // 通算成績が0勝0敗の棋士（未対局・新四段等）または休場中棋士は全年度0局0勝0敗
   if (
     (player.careerWins === 0 && player.careerLosses === 0) ||
-    nameClean.includes('早水千紗') ||
-    nameClean.includes('山田朱未')
+    (!player.leaveInfo && (nameClean.includes('早水千紗') || nameClean.includes('山田朱未')))
   ) {
     return years.map((year) => ({
       year,
@@ -537,9 +536,18 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
     const total = wins + losses;
     const rate = total > 0 ? Math.round((wins / total) * 1000) / 1000 : 0;
     const explicitLeave = (player.yearRecords || []).find((r) => r.year === year)?.isLeave;
+    const leaveStart = (player.leaveInfo?.startDate || '').trim();
+    const leaveEnd = (player.leaveInfo?.endDate || '').trim();
+    const fyStart = `${year}-04-01`;
+    const fyEnd = `${year + 1}-03-31`;
+    const leaveOverlapsFY =
+      player.leaveInfo?.isOnLeave !== false &&
+      Boolean(leaveStart || leaveEnd) &&
+      (!leaveStart || leaveStart <= fyEnd) &&
+      (!leaveEnd || leaveEnd >= fyStart);
     const isLeave =
       Boolean(explicitLeave) ||
-      (isPlayerOnLeave(player) && wins === 0 && losses === 0 && year >= debutYear) ||
+      (wins === 0 && losses === 0 && year >= debutYear && (isPlayerOnLeave(player) || leaveOverlapsFY)) ||
       (nameClean.includes('水町みゆ') && year === 2025);
     const isPreDebut = total === 0 && !isLeave && year < debutYear;
 

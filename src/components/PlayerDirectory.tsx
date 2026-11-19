@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, isPlayerRetired, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -215,8 +215,11 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             )}
 
             {onLeave && (
-              <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                休場中
+              <span
+                className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                title={formatPlayerLeavePeriod(player)}
+              >
+                休場
               </span>
             )}
 
@@ -317,7 +320,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, onSelectPlayer,
             <span className="text-[9px] text-zinc-500 block">今年度成績</span>
             <span className="font-bold text-emerald-400 font-serif-jp">
               {onLeave ? (
-                <span className="text-amber-400 text-[11px] font-bold">休場中</span>
+                <span className="text-amber-400 text-[11px] font-bold">休場</span>
               ) : player.currentYearWins > 0 || player.currentYearLosses > 0 ? (
                 `${(player.currentYearWinRate * 100).toFixed(0)}%`
               ) : (

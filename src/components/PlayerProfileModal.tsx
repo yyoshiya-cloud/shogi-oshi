@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import { getTodayDateString } from '../utils/dateUtils';
 import results2026Json from '../data/results2026.json';
@@ -353,8 +353,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
               </span>
             )}
             {isPlayerOnLeave(activePlayer) && (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40">
-                休場中
+              <span
+                className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40"
+                title={formatPlayerLeavePeriod(activePlayer)}
+              >
+                休場
               </span>
             )}
             {followedConfig && (
@@ -681,6 +684,19 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                     </>
                   )}
                 </div>
+
+                {isPlayerOnLeave(activePlayer) && (
+                  <div className="mt-3 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2 flex-wrap text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/40">
+                        休場
+                      </span>
+                      <span className="font-bold text-amber-200">
+                        休場期間: {formatPlayerLeavePeriod(activePlayer)}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* 通算タイトル獲得（一本化） */}
                 {((activePlayer.totalTitles && activePlayer.totalTitles > 0) ||

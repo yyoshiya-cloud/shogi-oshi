@@ -76,6 +76,12 @@ export interface Player {
     kifuDatabase: string;
     wikipedia?: string;
   };
+  leaveInfo?: {
+    isOnLeave?: boolean;
+    startDate?: string; // YYYY-MM-DD
+    endDate?: string; // YYYY-MM-DD
+    reason?: string;
+  };
 }
 
 export interface FollowedPlayerConfig {

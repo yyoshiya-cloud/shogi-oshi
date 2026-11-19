@@ -14871,6 +14871,7 @@
   {
     "id": "lady-ryoko_chiba",
     "name": "千葉 涼子",
+    "formerName": "碓井 涼子",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流五段",
@@ -15032,6 +15033,7 @@
   {
     "id": "lady-sayuri_takebe",
     "name": "竹部 さゆり",
+    "formerName": "木村 さゆり",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15480,6 +15482,7 @@
   {
     "id": "lady-sayuri_honda",
     "name": "本田 小百合",
+    "formerName": "植村 小百合",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流四段",
@@ -15717,6 +15720,7 @@
   {
     "id": "lady-yuki_muroya",
     "name": "室谷 由紀",
+    "formerName": "谷口 由紀",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -16386,6 +16390,7 @@
   {
     "id": "lady-sumie_ishitaka",
     "name": "石高 澄恵",
+    "formerName": "横山 澄恵",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流三段",
@@ -18478,6 +18483,7 @@
   {
     "id": "lady-nanako_hagita",
     "name": "萩田 菜々子",
+    "formerName": "脇田 菜々子",
     "type": "women",
     "affiliation": "日本将棋連盟",
     "rank": "女流初段",
@@ -20638,6 +20644,7 @@
   {
     "id": "uekawa-kaori",
     "name": "上川 香織",
+    "formerName": "藤森 香織",
     "type": "women",
     "affiliation": "LPSA",
     "rank": "女流二段",

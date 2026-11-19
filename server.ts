@@ -35,6 +35,7 @@ import {
   exportBackupJson,
   restoreFromBackupJson,
   importFromSqliteBuffer,
+  syncNameHistoryAndRelinkArchives,
 } from './src/db/sqlite';
 import type { Player, Match, ShogiMonthlyResult } from './src/types/shogi';
 
@@ -321,12 +322,20 @@ async function startServer() {
 
   app.put('/api/admin/players/:id', requireAdmin, (req, res) => {
     try {
-      const player = { ...(req.body as Player), id: req.params.id };
+      const existing = getAllPlayers().find((p) => p.id === req.params.id);
+      const body = req.body as Player;
+      const player: Player = existing
+        ? {
+            ...existing,
+            ...body,
+            id: req.params.id,
+          }
+        : { ...body, id: req.params.id };
       if (!player.name) {
         return res.status(400).json({ success: false, error: 'player.name が必須です' });
       }
       const saved = upsertPlayer(player);
-      addSyncLog('player_update', 'success', `棋士プロフィール編集: ${saved.name} (${saved.id})`, 1);
+      addSyncLog('player_update', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
       res.json({ success: true, player: saved });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to update player' });
@@ -358,6 +367,20 @@ async function startServer() {
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to record name change' });
+    }
+  });
+
+  app.post('/api/admin/relink-names', requireAdmin, (req, res) => {
+    try {
+      const summary = syncNameHistoryAndRelinkArchives();
+      res.json({
+        success: true,
+        summary,
+        overview: getDatabaseOverview(),
+      });
+    } catch (error: any) {
+      console.error('Error in /api/admin/relink-names:', error);
+      res.status(500).json({ success: false, error: error?.message || 'Failed to relink names' });
     }
   });
 
