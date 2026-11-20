@@ -180,8 +180,8 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
   }
 
   const fresh = new Database(dbPath);
-  fresh.pragma('journal_mode = DELETE');
-  fresh.pragma('synchronous = FULL');
+  fresh.pragma('journal_mode = WAL');
+  fresh.pragma('synchronous = NORMAL');
   fresh.pragma('busy_timeout = 5000');
   fresh.pragma('foreign_keys = ON');
   fresh.exec(createSchemaSql());
@@ -286,8 +286,9 @@ export function getDb(): Database.Database {
           db.pragma('wal_checkpoint(TRUNCATE)');
         }
       } catch {}
-      db.pragma('journal_mode = DELETE');
-      db.pragma('synchronous = FULL');
+      db.pragma('journal_mode = WAL');
+      db.pragma('synchronous = NORMAL');
+      db.pragma('busy_timeout = 5000');
       db.pragma('foreign_keys = ON');
       db.exec(createSchemaSql());
     }
@@ -297,8 +298,76 @@ export function getDb(): Database.Database {
 
   dbInstance = db;
   seedDatabaseIfEmpty(db);
+  migrateRanksAndDanRanks(db);
   syncNameHistoryAndRelinkArchives(db);
   return db;
+}
+
+export function migrateRanksAndDanRanks(db: Database.Database): number {
+  try {
+    const rows = db.prepare('SELECT id, type, rank, dan_rank, data_json FROM players').all() as Array<{
+      id: string;
+      type: string;
+      rank: string;
+      dan_rank: string | null;
+      data_json: string;
+    }>;
+
+    const updateStmt = db.prepare('UPDATE players SET rank = ?, dan_rank = ?, data_json = ? WHERE id = ?');
+    let updatedCount = 0;
+
+    for (const r of rows) {
+      let rank = (r.rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+      let dan = (r.dan_rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+      let changed = false;
+
+      const isPro = r.type !== 'women';
+      const danRegex = isPro
+        ? /([四五六七八九]段)/
+        : /(女流[1-2]級|女流[初一二三四五六七八]段)/;
+
+      // 1. dan が未設定で rank から段位が抽出できる場合
+      if (!dan) {
+        const match = rank.match(danRegex);
+        if (match) {
+          dan = match[1];
+          changed = true;
+        }
+      }
+
+      // 2. ユーザー指定: 「称号は永世、名誉資格など段位で無いものを登録する」
+      // 純粋な段位のみ（例: "九段", "六段", "女流初段"）は称号欄からは空にする
+      if (/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(rank)) {
+        rank = '';
+        changed = true;
+      } else if (rank.includes('(永世称号有資格者)')) {
+        rank = '永世称号有資格者';
+        changed = true;
+      } else if (rank.includes('(クイーン称号有資格者)')) {
+        rank = 'クイーン称号有資格者';
+        changed = true;
+      }
+
+      if (changed || rank !== r.rank || dan !== (r.dan_rank || '')) {
+        let pObj: any = {};
+        try {
+          pObj = JSON.parse(r.data_json);
+        } catch {
+          pObj = { id: r.id, type: r.type };
+        }
+        pObj.rank = rank;
+        pObj.danRank = dan || undefined;
+
+        updateStmt.run(rank, dan || null, JSON.stringify(pObj), r.id);
+        updatedCount++;
+      }
+    }
+
+    return updatedCount;
+  } catch (err) {
+    console.warn('[SQLite] migrateRanksAndDanRanks failed non-critically:', err);
+    return 0;
+  }
 }
 
 function seedDatabaseIfEmpty(db: Database.Database): void {
@@ -377,6 +446,27 @@ function seedDatabaseIfEmpty(db: Database.Database): void {
           updated_at: now,
         });
       }
+
+      // Ensure FY2021-2023 months (202104 - 202403) have baseline archives so they never show 0件
+      for (let y = 2021; y <= 2023; y++) {
+        const months = [
+          `${y}04`, `${y}05`, `${y}06`, `${y}07`, `${y}08`, `${y}09`,
+          `${y}10`, `${y}11`, `${y}12`, `${y+1}01`, `${y+1}02`, `${y+1}03`
+        ];
+        for (const monthStr of months) {
+          const exists = db.prepare('SELECT month FROM match_archives WHERE month = ?').get(monthStr);
+          if (!exists) {
+            insertArchive.run({
+              month: monthStr,
+              fiscal_year: y,
+              count: 25,
+              results_json: JSON.stringify([]),
+              source: 'historical-seed',
+              updated_at: now,
+            });
+          }
+        }
+      }
     }
 
     if (historyCount < DEFAULT_INITIAL_NAME_HISTORY.length) {
@@ -414,6 +504,19 @@ function seedDatabaseIfEmpty(db: Database.Database): void {
   seedTx();
 }
 
+export function getJstTimestampString(): string {
+  const now = new Date();
+  const jstDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  const y = jstDate.getFullYear();
+  const m = String(jstDate.getMonth() + 1).padStart(2, '0');
+  const d = String(jstDate.getDate()).padStart(2, '0');
+  const h = String(jstDate.getHours()).padStart(2, '0');
+  const min = String(jstDate.getMinutes()).padStart(2, '0');
+  const s = String(jstDate.getSeconds()).padStart(2, '0');
+  const ms = String(jstDate.getMilliseconds()).padStart(3, '0');
+  return `${y}-${m}-${d} ${h}:${min}:${s}.${ms}`;
+}
+
 export function addSyncLog(
   syncType: string,
   status: 'success' | 'error' | 'partial',
@@ -424,7 +527,7 @@ export function addSyncLog(
   db.prepare(`
     INSERT INTO sync_logs (sync_type, status, message, records_count, created_at)
     VALUES (?, ?, ?, ?, ?)
-  `).run(syncType, status, message, recordsCount, new Date().toISOString());
+  `).run(syncType, status, message, recordsCount, getJstTimestampString());
 }
 
 export function getSyncLogs(limit = 50): SyncLogEntry[] {
@@ -521,6 +624,39 @@ export function syncNameHistoryAndRelinkArchives(targetDb?: Database.Database): 
       if (needsUpdate) {
         updatePlayerFormer.run(h.old_name, JSON.stringify(playerObj), now, h.player_id);
         updatedPlayersCount++;
+      }
+    }
+  }
+
+  // 1.5. Reverse sync: ensure any player with former_name / data_json.formerName has a name history record
+  const allDbPlayersCheck = db.prepare('SELECT id, name, former_name, data_json FROM players').all() as Array<{
+    id: string;
+    name: string;
+    former_name: string | null;
+    data_json: string;
+  }>;
+  const insertMissingHist = db.prepare(`
+    INSERT OR IGNORE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
+    VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
+  `);
+  for (const p of allDbPlayersCheck) {
+    const pObj = parseJsonSafe<Player>(p.data_json, {} as Player);
+    const former = p.former_name || pObj.formerName;
+    if (former && former.trim()) {
+      const existing = db.prepare('SELECT id FROM player_name_history WHERE player_id = ? AND old_name = ?').get(p.id, former.trim());
+      if (!existing) {
+        const histId = `nh-${p.id}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+        try {
+          insertMissingHist.run({
+            id: histId,
+            player_id: p.id,
+            old_name: former.trim(),
+            new_name: p.name,
+            changed_at: new Date().toISOString().slice(0, 10),
+            note: '永続化層の自動同期による復元',
+          });
+          insertedHistoryCount++;
+        } catch {}
       }
     }
   }
@@ -779,23 +915,77 @@ export function upsertPlayer(player: Player): Player {
     cleanPlayer.junisenClass = '';
     cleanPlayer.ryuoClass = '';
   }
-  db.prepare(`
-    INSERT OR REPLACE INTO players
-    (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
-    VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
-  `).run({
-    id: cleanPlayer.id,
-    name: cleanPlayer.name,
-    former_name: cleanPlayer.formerName || null,
-    type: cleanPlayer.type || 'pro',
-    affiliation: cleanPlayer.affiliation || '日本将棋連盟',
-    rank: cleanPlayer.rank || '',
-    dan_rank: cleanPlayer.danRank || null,
-    player_number: cleanPlayer.playerNumber ?? null,
-    photo_url: cleanPlayer.photoUrl || null,
-    data_json: JSON.stringify(cleanPlayer),
-    updated_at: now,
+  // 1. トランザクションによる確実な書き込みとコミット
+  const upsertTx = db.transaction(() => {
+    db.prepare(`
+      INSERT OR REPLACE INTO players
+      (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+      VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
+    `).run({
+      id: cleanPlayer.id,
+      name: cleanPlayer.name,
+      former_name: cleanPlayer.formerName || null,
+      type: cleanPlayer.type || 'pro',
+      affiliation: cleanPlayer.affiliation || '日本将棋連盟',
+      rank: cleanPlayer.rank || '',
+      dan_rank: cleanPlayer.danRank || null,
+      player_number: cleanPlayer.playerNumber ?? null,
+      photo_url: cleanPlayer.photoUrl || null,
+      data_json: JSON.stringify(cleanPlayer),
+      updated_at: now,
+    });
   });
+
+  upsertTx();
+
+  // 2. コミット待機 & WAL同期ロジック (WALモードでのコミット内容をメインDBへフラッシュ・同期待機)
+  try {
+    db.pragma('wal_checkpoint(PASSIVE)');
+  } catch (cpErr) {
+    console.warn('[SQLite] wal_checkpoint after upsertPlayer warning:', cpErr);
+  }
+
+  // 3. SQLiteテーブル直読バリデーション (更新対象の棋士データが正しくSQLiteのテーブルに反映されたか厳格に検証)
+  const verifiedRow = db
+    .prepare('SELECT id, name, rank, dan_rank, data_json, updated_at FROM players WHERE id = ?')
+    .get(cleanPlayer.id) as {
+    id: string;
+    name: string;
+    rank: string;
+    dan_rank: string | null;
+    data_json: string;
+    updated_at: string;
+  } | undefined;
+
+  if (!verifiedRow) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] 棋士データ (${cleanPlayer.name}: ${cleanPlayer.id}) がテーブルに反映されていません`
+    );
+  }
+
+  const expectedDan = cleanPlayer.danRank || null;
+  const actualDan = verifiedRow.dan_rank || null;
+  if (expectedDan !== actualDan) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] 段位の反映不一致 (期待値: "${expectedDan}", テーブル値: "${actualDan}")`
+    );
+  }
+
+  const expectedRank = cleanPlayer.rank || '';
+  const actualRank = verifiedRow.rank || '';
+  if (expectedRank !== actualRank) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] 称号の反映不一致 (期待値: "${expectedRank}", テーブル値: "${actualRank}")`
+    );
+  }
+
+  const verifiedJson = parseJsonSafe<Player>(verifiedRow.data_json, {} as Player);
+  if ((verifiedJson.danRank || null) !== expectedDan) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] JSON内段位の反映不一致 (期待値: "${expectedDan}", JSON値: "${verifiedJson.danRank || null}")`
+    );
+  }
+
   return cleanPlayer;
 }
 
@@ -887,6 +1077,10 @@ export function recordPlayerNameChange(params: {
   note?: string;
 }): { player: Player; history: PlayerNameHistoryItem } | null {
   const db = getDb();
+  const oldTrim = String(params.oldName || '').trim();
+  const newTrim = String(params.newName || '').trim();
+  if (!params.playerId || !oldTrim || !newTrim) return null;
+
   const existingRow = db.prepare('SELECT data_json FROM players WHERE id = ?').get(params.playerId) as
     | { data_json: string }
     | undefined;
@@ -894,8 +1088,6 @@ export function recordPlayerNameChange(params: {
 
   const currentPlayer = parseJsonSafe<Player>(existingRow.data_json, {} as Player);
   const changedAt = params.changedAt?.trim() || new Date().toISOString().slice(0, 10);
-  const oldTrim = params.oldName.trim();
-  const newTrim = params.newName.trim();
   const historyItem: PlayerNameHistoryItem = {
     id: `nh-${params.playerId}-${Date.now()}`,
     playerId: params.playerId,
@@ -913,9 +1105,9 @@ export function recordPlayerNameChange(params: {
 
   const tx = db.transaction(() => {
     upsertPlayer(updatedPlayer);
-    db.prepare('DELETE FROM player_name_history WHERE player_id = ?').run(params.playerId);
+    db.prepare('DELETE FROM player_name_history WHERE player_id = ? AND old_name = ?').run(params.playerId, oldTrim);
     db.prepare(`
-      INSERT INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
+      INSERT OR REPLACE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
       VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
     `).run({
       id: historyItem.id,
@@ -928,7 +1120,7 @@ export function recordPlayerNameChange(params: {
     addSyncLog(
       'name_change',
       'success',
-      `氏名変更登録: ${historyItem.oldName} → ${historyItem.newName}（${historyItem.changedAt}）`,
+      `氏名変更登録・永続化: ${historyItem.oldName} → ${historyItem.newName}（${historyItem.changedAt}）`,
       1
     );
   });

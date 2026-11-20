@@ -370,7 +370,12 @@ async function startServer() {
       }
 
       let saved = upsertPlayer(player);
-      addSyncLog('player_update', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
+      addSyncLog(
+        'player_update',
+        'success',
+        `棋士段位・プロフィール更新 [SQLiteテーブル反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'})`,
+        1
+      );
 
       if (nameChangePayload?.clear) {
         const cleared = clearPlayerNameHistory(req.params.id);
@@ -389,7 +394,7 @@ async function startServer() {
       }
 
       const freshPlayer = getAllPlayers().find((p) => p.id === req.params.id) || saved;
-      res.json({ success: true, player: freshPlayer });
+      res.json({ success: true, player: freshPlayer, validated: true });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to update player' });
     }

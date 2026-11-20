@@ -634,11 +634,19 @@ export default function App() {
             backfaceVisibility: 'hidden',
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowNotificationModal(false);
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
           }}
         >
           <div
             className="relative w-full max-w-2xl max-h-[85vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden touch-auto overscroll-contain"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             style={{
               transform: 'translateZ(0)',
               WebkitBackfaceVisibility: 'hidden',

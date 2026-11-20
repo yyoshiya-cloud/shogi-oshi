@@ -964,17 +964,26 @@ export const YearlyChartZoomModal: React.FC<YearlyChartZoomModalProps> = ({
         WebkitBackfaceVisibility: 'hidden',
         backfaceVisibility: 'hidden',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       <div
         className="bg-zinc-950 border border-zinc-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto touch-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden',
           isolation: 'isolate',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">

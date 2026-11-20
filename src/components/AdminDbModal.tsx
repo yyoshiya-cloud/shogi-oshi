@@ -44,6 +44,8 @@ import {
   normalizeDateToYyyyMmDd,
   isValidYyyyMmDd,
   calculateAgeFromBirthDateString,
+  PRO_DAN_RANKS,
+  WOMEN_DAN_RANKS,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -511,8 +513,34 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     const normalizedBirthDate = normalizeDateToYyyyMmDd(p.birthDate || '');
     const computedAge = calculateAgeFromBirthDateString(normalizedBirthDate);
     const retired = isPlayerRetired(p);
+
+    let initialDan = (p.danRank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+    let initialRank = (p.rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+
+    const isPro = p.type !== 'women';
+    const danRegex = isPro
+      ? /([四五六七八九]段)/
+      : /(女流[1-2]級|女流[初一二三四五六七八]段)/;
+
+    if (!initialDan) {
+      const match = initialRank.match(danRegex);
+      if (match) {
+        initialDan = match[1];
+      }
+    }
+
+    if (/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(initialRank)) {
+      initialRank = '';
+    } else if (initialRank.includes('(永世称号有資格者)')) {
+      initialRank = '永世称号有資格者';
+    } else if (initialRank.includes('(クイーン称号有資格者)')) {
+      initialRank = 'クイーン称号有資格者';
+    }
+
     setEditingProfile({
       ...p,
+      rank: initialRank,
+      danRank: initialDan,
       birthDate: normalizedBirthDate,
       ...(retired ? { junisenClass: '', ryuoClass: '' } : {}),
     });
@@ -631,6 +659,20 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       return;
     }
 
+    const trimmedRank = (editingProfile.rank || '').trim();
+    if (/^[一二三四五六七八九]段$|^女流[1-2１-２]級$|^女流[初一二三四五六七八]段$/.test(trimmedRank)) {
+      showStatus(
+        'error',
+        '「称号」には永世・名誉資格など段位以外の称号を登録してください（段位は「公式段位」で選択してください）'
+      );
+      return;
+    }
+
+    if (!editingProfile.danRank) {
+      showStatus('error', '公式段位を選択してください');
+      return;
+    }
+
     try {
       setIsBusy(true);
       const calcRate = (w: number, l: number) =>
@@ -733,6 +775,9 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const currentlyOnLeave = isPlayerOnLeave(savedPlayer);
       const currentlyRetired = isPlayerRetired(savedPlayer);
       const statusBadges: string[] = [];
+      if (savedPlayer.danRank) statusBadges.push(`段位: ${savedPlayer.danRank}`);
+      if (savedPlayer.rank) statusBadges.push(`称号: ${savedPlayer.rank}`);
+      if (json.validated) statusBadges.push('SQLiteテーブル反映検証済');
       if (currentlyRetired) statusBadges.push('引退バッジ適用中');
       if (currentlyOnLeave) statusBadges.push('休場バッジ適用中');
       if (trimmedOld && trimmedNew) statusBadges.push(`氏名変更記録: ${trimmedOld} → ${trimmedNew}`);
@@ -1348,10 +1393,20 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     <div
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 sm:p-5 touch-none"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }}
     >
-      <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-zinc-100 touch-auto">
+      <div 
+        className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-zinc-100 touch-auto"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -1831,12 +1886,20 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             <label className="text-[10px] text-zinc-400 block mb-0.5">区分</label>
                             <select
                               value={editingProfile.type}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const nextType = e.target.value as 'pro' | 'women';
+                                let nextDan = editingProfile.danRank || '';
+                                if (nextType === 'pro' && !PRO_DAN_RANKS.includes(nextDan as any)) {
+                                  nextDan = '四段';
+                                } else if (nextType === 'women' && !WOMEN_DAN_RANKS.includes(nextDan as any)) {
+                                  nextDan = '女流初段';
+                                }
                                 setEditingProfile({
                                   ...editingProfile,
-                                  type: e.target.value as 'pro' | 'women',
-                                })
-                              }
+                                  type: nextType,
+                                  danRank: nextDan,
+                                });
+                              }}
                               className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                             >
                               <option value="pro">棋士</option>
@@ -1861,24 +1924,39 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             </select>
                           </div>
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-0.5">称号・表示段位</label>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">称号</label>
                             <input
                               type="text"
-                              value={editingProfile.rank}
+                              placeholder="例: 永世名人、名誉王座 など"
+                              value={editingProfile.rank || ''}
                               onChange={(e) => setEditingProfile({ ...editingProfile, rank: e.target.value })}
-                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-0.5">公式段位 (danRank)</label>
-                            <input
-                              type="text"
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">公式段位</label>
+                            <select
                               value={editingProfile.danRank || ''}
                               onChange={(e) =>
                                 setEditingProfile({ ...editingProfile, danRank: e.target.value })
                               }
-                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
-                            />
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none font-medium"
+                            >
+                              <option value="">段位を選択</option>
+                              {((editingProfile.type === 'women' ? WOMEN_DAN_RANKS : PRO_DAN_RANKS) as readonly string[]).map((rank) => (
+                                <option key={rank} value={rank}>
+                                  {rank}
+                                </option>
+                              ))}
+                              {editingProfile.danRank &&
+                                !((editingProfile.type === 'women' ? WOMEN_DAN_RANKS : PRO_DAN_RANKS) as readonly string[]).includes(
+                                  editingProfile.danRank
+                                ) && (
+                                  <option value={editingProfile.danRank}>
+                                    {editingProfile.danRank}
+                                  </option>
+                                )}
+                            </select>
                           </div>
                           <div>
                             <label className="text-[10px] text-zinc-400 block mb-0.5">棋士番号 / 女流番号</label>

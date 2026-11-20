@@ -26,11 +26,19 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose, onOpenAdmin
         backfaceVisibility: 'hidden',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }}
     >
       <div
         className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-6 text-zinc-100 space-y-5 touch-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',

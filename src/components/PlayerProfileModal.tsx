@@ -308,11 +308,19 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
         backfaceVisibility: 'hidden',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }}
     >
       <div
         className="relative w-full max-w-3xl h-[92vh] max-h-[900px] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden touch-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',

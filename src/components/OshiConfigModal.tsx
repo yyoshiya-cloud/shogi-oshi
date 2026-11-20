@@ -83,11 +83,19 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
         backfaceVisibility: 'hidden',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }}
     >
       <div
         className="w-full sm:max-w-md bg-zinc-900 border-t sm:border border-zinc-800 rounded-t-3xl sm:rounded-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl text-zinc-100 overflow-hidden relative touch-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         style={{
           transform: 'translateZ(0)',
           WebkitBackfaceVisibility: 'hidden',
