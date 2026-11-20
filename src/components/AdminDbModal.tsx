@@ -542,6 +542,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       rank: initialRank,
       danRank: initialDan,
       birthDate: normalizedBirthDate,
+      ...(p.type === 'women' ? { ryuoClass: '' } : {}),
       ...(retired ? { junisenClass: '', ryuoClass: '' } : {}),
     });
     setProfileAge(computedAge !== null ? String(computedAge) : '');
@@ -731,9 +732,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         shortBio: cleanedShortBio,
         leaveInfo,
       };
+      if (editingProfile.type === 'women' || isPlayerRetired(payload as Player)) {
+        payload.ryuoClass = '';
+      }
       if (isPlayerRetired(payload as Player)) {
         payload.junisenClass = '';
-        payload.ryuoClass = '';
       }
 
       if (trimmedOld && trimmedNew) {
@@ -1898,6 +1901,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                   ...editingProfile,
                                   type: nextType,
                                   danRank: nextDan,
+                                  ...(nextType === 'women' ? { ryuoClass: '' } : {}),
                                 });
                               }}
                               className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
@@ -2010,18 +2014,27 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             <label className="text-[10px] text-zinc-400 block mb-0.5">竜王戦クラス</label>
                             <input
                               type="text"
+                              disabled={
+                                editingProfile.type === 'women' ||
+                                isPlayerRetired({
+                                  ...editingProfile,
+                                  retirementDate: profileRetirementDate.trim() || editingProfile.retirementDate,
+                                })
+                              }
                               value={
+                                editingProfile.type === 'women' ||
                                 isPlayerRetired({
                                   ...editingProfile,
                                   retirementDate: profileRetirementDate.trim() || editingProfile.retirementDate,
                                 })
                                   ? ''
-                                  : editingProfile.ryuoClass
+                                  : editingProfile.ryuoClass || ''
                               }
                               onChange={(e) =>
                                 setEditingProfile({ ...editingProfile, ryuoClass: e.target.value })
                               }
-                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
+                              placeholder={editingProfile.type === 'women' ? '（女流棋士は対象外）' : '例: 1組〜6組'}
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 placeholder:text-zinc-600 focus:border-sky-500 focus:outline-none disabled:bg-zinc-900/80 disabled:text-zinc-500 disabled:border-zinc-800 disabled:cursor-not-allowed"
                             />
                           </div>
                           <div>

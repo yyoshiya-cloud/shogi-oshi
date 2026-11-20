@@ -364,9 +364,11 @@ async function startServer() {
       if (!player.name) {
         return res.status(400).json({ success: false, error: 'player.name が必須です' });
       }
+      if (player.type === 'women' || isPlayerRetired(player)) {
+        player.ryuoClass = '';
+      }
       if (isPlayerRetired(player)) {
         player.junisenClass = '';
-        player.ryuoClass = '';
       }
 
       let saved = upsertPlayer(player);

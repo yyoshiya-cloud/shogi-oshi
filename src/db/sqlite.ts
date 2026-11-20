@@ -270,36 +270,56 @@ export function getDb(): Database.Database {
   try {
     db = new Database(dbPath);
     db.pragma('busy_timeout = 5000');
-    const qc = db.pragma('quick_check') as Array<{ quick_check: string }>;
-    const qcVal = qc?.[0]?.quick_check;
-    if (qcVal && qcVal !== 'ok') {
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
+    db.pragma('foreign_keys = ON');
+
+    try {
+      const qc = db.pragma('quick_check') as Array<{ quick_check: string }>;
+      const qcVal = qc?.[0]?.quick_check;
+      if (qcVal && qcVal !== 'ok') {
+        try {
+          db.close();
+        } catch {}
+        db = recoverCorruptedDatabase(dbPath, `quick_check=${qcVal}`);
+      }
+    } catch (qcErr: any) {
       try {
         db.close();
       } catch {}
-      db = recoverCorruptedDatabase(dbPath, `quick_check=${qcVal}`);
-    } else {
-      // Checkpoint any legacy WAL data and enforce single-file DELETE journal mode
-      // so git/deployment snapshots never lose uncommitted WAL pages
-      try {
-        const curMode = (db.pragma('journal_mode', { simple: true }) as string || '').toLowerCase();
-        if (curMode === 'wal') {
-          db.pragma('wal_checkpoint(TRUNCATE)');
-        }
-      } catch {}
-      db.pragma('journal_mode = WAL');
-      db.pragma('synchronous = NORMAL');
-      db.pragma('busy_timeout = 5000');
-      db.pragma('foreign_keys = ON');
-      db.exec(createSchemaSql());
+      db = recoverCorruptedDatabase(dbPath, qcErr?.message || 'quick_check_error');
     }
+
+    db.exec(createSchemaSql());
   } catch (err: any) {
     db = recoverCorruptedDatabase(dbPath, err?.message || 'open_failed');
   }
 
   dbInstance = db;
-  seedDatabaseIfEmpty(db);
-  migrateRanksAndDanRanks(db);
-  syncNameHistoryAndRelinkArchives(db);
+  try {
+    seedDatabaseIfEmpty(db);
+    migrateRanksAndDanRanks(db);
+    syncNameHistoryAndRelinkArchives(db);
+  } catch (initErr: any) {
+    if (
+      initErr?.code === 'SQLITE_CORRUPT' ||
+      String(initErr?.message || '').includes('btreeInitPage') ||
+      String(initErr?.message || '').includes('corrupt') ||
+      String(initErr?.message || '').includes('malformed')
+    ) {
+      try {
+        db.close();
+      } catch {}
+      dbInstance = null;
+      db = recoverCorruptedDatabase(dbPath, initErr?.message || 'init_corrupt');
+      dbInstance = db;
+      seedDatabaseIfEmpty(db);
+      migrateRanksAndDanRanks(db);
+      syncNameHistoryAndRelinkArchives(db);
+    } else {
+      throw initErr;
+    }
+  }
   return db;
 }
 
@@ -348,15 +368,25 @@ export function migrateRanksAndDanRanks(db: Database.Database): number {
         changed = true;
       }
 
+      let pObj: any = {};
+      try {
+        pObj = JSON.parse(r.data_json);
+      } catch {
+        pObj = { id: r.id, type: r.type };
+      }
+
+      // ユーザー指定: 女流棋士は既に登録されている竜王戦クラス項目の内容を消去する
+      if (r.type === 'women' && pObj.ryuoClass) {
+        pObj.ryuoClass = '';
+        changed = true;
+      }
+
       if (changed || rank !== r.rank || dan !== (r.dan_rank || '')) {
-        let pObj: any = {};
-        try {
-          pObj = JSON.parse(r.data_json);
-        } catch {
-          pObj = { id: r.id, type: r.type };
-        }
         pObj.rank = rank;
         pObj.danRank = dan || undefined;
+        if (r.type === 'women') {
+          pObj.ryuoClass = '';
+        }
 
         updateStmt.run(rank, dan || null, JSON.stringify(pObj), r.id);
         updatedCount++;
@@ -889,9 +919,11 @@ export function getAllPlayers(): Player[] {
       name: parsed.name || row.name,
       ...(formerName ? { formerName } : {}),
     };
+    if (playerObj.type === 'women' || isPlayerRetired(playerObj)) {
+      playerObj.ryuoClass = '';
+    }
     if (isPlayerRetired(playerObj)) {
       playerObj.junisenClass = '';
-      playerObj.ryuoClass = '';
     }
     return playerObj;
   });
@@ -911,9 +943,11 @@ export function upsertPlayer(player: Player): Player {
   } else {
     cleanPlayer.retirementDate = cleanPlayer.retirementDate.trim();
   }
+  if (cleanPlayer.type === 'women' || isPlayerRetired(cleanPlayer)) {
+    cleanPlayer.ryuoClass = '';
+  }
   if (isPlayerRetired(cleanPlayer)) {
     cleanPlayer.junisenClass = '';
-    cleanPlayer.ryuoClass = '';
   }
   // 1. トランザクションによる確実な書き込みとコミット
   const upsertTx = db.transaction(() => {
@@ -1013,6 +1047,12 @@ export function upsertPlayersBulk(players: Player[], source = 'sync'): number {
         leaveInfo: p.leaveInfo || prev?.leaveInfo,
         yearRecords: p.yearRecords && p.yearRecords.length > 0 ? p.yearRecords : (prev?.yearRecords || []),
       };
+      if (merged.type === 'women' || isPlayerRetired(merged)) {
+        merged.ryuoClass = '';
+      }
+      if (isPlayerRetired(merged)) {
+        merged.junisenClass = '';
+      }
       stmt.run({
         id: merged.id,
         name: merged.name,
