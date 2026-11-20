@@ -46,6 +46,7 @@ import {
   calculateAgeFromBirthDateString,
   PRO_DAN_RANKS,
   WOMEN_DAN_RANKS,
+  getPlayerNumberPrefix,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -1848,7 +1849,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                       : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                                   }`}
                                 >
-                                  {editingProfile.type === 'women' ? '女流棋士' : '棋士'} No.{editingProfile.playerNumber ?? '-'}
+                                  {getPlayerNumberPrefix(editingProfile)} No.{editingProfile.playerNumber ?? '-'}
                                 </span>
                                 {isPlayerRetired(editingProfile) && (
                                   <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80">
@@ -1963,7 +1964,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             </select>
                           </div>
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-0.5">棋士番号 / 女流番号</label>
+                            <label className="text-[10px] text-zinc-400 block mb-0.5">
+                              {editingProfile.type === 'women'
+                                ? (editingProfile.affiliation === 'LPSA' ? 'LPSA番号' : '女流棋士番号')
+                                : '棋士番号'}
+                            </label>
                             <input
                               type="number"
                               value={editingProfile.playerNumber ?? ''}

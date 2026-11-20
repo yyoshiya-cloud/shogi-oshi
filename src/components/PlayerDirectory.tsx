@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -207,7 +207,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
                   : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
               }`}
             >
-              {player.type === 'women' ? '女流棋士' : '棋士'} No.{player.playerNumber}
+              {getPlayerNumberPrefix(player)} No.{player.playerNumber}
             </span>
 
             <span

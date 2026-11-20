@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import { getTodayDateString } from '../utils/dateUtils';
 import results2026Json from '../data/results2026.json';
@@ -345,7 +345,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
           {/* Top badges row (above photo and name) - with pr-12 right margin to guarantee zero overlap with top-right X button */}
           <div className="flex items-center gap-2 flex-wrap pr-12 mb-2.5">
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-black/40 text-amber-200 border border-white/10 shadow-sm">
-              {activePlayer.type === 'women' ? '女流棋士' : '棋士'} No.{activePlayer.playerNumber}
+              {getPlayerNumberPrefix(activePlayer)} No.{activePlayer.playerNumber}
             </span>
             <span
               className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border shadow-sm ${
@@ -631,9 +631,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   {activePlayer.type === 'women' ? (
                     <>
                       <div>
-                        <span className="text-zinc-500 block">女流棋士番号</span>
+                        <span className="text-zinc-500 block">
+                          {activePlayer.affiliation === 'LPSA' ? 'LPSA番号' : '女流棋士番号'}
+                        </span>
                         <span className="font-semibold text-zinc-200">
-                          No.{activePlayer.playerNumber || '-'}
+                          {activePlayer.affiliation === 'LPSA' ? 'LPSA ' : ''}No.{activePlayer.playerNumber || '-'}
                         </span>
                       </div>
                       <div>

@@ -628,6 +628,19 @@ export function formatPlayerDanOnly(player?: { rank?: string; danRank?: string; 
 }
 
 /**
+ * 棋士・女流棋士の番号プレフィックス（表示ラベル）を返す。
+ * LPSA所属の女流棋士は "LPSA"、連盟等の女流棋士は "女流棋士"、棋士は "棋士"。
+ * 例: "LPSA No.18"、"女流棋士 No.77"、"棋士 No.314"
+ */
+export function getPlayerNumberPrefix(player?: { type?: string; affiliation?: string } | null): string {
+  if (!player) return '棋士';
+  if (player.type === 'women') {
+    return player.affiliation === 'LPSA' ? 'LPSA' : '女流棋士';
+  }
+  return '棋士';
+}
+
+/**
  * Normalizes shogi player name for fuzzy matching across scraped records,
  * taking into account variant kanji (e.g. 﨑 vs 崎, 齊/齋 vs 斉, 髙 vs 高, 德 vs 徳, 廣 vs 広).
  */

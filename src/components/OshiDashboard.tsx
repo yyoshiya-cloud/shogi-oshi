@@ -1,7 +1,7 @@
 import React from 'react';
 import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
-import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate } from '../utils/playerUtils';
+import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
@@ -332,7 +332,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                           </span>
                         )}
                         <span className="text-[10px] text-zinc-400 font-medium">
-                          {player.type === 'women' ? '女流棋士' : '棋士'} No.{player.playerNumber}
+                          {getPlayerNumberPrefix(player)} No.{player.playerNumber}
                         </span>
                       </div>
 
