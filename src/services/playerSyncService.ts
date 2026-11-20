@@ -512,10 +512,13 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               VERIFIED_TITLE_HOLDER_DAN_RANKS[slug] ||
               VERIFIED_TITLE_HOLDER_DAN_RANKS[cleanName] ||
               VERIFIED_TITLE_HOLDER_DAN_RANKS[cleanName.replace(/\s+/g, '')] ||
-              undefined
-            : undefined;
+              existing?.danRank
+            : sectionRank;
 
           const finalRank = sanitizeRank(rank);
+          const siteRank = isTitleHolder ? finalRank : '';
+          const siteDan = profileDan || existing?.danRank || sectionRank;
+
           const cleanKey = cleanPlayerName(cleanName);
           const career = careerMap.get(cleanKey);
           const careerWins = career ? career.wins : (existing?.careerWins || 0);
@@ -544,8 +547,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             const updated: Player = {
               ...existing,
               affiliation: existing.affiliation || '日本将棋連盟',
-              rank: sanitizeRank(existing.rank.length > 25 ? finalRank : existing.rank || finalRank),
-              danRank: profileDan || existing.danRank,
+              rank: siteRank || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
+              danRank: siteDan,
               playerNumber: playerNumber || existing.playerNumber,
               photoUrl: photoUrl || existing.photoUrl,
               heldTitles: heldTitles.length > 0 ? heldTitles : existing.heldTitles,
@@ -576,8 +579,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               name: cleanName,
               type: 'pro',
               affiliation: '日本将棋連盟',
-              rank: finalRank,
-              danRank: profileDan,
+              rank: siteRank,
+              danRank: siteDan,
               playerNumber,
               photoUrl: photoUrl || undefined,
               birthDate: '',
@@ -691,10 +694,13 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               VERIFIED_TITLE_HOLDER_DAN_RANKS[slug] ||
               VERIFIED_TITLE_HOLDER_DAN_RANKS[cleanName] ||
               VERIFIED_TITLE_HOLDER_DAN_RANKS[cleanName.replace(/\s+/g, '')] ||
-              undefined
-            : undefined;
+              existing?.danRank
+            : sectionRank;
 
           const finalRank = sanitizeRank(rank);
+          const siteRank = isTitleHolder ? finalRank : '';
+          const siteDan = profileDan || existing?.danRank || sectionRank;
+
           const cleanKey = cleanPlayerName(cleanName);
           const career = careerMap.get(cleanKey);
           const careerWins = career ? career.wins : (existing?.careerWins || 0);
@@ -721,8 +727,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             const updated: Player = {
               ...existing,
               affiliation: existing.affiliation || '日本将棋連盟',
-              rank: sanitizeRank(existing.rank.length > 25 ? finalRank : existing.rank || finalRank),
-              danRank: profileDan || existing.danRank,
+              rank: siteRank || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
+              danRank: siteDan,
               playerNumber: playerNumber || existing.playerNumber,
               photoUrl: photoUrl || existing.photoUrl,
               junisenClass: hakureiClass !== 'フリークラス' ? hakureiClass : (existing.junisenClass || 'フリークラス'),
@@ -754,8 +760,8 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
               name: cleanName,
               type: 'women',
               affiliation: '日本将棋連盟',
-              rank: finalRank,
-              danRank: profileDan,
+              rank: siteRank,
+              danRank: siteDan,
               playerNumber,
               photoUrl: photoUrl || undefined,
               birthDate: '',
