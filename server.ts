@@ -15,6 +15,7 @@ import {
 } from './src/services/matchSyncService';
 import {
   getDb,
+  closeDb,
   getAllPlayers,
   upsertPlayer,
   upsertPlayersBulk,
@@ -190,6 +191,13 @@ async function startServer() {
   );
 
   app.use(express.json({ limit: '60mb' }));
+
+  app.use('/api', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
 
   // =========================================================================
   // PUBLIC READ-ONLY DATABASE ENDPOINTS (将棋推し活アプリ 表画面データ取得元)
@@ -527,7 +535,7 @@ async function startServer() {
       const dbPlayersNow = getAllPlayers();
       const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
-        scrapeAllActivePlayers(force),
+        scrapeAllActivePlayers(force, dbPlayersNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
         scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);
@@ -572,7 +580,7 @@ async function startServer() {
       const includePlayersAndMatches = req.body?.includePlayersAndMatches !== false;
 
       if (includePlayersAndMatches) {
-        const playersRes = await scrapeAllActivePlayers(true);
+        const playersRes = await scrapeAllActivePlayers(true, getAllPlayers());
         if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
           upsertPlayersBulk(playersRes.players, 'rebuild_2021_2026');
         }
@@ -653,7 +661,7 @@ async function startServer() {
   app.get('/api/players/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      const result = await scrapeAllActivePlayers(force);
+      const result = await scrapeAllActivePlayers(force, getAllPlayers());
       if (result?.success && Array.isArray(result.players) && result.players.length >= 50) {
         upsertPlayersBulk(result.players, 'api_sync');
       }
@@ -731,7 +739,7 @@ async function startServer() {
       const dbPlayersNow = getAllPlayers();
       const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
-        scrapeAllActivePlayers(force),
+        scrapeAllActivePlayers(force, dbPlayersNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
         scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);
@@ -881,6 +889,21 @@ self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on http://0.0.0.0:${PORT} (SQLite: data/shogi.db)`);
+  });
+
+  const gracefulShutdown = (signal: string) => {
+    console.log(`[Server] Received ${signal}, closing SQLite DB cleanly...`);
+    closeDb();
+    httpServer.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 2000).unref();
+  };
+
+  process.once('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.once('beforeExit', () => {
+    closeDb();
   });
 }
 

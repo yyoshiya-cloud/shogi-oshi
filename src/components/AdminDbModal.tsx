@@ -91,6 +91,7 @@ async function adminFetch(url: string, options: RequestInit = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
   return fetch(url, {
+    cache: 'no-store',
     ...options,
     headers,
     credentials: 'include',
@@ -214,7 +215,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     try {
       const [ovRes, bootRes] = await Promise.all([
         adminFetch('/api/admin/overview'),
-        fetch('/api/db/bootstrap'),
+        fetch('/api/db/bootstrap', { cache: 'no-store' }),
       ]);
       if (ovRes.status === 401) {
         setAuthenticated(false);
@@ -288,7 +289,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const loadArchiveMonth = async (month: string) => {
     try {
-      const res = await fetch(`/api/db/results?month=${encodeURIComponent(month)}`);
+      const res = await fetch(`/api/db/results?month=${encodeURIComponent(month)}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success && Array.isArray(json.results)) {
         setArchiveMonthResults(json.results);

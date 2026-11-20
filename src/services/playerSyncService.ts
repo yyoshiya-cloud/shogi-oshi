@@ -299,18 +299,30 @@ export async function fetchLatestHakureiLeagueMap(): Promise<{ term: number; map
  * Scrape all active shogi players from Japan Shogi Association and LPSA,
  * and merge with official career win/loss records.
  */
-export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResult> {
+export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Player[]): Promise<ScrapeResult> {
   const now = Date.now();
-  if (!force && cachedResult && now - lastScrapeTime < CACHE_TTL_MS) {
+  if (!force && !baselinePlayers && cachedResult && now - lastScrapeTime < CACHE_TTL_MS) {
     return cachedResult;
   }
 
-  // Map existing static players by clean name and id for rich data preservation
+  // Map existing static players first, then overlay current SQLite DB players so manual edits persist on non-scraped fields
   const existingByName = new Map<string, Player>();
-  for (const p of PLAYERS_DATA) {
+  const registerBaseline = (p: Player) => {
     existingByName.set(p.name.replace(/\s+/g, ''), p);
     existingByName.set(cleanPlayerName(p.name), p);
     existingByName.set(p.name, p);
+    if (p.formerName) {
+      existingByName.set(p.formerName.replace(/\s+/g, ''), p);
+      existingByName.set(cleanPlayerName(p.formerName), p);
+    }
+  };
+  for (const p of PLAYERS_DATA) {
+    registerBaseline(p);
+  }
+  if (Array.isArray(baselinePlayers)) {
+    for (const p of baselinePlayers) {
+      registerBaseline(p);
+    }
   }
 
   let proCount = 0;
@@ -934,6 +946,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
         lpsaCount++;
 
         const finalRank = sanitizeRank(rawRank);
+        const lpsaDanMatch = finalRank.match(/(女流[1-2]級|女流[初一二三四五六七八]段)/);
+        const lpsaDan = lpsaDanMatch ? lpsaDanMatch[1] : undefined;
+        const lpsaRankOnly = lpsaDan && finalRank === lpsaDan ? '' : finalRank;
         const accent = getAccentColor('women', 'LPSA', finalRank);
 
         const cleanKey = cleanPlayerName(cleanName);
@@ -969,7 +984,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
           const updated: Player = {
             ...existing,
             affiliation: 'LPSA',
-            rank: sanitizeRank(finalRank),
+            rank: lpsaRankOnly || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
+            danRank: lpsaDan || existing.danRank,
+            ryuoClass: '',
             photoUrl: photoUrl || existing.photoUrl,
             birthPlace: birthPlace || existing.birthPlace,
             birthDate: birthDate || existing.birthDate,
@@ -999,14 +1016,15 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
             name: cleanName,
             type: 'women',
             affiliation: 'LPSA',
-            rank: finalRank,
+            rank: lpsaRankOnly,
+            danRank: lpsaDan,
             playerNumber: num,
             photoUrl,
             birthDate,
             birthPlace,
             master: '',
             style,
-            ryuoClass: '女流棋士',
+            ryuoClass: '',
             junisenClass: lpsaHakureiClass,
             heldTitles: [],
             totalTitles:
@@ -1050,8 +1068,9 @@ export async function scrapeAllActivePlayers(force = false): Promise<ScrapeResul
     }
   }
 
-  // 4. Ensure any static players (e.g. independent Nakai Hiroe) are preserved with official stats
-  for (const p of PLAYERS_DATA) {
+  // 4. Ensure any existing DB or static players (e.g. independent Nakai Hiroe, retired/manually edited) are preserved with official stats
+  const fallbackPool = [...(Array.isArray(baselinePlayers) ? baselinePlayers : []), ...PLAYERS_DATA];
+  for (const p of fallbackPool) {
     if (!registeredIds.has(p.id)) {
       registeredIds.add(p.id);
       const cleanKey = cleanPlayerName(p.name);

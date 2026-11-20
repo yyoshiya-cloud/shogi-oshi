@@ -479,7 +479,7 @@ export function applyPlayerOverrides(p: Player): Player {
   if (nameClean.includes('中倉宏美')) {
     return {
       ...p,
-      junisenClass: 'フリークラス',
+      junisenClass: p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : 'フリークラス',
     };
   }
   const PRO_CLASS_OVERRIDES: Record<string, { junisenClass: string; ryuoClass: string }> = {
@@ -501,12 +501,17 @@ export function applyPlayerOverrides(p: Player): Player {
     if (nameClean.includes(key)) {
       const isFurui = key === '古井丈大';
       const isSumisaki = key === '炭﨑俊毅' || key === '炭崎俊毅';
+      const hasStats = (p.careerWins || 0) > 0 || (p.careerLosses || 0) > 0;
       return {
         ...p,
-        junisenClass: p.junisenClass || val.junisenClass,
-        ryuoClass: p.ryuoClass || val.ryuoClass,
-        ...(isFurui ? { currentYearWins: 5, currentYearLosses: 5, currentYearWinRate: 0.5, careerWins: 5, careerLosses: 5, careerWinRate: 0.5 } : {}),
-        ...(isSumisaki ? { currentYearWins: 13, currentYearLosses: 7, currentYearWinRate: 0.65, careerWins: 13, careerLosses: 7, careerWinRate: 0.65 } : {}),
+        junisenClass: p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : val.junisenClass,
+        ryuoClass: p.ryuoClass && p.ryuoClass !== '-' ? p.ryuoClass : val.ryuoClass,
+        ...(!hasStats && isFurui
+          ? { currentYearWins: 5, currentYearLosses: 5, currentYearWinRate: 0.5, careerWins: 5, careerLosses: 5, careerWinRate: 0.5 }
+          : {}),
+        ...(!hasStats && isSumisaki
+          ? { currentYearWins: 13, currentYearLosses: 7, currentYearWinRate: 0.65, careerWins: 13, careerLosses: 7, careerWinRate: 0.65 }
+          : {}),
       };
     }
   }

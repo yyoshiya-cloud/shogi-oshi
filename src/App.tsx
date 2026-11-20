@@ -101,7 +101,7 @@ export default function App() {
 
   const hydrateFromSqliteDb = async (showToast = false): Promise<boolean> => {
     try {
-      const res = await fetch('/api/db/bootstrap');
+      const res = await fetch('/api/db/bootstrap', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!data?.success) return false;

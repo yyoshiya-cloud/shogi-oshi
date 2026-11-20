@@ -27,6 +27,10 @@ export function getDbPath(): string {
   return path.join(process.cwd(), 'data', 'shogi.db');
 }
 
+export function getCleanSnapshotPath(): string {
+  return path.join(process.cwd(), 'data', 'shogi.db.clean');
+}
+
 let dbInstance: Database.Database | null = null;
 
 function parseJsonSafe<T>(val: unknown, fallback: T): T {
@@ -118,35 +122,112 @@ function createSchemaSql(): string {
   `;
 }
 
-function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Database {
-  console.warn(`[SQLite] Detected corrupted DB (${reason}). Rebuilding healthy database at ${dbPath}...`);
-
-  let salvagedPlayers: any[] = [];
-  let salvagedMatches: any[] = [];
-  let salvagedHistory: any[] = [];
-  const salvagedArchives = new Map<string, { month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>();
-
+export function closeDb(): void {
+  if (!dbInstance) return;
   try {
-    const ro = new Database(dbPath, { readonly: true });
+    const jm = dbInstance.pragma('journal_mode') as Array<{ journal_mode: string }>;
+    if (jm?.[0]?.journal_mode?.toLowerCase() === 'wal') {
+      dbInstance.pragma('wal_checkpoint(TRUNCATE)');
+    }
+  } catch {}
+  try {
+    dbInstance.close();
+  } catch {}
+  dbInstance = null;
+}
+
+function cleanupOldCorruptBackups(dir: string, keepLatestCount = 1): void {
+  try {
+    const entries = fs.readdirSync(dir).filter((f) => f.startsWith('shogi.db.corrupt-'));
+    const mainFiles = entries
+      .filter((f) => !f.endsWith('-wal') && !f.endsWith('-shm') && !f.endsWith('-journal'))
+      .sort()
+      .reverse();
+    const keepSet = new Set(mainFiles.slice(0, keepLatestCount));
+    for (const file of entries) {
+      const base = file.replace(/(?:-wal|-shm|-journal)$/, '');
+      if (!keepSet.has(base) || file !== base) {
+        try {
+          fs.unlinkSync(path.join(dir, file));
+        } catch {}
+      }
+    }
+  } catch {}
+}
+
+function salvageFromDatabaseFile(filePath: string): {
+  players: any[];
+  matches: any[];
+  history: any[];
+  archives: Map<string, { month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>;
+} {
+  const players: any[] = [];
+  const matches: any[] = [];
+  const history: any[] = [];
+  const archives = new Map<string, { month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>();
+
+  let ro: Database.Database | null = null;
+  try {
+    ro = new Database(filePath, { readonly: true });
+
+    // Players: bulk first, fallback to per-rowid if partial B-tree corruption exists
     try {
-      salvagedPlayers = ro.prepare('SELECT * FROM players').all();
-    } catch {}
+      players.push(...ro.prepare('SELECT * FROM players').all());
+    } catch {
+      try {
+        const rowIds = ro.prepare('SELECT rowid FROM players ORDER BY rowid').all() as Array<{ rowid: number }>;
+        const stmt = ro.prepare('SELECT * FROM players WHERE rowid = ?');
+        for (const { rowid } of rowIds) {
+          try {
+            const row = stmt.get(rowid);
+            if (row) players.push(row);
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // Matches
     try {
-      salvagedMatches = ro.prepare('SELECT * FROM matches').all();
-    } catch {}
+      matches.push(...ro.prepare('SELECT * FROM matches').all());
+    } catch {
+      try {
+        const rowIds = ro.prepare('SELECT rowid FROM matches ORDER BY rowid').all() as Array<{ rowid: number }>;
+        const stmt = ro.prepare('SELECT * FROM matches WHERE rowid = ?');
+        for (const { rowid } of rowIds) {
+          try {
+            const row = stmt.get(rowid);
+            if (row) matches.push(row);
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // Name history
     try {
-      salvagedHistory = ro.prepare('SELECT * FROM player_name_history').all();
-    } catch {}
+      history.push(...ro.prepare('SELECT * FROM player_name_history').all());
+    } catch {
+      try {
+        const rowIds = ro.prepare('SELECT rowid FROM player_name_history ORDER BY rowid').all() as Array<{ rowid: number }>;
+        const stmt = ro.prepare('SELECT * FROM player_name_history WHERE rowid = ?');
+        for (const { rowid } of rowIds) {
+          try {
+            const row = stmt.get(rowid);
+            if (row) history.push(row);
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // Archives
     try {
       const mRows = ro.prepare('SELECT month FROM match_archives').all() as Array<{ month: string }>;
+      const stmt = ro.prepare('SELECT month, fiscal_year, count, results_json, source, updated_at FROM match_archives WHERE month = ?');
       for (const { month } of mRows) {
         try {
-          const row = ro
-            .prepare('SELECT month, fiscal_year, count, results_json, source, updated_at FROM match_archives WHERE month = ?')
-            .get(month) as any;
+          const row = stmt.get(month) as any;
           const parsed = JSON.parse(row.results_json);
           if (Array.isArray(parsed)) {
-            salvagedArchives.set(month, {
+            archives.set(month, {
               month: row.month,
               fiscal_year: row.fiscal_year ?? getFiscalYearFromMonth(month),
               count: parsed.length,
@@ -158,10 +239,84 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
         } catch {}
       }
     } catch {}
+  } catch {} finally {
     try {
-      ro.close();
+      ro?.close();
     } catch {}
-  } catch {}
+  }
+
+  return { players, matches, history, archives };
+}
+
+function readCleanSnapshot(cleanPath: string): {
+  players: any[];
+  matches: any[];
+  history: any[];
+  archives: Array<{ month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>;
+} | null {
+  if (!fs.existsSync(cleanPath)) return null;
+  let cleanDb: Database.Database | null = null;
+  try {
+    cleanDb = new Database(cleanPath, { readonly: true });
+    const qc = cleanDb.pragma('quick_check') as Array<{ quick_check: string }>;
+    if (qc?.[0]?.quick_check !== 'ok') return null;
+    const players = cleanDb.prepare('SELECT * FROM players').all();
+    const matches = cleanDb.prepare('SELECT * FROM matches').all();
+    const history = cleanDb.prepare('SELECT * FROM player_name_history').all();
+    const archives = cleanDb
+      .prepare('SELECT month, fiscal_year, count, results_json, source, updated_at FROM match_archives ORDER BY month ASC')
+      .all() as Array<{ month: string; fiscal_year: number; count: number; results_json: string; source: string; updated_at: string }>;
+    return { players, matches, history, archives };
+  } catch {
+    return null;
+  } finally {
+    try {
+      cleanDb?.close();
+    } catch {}
+  }
+}
+
+function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Database {
+  console.warn(`[SQLite] Detected corrupted DB (${reason}). Rebuilding healthy database at ${dbPath}...`);
+
+  // 1. Try salvaging directly first
+  let salvaged = salvageFromDatabaseFile(dbPath);
+
+  // 2. If main DB salvage failed (often because corrupted -wal/-shm broke reads), copy main DB alone without -wal/-shm and retry
+  if (salvaged.players.length === 0 && fs.existsSync(dbPath)) {
+    const tmpCopy = path.join(os.tmpdir(), `shogi-salvage-${Date.now()}.db`);
+    try {
+      fs.copyFileSync(dbPath, tmpCopy);
+      const withoutWal = salvageFromDatabaseFile(tmpCopy);
+      if (withoutWal.players.length > salvaged.players.length) {
+        salvaged = withoutWal;
+      }
+    } catch {} finally {
+      try {
+        if (fs.existsSync(tmpCopy)) fs.unlinkSync(tmpCopy);
+      } catch {}
+    }
+  }
+
+  // 3. Also load clean snapshot as baseline / fallback so players & archives are never lost
+  const cleanSnap = readCleanSnapshot(getCleanSnapshotPath());
+  if (cleanSnap) {
+    const playerById = new Map<string, any>();
+    for (const p of cleanSnap.players) {
+      if (p?.id) playerById.set(p.id, p);
+    }
+    for (const p of salvaged.players) {
+      if (p?.id) playerById.set(p.id, p);
+    }
+    salvaged.players = Array.from(playerById.values());
+
+    if (salvaged.matches.length === 0 && cleanSnap.matches.length > 0) {
+      salvaged.matches = cleanSnap.matches;
+    }
+    if (salvaged.history.length === 0 && cleanSnap.history.length > 0) {
+      salvaged.history = cleanSnap.history;
+    }
+  }
 
   const ts = Date.now();
   try {
@@ -178,46 +333,47 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
       if (fs.existsSync(`${dbPath}${suffix}`)) fs.unlinkSync(`${dbPath}${suffix}`);
     } catch {}
   }
+  cleanupOldCorruptBackups(path.dirname(dbPath), 1);
 
   const fresh = new Database(dbPath);
-  fresh.pragma('journal_mode = WAL');
-  fresh.pragma('synchronous = NORMAL');
   fresh.pragma('busy_timeout = 5000');
+  fresh.pragma('journal_mode = DELETE');
+  fresh.pragma('synchronous = FULL');
   fresh.pragma('foreign_keys = ON');
   fresh.exec(createSchemaSql());
 
   const now = new Date().toISOString();
   const tx = fresh.transaction(() => {
-    if (salvagedPlayers.length > 0) {
+    if (salvaged.players.length > 0) {
       const insP = fresh.prepare(`
         INSERT OR REPLACE INTO players
         (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
         VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
       `);
-      for (const p of salvagedPlayers) {
+      for (const p of salvaged.players) {
         try {
           insP.run(p);
         } catch {}
       }
     }
-    if (salvagedMatches.length > 0) {
+    if (salvaged.matches.length > 0) {
       const insM = fresh.prepare(`
         INSERT OR REPLACE INTO matches
         (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
         VALUES (@id, @date, @time, @tournament, @category, @round, @player1_id, @player2_id, @status, @venue, @data_json, @updated_at)
       `);
-      for (const m of salvagedMatches) {
+      for (const m of salvaged.matches) {
         try {
           insM.run(m);
         } catch {}
       }
     }
-    if (salvagedHistory.length > 0) {
+    if (salvaged.history.length > 0) {
       const insH = fresh.prepare(`
         INSERT OR REPLACE INTO player_name_history (id, player_id, old_name, new_name, changed_at, note)
         VALUES (@id, @player_id, @old_name, @new_name, @changed_at, @note)
       `);
-      for (const h of salvagedHistory) {
+      for (const h of salvaged.history) {
         try {
           insH.run(h);
         } catch {}
@@ -228,12 +384,12 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
       (month, fiscal_year, count, results_json, source, updated_at)
       VALUES (@month, @fiscal_year, @count, @results_json, @source, @updated_at)
     `);
-    for (const arch of salvagedArchives.values()) {
+    for (const arch of salvaged.archives.values()) {
       insA.run(arch);
     }
     const bundled = enrichAllResultsWithSupplements(results2026Json as Record<string, ShogiMonthlyResult[]>);
     for (const [month, list] of Object.entries(bundled)) {
-      if (!Array.isArray(list) || salvagedArchives.has(month)) continue;
+      if (!Array.isArray(list) || salvaged.archives.has(month)) continue;
       insA.run({
         month,
         fiscal_year: getFiscalYearFromMonth(month),
@@ -249,7 +405,7 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
         'auto_recovery',
         'success',
         `SQLite破損検出により自動修復を実行 (${reason})`,
-        salvagedPlayers.length + salvagedArchives.size,
+        salvaged.players.length + salvaged.archives.size,
         now
       );
   });
@@ -270,10 +426,8 @@ export function getDb(): Database.Database {
   try {
     db = new Database(dbPath);
     db.pragma('busy_timeout = 5000');
-    db.pragma('journal_mode = WAL');
-    db.pragma('synchronous = NORMAL');
-    db.pragma('foreign_keys = ON');
 
+    // Run integrity check first before altering journal mode (reads existing WAL safely if intact)
     try {
       const qc = db.pragma('quick_check') as Array<{ quick_check: string }>;
       const qcVal = qc?.[0]?.quick_check;
@@ -290,7 +444,20 @@ export function getDb(): Database.Database {
       db = recoverCorruptedDatabase(dbPath, qcErr?.message || 'quick_check_error');
     }
 
+    // Migrate away from WAL to rollback journal (DELETE + FULL) to eliminate container WAL/SHM desync corruption
+    try {
+      const jmRows = db.pragma('journal_mode') as Array<{ journal_mode: string }>;
+      const currentMode = (jmRows?.[0]?.journal_mode || '').toLowerCase();
+      if (currentMode === 'wal') {
+        db.pragma('wal_checkpoint(TRUNCATE)');
+      }
+    } catch {}
+    db.pragma('journal_mode = DELETE');
+    db.pragma('synchronous = FULL');
+    db.pragma('foreign_keys = ON');
+
     db.exec(createSchemaSql());
+    cleanupOldCorruptBackups(dir, 1);
   } catch (err: any) {
     db = recoverCorruptedDatabase(dbPath, err?.message || 'open_failed');
   }
@@ -298,6 +465,7 @@ export function getDb(): Database.Database {
   dbInstance = db;
   try {
     seedDatabaseIfEmpty(db);
+    ensureCompleteArchives(db);
     migrateRanksAndDanRanks(db);
     syncNameHistoryAndRelinkArchives(db);
   } catch (initErr: any) {
@@ -314,6 +482,7 @@ export function getDb(): Database.Database {
       db = recoverCorruptedDatabase(dbPath, initErr?.message || 'init_corrupt');
       dbInstance = db;
       seedDatabaseIfEmpty(db);
+      ensureCompleteArchives(db);
       migrateRanksAndDanRanks(db);
       syncNameHistoryAndRelinkArchives(db);
     } else {
@@ -400,59 +569,175 @@ export function migrateRanksAndDanRanks(db: Database.Database): number {
   }
 }
 
+const PARTIAL_SEED_SOURCES = new Set([
+  'bundled-seed',
+  'auto_recovery_seed',
+  'historical-seed',
+  'historical-seed-populated',
+]);
+
+/**
+ * Unconditionally ensures FY2021-FY2026 (all 72 months) match archives are populated from
+ * the verified clean snapshot (data/shogi.db.clean) whenever months are missing, empty, or
+ * only hold partial recovery/bundled seeds, while always preserving protected manual/CSV matches.
+ */
+export function ensureCompleteArchives(db: Database.Database): {
+  restoredMonths: number;
+  restoredMatches: number;
+} {
+  const cleanSnap = readCleanSnapshot(getCleanSnapshotPath());
+  if (!cleanSnap || cleanSnap.archives.length === 0) {
+    return { restoredMonths: 0, restoredMatches: 0 };
+  }
+
+  const selectExisting = db.prepare(
+    'SELECT month, count, source, results_json FROM match_archives WHERE month = ?'
+  );
+  const upsertArch = db.prepare(`
+    INSERT OR REPLACE INTO match_archives
+    (month, fiscal_year, count, results_json, source, updated_at)
+    VALUES (@month, @fiscal_year, @count, @results_json, @source, @updated_at)
+  `);
+
+  const now = new Date().toISOString();
+  let restoredMonths = 0;
+  let restoredMatches = 0;
+
+  const tx = db.transaction(() => {
+    for (const cleanArch of cleanSnap.archives) {
+      const month = String(cleanArch.month || '').replace(/[^0-9]/g, '');
+      if (month.length !== 6) continue;
+      const cleanList = parseJsonSafe<ShogiMonthlyResult[]>(cleanArch.results_json, []);
+      if (!Array.isArray(cleanList) || cleanList.length === 0) continue;
+
+      const existingRow = selectExisting.get(month) as
+        | { month: string; count: number; source: string; results_json: string }
+        | undefined;
+      const existingList = existingRow
+        ? parseJsonSafe<ShogiMonthlyResult[]>(existingRow.results_json, [])
+        : [];
+      const existingSource = existingRow?.source || '';
+
+      const isMissingOrEmpty =
+        !existingRow || existingRow.count === 0 || existingList.length === 0;
+      const isPartialSeed =
+        PARTIAL_SEED_SOURCES.has(existingSource) && cleanList.length > existingList.length;
+
+      if (!isMissingOrEmpty && !isPartialSeed) {
+        continue;
+      }
+
+      const merged = mergeProtectedWithOfficialResults(existingList, cleanList);
+      const enriched = enrichMonthlyResultsWithSupplements(month, merged);
+      upsertArch.run({
+        month,
+        fiscal_year: cleanArch.fiscal_year ?? getFiscalYearFromMonth(month),
+        count: enriched.length,
+        results_json: JSON.stringify(enriched),
+        source: cleanArch.source || 'rebuild_2021_2026',
+        updated_at: now,
+      });
+      restoredMonths++;
+      restoredMatches += enriched.length;
+    }
+
+    if (restoredMonths > 0) {
+      db.prepare(
+        'INSERT INTO sync_logs (sync_type, status, message, records_count, created_at) VALUES (?, ?, ?, ?, ?)'
+      ).run(
+        'archive_completeness_restore',
+        'success',
+        `2021〜2026年度 欠損・不完全月別アーカイブを公式クリーンDBから復元完了 (${restoredMonths}ヶ月 / ${restoredMatches}局, 保護データ維持)`,
+        restoredMatches,
+        now
+      );
+    }
+  });
+
+  tx();
+  return { restoredMonths, restoredMatches };
+}
+
 function seedDatabaseIfEmpty(db: Database.Database): void {
   const playersCount = (db.prepare('SELECT COUNT(*) AS cnt FROM players').get() as { cnt: number }).cnt;
   const matchesCount = (db.prepare('SELECT COUNT(*) AS cnt FROM matches').get() as { cnt: number }).cnt;
   const archivesCount = (db.prepare('SELECT COUNT(*) AS cnt FROM match_archives').get() as { cnt: number }).cnt;
   const historyCount = (db.prepare('SELECT COUNT(*) AS cnt FROM player_name_history').get() as { cnt: number }).cnt;
 
+  const cleanSnap =
+    playersCount === 0 || matchesCount === 0 || archivesCount === 0
+      ? readCleanSnapshot(getCleanSnapshotPath())
+      : null;
+
   const now = new Date().toISOString();
 
   const seedTx = db.transaction(() => {
-    if (playersCount === 0 && PLAYERS_DATA.length > 0) {
-      const insertPlayer = db.prepare(`
-        INSERT OR REPLACE INTO players
-        (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
-        VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
-      `);
-      for (const p of PLAYERS_DATA) {
-        insertPlayer.run({
-          id: p.id,
-          name: p.name,
-          former_name: p.formerName || null,
-          type: p.type || 'pro',
-          affiliation: p.affiliation || '日本将棋連盟',
-          rank: p.rank || '',
-          dan_rank: p.danRank || null,
-          player_number: p.playerNumber ?? null,
-          photo_url: p.photoUrl || null,
-          data_json: JSON.stringify(p),
-          updated_at: now,
-        });
+    if (playersCount === 0) {
+      if (cleanSnap && cleanSnap.players.length > 0) {
+        const insertRawPlayer = db.prepare(`
+          INSERT OR REPLACE INTO players
+          (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+          VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
+        `);
+        for (const p of cleanSnap.players) {
+          insertRawPlayer.run(p);
+        }
+      } else if (PLAYERS_DATA.length > 0) {
+        const insertPlayer = db.prepare(`
+          INSERT OR REPLACE INTO players
+          (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+          VALUES (@id, @name, @former_name, @type, @affiliation, @rank, @dan_rank, @player_number, @photo_url, @data_json, @updated_at)
+        `);
+        for (const p of PLAYERS_DATA) {
+          insertPlayer.run({
+            id: p.id,
+            name: p.name,
+            former_name: p.formerName || null,
+            type: p.type || 'pro',
+            affiliation: p.affiliation || '日本将棋連盟',
+            rank: p.rank || '',
+            dan_rank: p.danRank || null,
+            player_number: p.playerNumber ?? null,
+            photo_url: p.photoUrl || null,
+            data_json: JSON.stringify(p),
+            updated_at: now,
+          });
+        }
       }
     }
 
-    if (matchesCount === 0 && MATCHES_DATA.length > 0) {
-      const insertMatch = db.prepare(`
-        INSERT OR REPLACE INTO matches
-        (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
-        VALUES (@id, @date, @time, @tournament, @category, @round, @player1_id, @player2_id, @status, @venue, @data_json, @updated_at)
-      `);
-      for (const m of MATCHES_DATA) {
-        insertMatch.run({
-          id: m.id,
-          date: m.date || '',
-          time: m.time || '',
-          tournament: m.tournament || '',
-          category: m.category || '一般棋戦',
-          round: m.round || '',
-          player1_id: m.player1Id || '',
-          player2_id: m.player2Id || '',
-          status: m.status || 'upcoming',
-          venue: m.venue || '',
-          data_json: JSON.stringify(m),
-          updated_at: now,
-        });
+    if (matchesCount === 0) {
+      if (cleanSnap && cleanSnap.matches.length > 0) {
+        const insertRawMatch = db.prepare(`
+          INSERT OR REPLACE INTO matches
+          (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
+          VALUES (@id, @date, @time, @tournament, @category, @round, @player1_id, @player2_id, @status, @venue, @data_json, @updated_at)
+        `);
+        for (const m of cleanSnap.matches) {
+          insertRawMatch.run(m);
+        }
+      } else if (MATCHES_DATA.length > 0) {
+        const insertMatch = db.prepare(`
+          INSERT OR REPLACE INTO matches
+          (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
+          VALUES (@id, @date, @time, @tournament, @category, @round, @player1_id, @player2_id, @status, @venue, @data_json, @updated_at)
+        `);
+        for (const m of MATCHES_DATA) {
+          insertMatch.run({
+            id: m.id,
+            date: m.date || '',
+            time: m.time || '',
+            tournament: m.tournament || '',
+            category: m.category || '一般棋戦',
+            round: m.round || '',
+            player1_id: m.player1Id || '',
+            player2_id: m.player2Id || '',
+            status: m.status || 'upcoming',
+            venue: m.venue || '',
+            data_json: JSON.stringify(m),
+            updated_at: now,
+          });
+        }
       }
     }
 
@@ -475,61 +760,6 @@ function seedDatabaseIfEmpty(db: Database.Database): void {
           source: 'bundled-seed',
           updated_at: now,
         });
-      }
-
-      // Ensure FY2021-2024 months (202104 - 202503) have fully populated match archives so they never show 0件
-      for (let y = 2021; y <= 2024; y++) {
-        const months = [
-          `${y}04`, `${y}05`, `${y}06`, `${y}07`, `${y}08`, `${y}09`,
-          `${y}10`, `${y}11`, `${y}12`, `${y+1}01`, `${y+1}02`, `${y+1}03`
-        ];
-        for (const monthStr of months) {
-          const row = db.prepare('SELECT count, results_json FROM match_archives WHERE month = ?').get(monthStr) as { count: number; results_json: string } | undefined;
-          const list = row ? parseJsonSafe<ShogiMonthlyResult[]>(row.results_json, []) : [];
-          if (!row || row.count === 0 || list.length === 0) {
-            const histMatches: ShogiMonthlyResult[] = [];
-            const pairs = [
-              ['藤井 聡太', '羽生 善治', '王将戦', 'タイトル戦'],
-              ['伊藤 匠', '永瀬 拓矢', '叡王戦', 'タイトル戦'],
-              ['豊島 将之', '菅井 竜也', '王位戦', 'タイトル戦'],
-              ['渡辺 明', '佐藤 天彦', 'A級順位戦', '順位戦'],
-              ['福間 香奈', '西山 朋佳', '白玲戦', '女流タイトル戦'],
-              ['加藤 桃子', '伊藤 沙恵', '女流名人戦', '女流タイトル戦'],
-            ];
-            for (let i = 0; i < 20; i++) {
-              const pair = pairs[i % pairs.length];
-              const isSenteWin = i % 2 === 0;
-              histMatches.push({
-                id: `hist-${monthStr}-${i}`,
-                date: `${monthStr.slice(0, 4)}-${monthStr.slice(4, 6)}-${String((i % 27) + 1).padStart(2, '0')}`,
-                month: monthStr,
-                sente: pair[0],
-                gote: pair[1],
-                senteRaw: `${pair[0]}九段`,
-                goteRaw: `${pair[1]}九段`,
-                senteMark: isSenteWin ? '○' : '●',
-                goteMark: isSenteWin ? '●' : '○',
-                winner: isSenteWin ? pair[0] : pair[1],
-                loser: isSenteWin ? pair[1] : pair[0],
-                resultType: 'normal',
-                tournament: pair[2],
-                note: `第${y - 2018}期 ${pair[2]}`,
-                category: pair[3] as any,
-                isWomen: pair[3].includes('女流'),
-                links: [],
-                sourceUrl: 'https://www.shogi.or.jp/',
-              });
-            }
-            insertArchive.run({
-              month: monthStr,
-              fiscal_year: y,
-              count: histMatches.length,
-              results_json: JSON.stringify(histMatches),
-              source: 'historical-seed-populated',
-              updated_at: now,
-            });
-          }
-        }
       }
     }
 
@@ -1006,14 +1236,7 @@ export function upsertPlayer(player: Player): Player {
 
   upsertTx();
 
-  // 2. コミット待機 & WAL同期ロジック (WALモードでのコミット内容をメインDBへフラッシュ・同期待機)
-  try {
-    db.pragma('wal_checkpoint(PASSIVE)');
-  } catch (cpErr) {
-    console.warn('[SQLite] wal_checkpoint after upsertPlayer warning:', cpErr);
-  }
-
-  // 3. SQLiteテーブル直読バリデーション (更新対象の棋士データが正しくSQLiteのテーブルに反映されたか厳格に検証)
+  // 2. SQLiteテーブル直読バリデーション (更新対象の棋士データが正しくSQLiteのテーブルに反映されたか厳格に検証)
   const verifiedRow = db
     .prepare('SELECT id, name, rank, dan_rank, data_json, updated_at FROM players WHERE id = ?')
     .get(cleanPlayer.id) as {
@@ -1028,6 +1251,12 @@ export function upsertPlayer(player: Player): Player {
   if (!verifiedRow) {
     throw new Error(
       `[SQLiteバリデーションエラー] 棋士データ (${cleanPlayer.name}: ${cleanPlayer.id}) がテーブルに反映されていません`
+    );
+  }
+
+  if (verifiedRow.name !== cleanPlayer.name) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] 氏名の反映不一致 (期待値: "${cleanPlayer.name}", テーブル値: "${verifiedRow.name}")`
     );
   }
 
@@ -1051,6 +1280,12 @@ export function upsertPlayer(player: Player): Player {
   if ((verifiedJson.danRank || null) !== expectedDan) {
     throw new Error(
       `[SQLiteバリデーションエラー] JSON内段位の反映不一致 (期待値: "${expectedDan}", JSON値: "${verifiedJson.danRank || null}")`
+    );
+  }
+
+  if ((verifiedJson.ryuoClass || '') !== (cleanPlayer.ryuoClass || '')) {
+    throw new Error(
+      `[SQLiteバリデーションエラー] 竜王戦クラスの反映不一致 (期待値: "${cleanPlayer.ryuoClass || ''}", JSON値: "${verifiedJson.ryuoClass || ''}")`
     );
   }
 
