@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import {
   isTursoConfigured,
   getTursoSafeTargetLabel,
@@ -6,6 +6,8 @@ import {
   getDatabaseOverview,
   closeTurso,
 } from '../src/db/turso';
+
+dotenv.config({ path: ['.env.local', '.env'], quiet: true });
 
 async function main() {
   if (!isTursoConfigured()) {

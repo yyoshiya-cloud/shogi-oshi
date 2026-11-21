@@ -392,14 +392,14 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
 
         const monthCount = loadedData[targetMonthKey]?.length || 0;
         setRefreshMessage(
-          `SQLite DB（data/shogi.db）から最新対局結果を読み込みました（${systemYear}年${systemMonth}月: ${monthCount}局）`
+          `統合DBから最新対局結果を読み込みました（${systemYear}年${systemMonth}月: ${monthCount}局）`
         );
       } else {
-        setRefreshMessage(`SQLite DB（data/shogi.db）の対局結果を確認しました`);
+        setRefreshMessage(`統合DBの対局結果を確認しました`);
       }
     } catch (err: any) {
-      console.warn('SQLite DB results load error:', err);
-      setRefreshMessage('SQLite DBからの読み込みエラーのため現在のデータを表示しています');
+      console.warn('Database results load error:', err);
+      setRefreshMessage('統合DBからの読み込みエラーのため現在のデータを表示しています');
     } finally {
       setIsRefreshing(false);
       setTimeout(() => setRefreshMessage(null), 5000);
@@ -609,7 +609,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               onClick={handleRefreshMonth}
               disabled={isRefreshing}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-lg border border-amber-500/40 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-              title="SQLiteデータベース（data/shogi.db）から最新対局結果を再読み込みします"
+              title="統合データベースから最新対局結果を再読み込みします"
             >
               <RefreshCw size={14} className={`text-amber-400 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>{isRefreshing ? 'DB読込中...' : 'DBから再読込'}</span>

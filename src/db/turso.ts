@@ -41,6 +41,10 @@ export function isTursoConfigured(): boolean {
   return Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.trim().length > 0);
 }
 
+export function isTursoAuthTokenConfigured(): boolean {
+  return Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim().length > 0);
+}
+
 export function getTursoSafeTargetLabel(): { host: string; dbName: string } {
   const raw = (process.env.TURSO_DATABASE_URL || '').trim();
   if (!raw) return { host: 'not-configured', dbName: 'turso' };
@@ -48,7 +52,7 @@ export function getTursoSafeTargetLabel(): { host: string; dbName: string } {
     return { host: 'local-libsql-file', dbName: path.basename(raw.slice(5)) || 'shogi.db' };
   }
   try {
-    const normalized = raw.replace(/^libsql:/i, 'https:');
+    const normalized = raw.replace(/^(libsql|wss?):/i, 'https:');
     const parsed = new URL(normalized);
     const host = parsed.hostname || 'turso.io';
     const dbName = host.split('.')[0] || 'turso-db';
@@ -58,6 +62,18 @@ export function getTursoSafeTargetLabel(): { host: string; dbName: string } {
   }
 }
 
+function requiresRemoteAuthToken(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (lower.startsWith('file:')) return false;
+  if (lower.includes('localhost') || lower.includes('127.0.0.1')) return false;
+  return (
+    lower.startsWith('libsql://') ||
+    lower.startsWith('https://') ||
+    lower.startsWith('wss://') ||
+    lower.includes('.turso.io')
+  );
+}
+
 export function getTursoClient(): Client {
   if (tursoClient) return tursoClient;
   const url = (process.env.TURSO_DATABASE_URL || '').trim();
@@ -65,6 +81,11 @@ export function getTursoClient(): Client {
     throw new Error('TURSO_DATABASE_URL 環境変数が設定されていません');
   }
   const authToken = (process.env.TURSO_AUTH_TOKEN || '').trim() || undefined;
+  if (requiresRemoteAuthToken(url) && !authToken) {
+    throw new Error(
+      'TURSO_AUTH_TOKEN 環境変数が設定されていません（Turso Cloud への認証接続にはトークンが必要です）'
+    );
+  }
   tursoClient = createClient({
     url,
     ...(authToken ? { authToken } : {}),

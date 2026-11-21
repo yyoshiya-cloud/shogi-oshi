@@ -93,11 +93,12 @@ export default function App() {
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
   const [showAdminDbModal, setShowAdminDbModal] = useState(false);
 
-  // SQLite DB read-only sync state
+  // Integrated DB read-only sync state (Turso libSQL or local SQLite)
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(getStoredLastSync());
   const [lastMatchSyncTime, setLastMatchSyncTime] = useState<string | null>(getStoredMatchLastSync());
   const [syncToast, setSyncToast] = useState<string | null>(null);
+  const [dbBackendLabel, setDbBackendLabel] = useState<string>('統合DB');
 
   const hydrateFromSqliteDb = async (showToast = false): Promise<boolean> => {
     try {
@@ -105,6 +106,14 @@ export default function App() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!data?.success) return false;
+
+      const engineStr = String(data.overview?.engine || '');
+      const resolvedLabel = engineStr.toLowerCase().includes('turso')
+        ? 'Turso (libSQL)'
+        : 'SQLite DB（data/shogi.db）';
+      if (engineStr) {
+        setDbBackendLabel(resolvedLabel);
+      }
 
       if (Array.isArray(data.nameHistory)) {
         registerDynamicNameHistory(data.nameHistory);
@@ -140,7 +149,7 @@ export default function App() {
 
         if (showToast) {
           const mCount = Array.isArray(data.matches) ? data.matches.length : 0;
-          setSyncToast(`SQLite DB（data/shogi.db）から最新データを読み込みました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
+          setSyncToast(`${resolvedLabel}から最新データを読み込みました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
           setTimeout(() => setSyncToast(null), 4000);
         }
         return true;
@@ -148,7 +157,7 @@ export default function App() {
 
       return false;
     } catch (err) {
-      console.warn('SQLite DB bootstrap error:', err);
+      console.warn('Database bootstrap error:', err);
       return false;
     }
   };
@@ -158,7 +167,7 @@ export default function App() {
       setIsSyncingAll(true);
       const ok = await hydrateFromSqliteDb(true);
       if (!ok) {
-        setSyncToast('SQLite DB（data/shogi.db）からの読み込みに失敗しました');
+        setSyncToast(`${dbBackendLabel}からの読み込みに失敗しました`);
         setTimeout(() => setSyncToast(null), 3500);
       }
     } finally {
@@ -353,17 +362,17 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Reload all data strictly from SQLite DB (read-only) */}
+          {/* Reload all data strictly from active DB (read-only) */}
           <button
             onClick={handleReloadFromSqlite}
             disabled={isSyncingAll}
-            aria-label="SQLite読込"
+            aria-label="DB再読込"
             className={`h-9 w-9 rounded-xl border transition flex items-center justify-center cursor-pointer shadow-sm active:scale-95 ${
               isSyncingAll
                 ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse'
                 : 'bg-zinc-900 hover:bg-zinc-850 text-amber-400 hover:text-amber-300 border-amber-500/30 hover:border-amber-500/60'
             }`}
-            title="SQLiteデータベース（data/shogi.db）から最新データを再読み込み"
+            title={`${dbBackendLabel}から最新データを再読み込み`}
           >
             <RefreshCw size={16} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
           </button>

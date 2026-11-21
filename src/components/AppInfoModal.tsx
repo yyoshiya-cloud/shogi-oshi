@@ -136,10 +136,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose, onOpenAdmin
               </div>
               <div>
                 <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  1. 推し棋士管理 & SQLite 統合データベース連携
+                  1. 推し棋士管理 & 統合データベース連携（Turso / SQLite）
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定して端末内に保存。棋士プロフィール・公式対局予定・2021〜2026年度対局結果はすべてローカルの SQLite（<code className="text-emerald-300">data/shogi.db</code>）から読み込み、データ更新はパスワード保護された管理画面（DB管理）から安全に行えます。
+                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定して端末内に保存。棋士プロフィール・公式対局予定・2021〜2026年度対局結果は統合データベース（Turso libSQL クラウドまたはローカル SQLite）から読み込み、データ更新はパスワード保護された管理画面（DB管理）から安全に行えます。
                 </p>
               </div>
             </div>

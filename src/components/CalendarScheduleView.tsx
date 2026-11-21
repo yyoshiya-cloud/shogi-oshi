@@ -450,11 +450,11 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
               <p className="text-[11px] text-zinc-400 mt-0.5">
                 {isSyncingMatches ? (
                   <span className="text-amber-400 animate-pulse font-medium">
-                    SQLite DB（data/shogi.db）から対局予定を読み込み中...
+                    統合DBから対局予定を読み込み中...
                   </span>
                 ) : (
                   <span>
-                    SQLite DB（data/shogi.db）より全 <strong className="text-amber-300 font-bold">{matches.length}</strong> 局を読み込み済み
+                    統合DBより全 <strong className="text-amber-300 font-bold">{matches.length}</strong> 局を読み込み済み
                     {lastMatchSyncTime && (
                       <span className="ml-1 text-zinc-400 font-mono">（最終読込: {lastMatchSyncTime}）</span>
                     )}
@@ -470,7 +470,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
                 onClick={onRefreshMatches}
                 disabled={isSyncingMatches}
                 className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold border border-zinc-700 transition flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-50"
-                title="SQLite DB（data/shogi.db）から対局予定を再読み込み"
+                title="統合DBから対局予定を再読み込み"
               >
                 <RefreshCw size={12} className={`text-emerald-400 ${isSyncingMatches ? 'animate-spin' : ''}`} />
                 <span>DB再読込</span>

@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: ['.env.local', '.env'], quiet: true });
 import express, { Request, Response, NextFunction } from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -16,6 +17,7 @@ import {
 import {
   initDatabase,
   closeDatabase,
+  isTursoActive,
   getStorageBackendInfo,
   pushLocalSqliteToTurso,
   getAllPlayers,
@@ -161,7 +163,15 @@ function clearAdminCookie(req: Request, res: Response) {
 
 async function startServer() {
   // Initialize active DB backend (Turso libSQL Cloud if TURSO_DATABASE_URL is set, otherwise local SQLite)
-  await initDatabase();
+  let dbReady = true;
+  let dbInitError: string | null = null;
+  try {
+    await initDatabase();
+  } catch (err: any) {
+    dbReady = false;
+    dbInitError = err?.message || 'Database initialization failed';
+    console.error('[DB Init Error]', dbInitError);
+  }
 
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -199,6 +209,19 @@ async function startServer() {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     next();
+  });
+
+  app.get('/api/health', async (req, res) => {
+    const backend = getStorageBackendInfo();
+    res.json({
+      success: true,
+      dbReady,
+      ...(dbInitError ? { dbInitError } : {}),
+      backend: backend.mode,
+      backendLabel: backend.label,
+      tursoConfigured: isTursoActive(),
+      tursoAuthTokenConfigured: Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim()),
+    });
   });
 
   // =========================================================================
