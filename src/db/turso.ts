@@ -1,5 +1,4 @@
 import { createClient, type Client, type InValue } from '@libsql/client';
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -22,32 +21,164 @@ import {
   isPlayerRetired,
   mergePreservingManualFields,
 } from '../utils/playerUtils';
-import {
-  getDbPath,
-  getCleanSnapshotPath,
-  getFiscalYearFromMonth,
-  getJstTimestampString,
-  parseJsonSafe,
-  readCleanSnapshot,
-  normalizePlayerRecord,
-  normalizeMatchRecord,
-  normalizeResultRow,
-} from './sqlite';
 
 let tursoClient: Client | null = null;
 let initPromise: Promise<void> | null = null;
 
 export function isTursoConfigured(): boolean {
-  return Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.trim().length > 0);
+  return true; // Turso (libSQL) is the sole database engine
 }
 
 export function isTursoAuthTokenConfigured(): boolean {
   return Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim().length > 0);
 }
 
+export function getDbPath(): string {
+  return path.join(process.cwd(), 'data', 'shogi.db');
+}
+
+export function getCleanSnapshotPath(): string {
+  return path.join(process.cwd(), 'data', 'shogi.db.clean');
+}
+
+export function parseJsonSafe<T>(val: unknown, fallback: T): T {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val !== 'string') return val as T;
+  try {
+    return JSON.parse(val) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getFiscalYearFromMonth(monthStr: string): number {
+  const clean = String(monthStr || '').replace(/[^0-9]/g, '');
+  if (clean.length < 6) return 2026;
+  const y = parseInt(clean.slice(0, 4), 10);
+  const m = parseInt(clean.slice(4, 6), 10);
+  if (isNaN(y) || isNaN(m)) return 2026;
+  return m >= 1 && m <= 3 ? y - 1 : y;
+}
+
+export function getJstTimestampString(): string {
+  const d = new Date();
+  const jstMs = d.getTime() + (9 * 60 + d.getTimezoneOffset()) * 60 * 1000;
+  const jstDate = new Date(jstMs);
+  return jstDate.toISOString().replace('T', ' ').slice(0, 19);
+}
+
+export function readCleanSnapshot(filePath: string): {
+  players: any[];
+  matches: any[];
+  archives: any[];
+  history: any[];
+} | null {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function normalizePlayerRecord(raw: any): Player | null {
+  if (!raw || !raw.id || !raw.name) return null;
+  const parsed = parseJsonSafe<Player>(raw.data_json, {} as Player);
+  return {
+    ...parsed,
+    id: String(raw.id),
+    name: String(raw.name),
+    type: (raw.type === 'women' ? 'women' : 'pro') as any,
+    rank: String(raw.rank || parsed.rank || ''),
+    birthDate: String(raw.birth_date || raw.birthDate || parsed.birthDate || '1970-01-01'),
+    birthPlace: String(raw.birth_place || raw.birthPlace || parsed.birthPlace || ''),
+    master: String(raw.master || parsed.master || ''),
+    style: (raw.style || parsed.style || '居飛車') as any,
+    ryuoClass: String(raw.ryuo_class || raw.ryuoClass || parsed.ryuoClass || ''),
+    junisenClass: String(raw.junisen_class || raw.junisenClass || parsed.junisenClass || ''),
+    heldTitles: Array.isArray(parsed.heldTitles) ? parsed.heldTitles : [],
+    totalTitles: Number(parsed.totalTitles || 0),
+    titleHistory: String(parsed.titleHistory || ''),
+    careerWins: Number(parsed.careerWins || 0),
+    careerLosses: Number(parsed.careerLosses || 0),
+    careerWinRate: Number(parsed.careerWinRate || 0),
+    currentYearWins: Number(parsed.currentYearWins || 0),
+    currentYearLosses: Number(parsed.currentYearLosses || 0),
+    currentYearWinRate: Number(parsed.currentYearWinRate || 0),
+    currentYearStreak: Number(parsed.currentYearStreak || 0),
+    rankingInFederation: parsed.rankingInFederation || {},
+    colorAccent: String(parsed.colorAccent || '#f59e0b'),
+    avatarBg: String(parsed.avatarBg || '#27272a'),
+    shortBio: String(parsed.shortBio || ''),
+    highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
+    yearRecords: Array.isArray(parsed.yearRecords) ? parsed.yearRecords : [],
+    senteWinRate: Number(parsed.senteWinRate || 0),
+    goteWinRate: Number(parsed.goteWinRate || 0),
+    openingStats: Array.isArray(parsed.openingStats) ? parsed.openingStats : [],
+    headToHead: Array.isArray(parsed.headToHead) ? parsed.headToHead : [],
+    externalLinks: parsed.externalLinks || { officialProfile: '', kifuDatabase: '' },
+  };
+}
+
+export function normalizeMatchRecord(raw: any): Match | null {
+  if (!raw || !raw.id) return null;
+  const parsed = parseJsonSafe<Match>(raw.data_json, {} as Match);
+  return {
+    ...parsed,
+    id: String(raw.id),
+    date: String(raw.date || parsed.date || '2026-01-01'),
+    time: String(raw.time || parsed.time || '10:00'),
+    tournament: String(raw.tournament || parsed.tournament || ''),
+    category: (raw.category || parsed.category || '一般棋戦') as any,
+    round: String(raw.round || parsed.round || ''),
+    player1Id: String(raw.player1_id || raw.player1Id || parsed.player1Id || ''),
+    player2Id: String(raw.player2_id || raw.player2Id || parsed.player2Id || ''),
+    status: (raw.status || parsed.status || 'upcoming') as any,
+    venue: String(raw.venue || parsed.venue || ''),
+    timeControl: String(parsed.timeControl || '各5時間'),
+    broadcast: Array.isArray(parsed.broadcast) ? parsed.broadcast : [],
+    kifuUrl: String(parsed.kifuUrl || ''),
+    kifuMoves: Array.isArray(parsed.kifuMoves) ? parsed.kifuMoves : [],
+    highlights: String(parsed.highlights || ''),
+  };
+}
+
+export function normalizeResultRow(raw: any): ShogiMonthlyResult | null {
+  if (!raw || !raw.id) return null;
+  return {
+    id: String(raw.id),
+    date: String(raw.date || '2026-01-01'),
+    month: String(raw.month || raw.date?.replace(/[^0-9]/g, '').slice(0, 6) || '202601'),
+    sente: String(raw.sente || ''),
+    gote: String(raw.gote || ''),
+    senteRaw: String(raw.senteRaw || raw.sente || ''),
+    goteRaw: String(raw.goteRaw || raw.gote || ''),
+    sentePlayerId: raw.sentePlayerId || raw.sente_player_id || undefined,
+    gotePlayerId: raw.gotePlayerId || raw.gote_player_id || undefined,
+    senteMark: String(raw.senteMark || raw.sente_mark || ''),
+    goteMark: String(raw.goteMark || raw.gote_mark || ''),
+    winner: String(raw.winner || ''),
+    loser: String(raw.loser || ''),
+    winnerId: raw.winnerId || raw.winner_id || undefined,
+    loserId: raw.loserId || raw.loser_id || undefined,
+    resultType: (raw.resultType || raw.result_type || 'normal') as any,
+    tournament: String(raw.tournament || ''),
+    note: String(raw.note || ''),
+    venue: raw.venue || undefined,
+    isWomen: Boolean(raw.isWomen || raw.is_women),
+    category: (raw.category || '一般棋戦') as any,
+    links: Array.isArray(raw.links) ? raw.links : [],
+    sourceUrl: String(raw.sourceUrl || raw.source_url || ''),
+    entrySource: (raw.entrySource || raw.entry_source || 'official') as any,
+    isProtected: Boolean(raw.isProtected || raw.is_protected),
+  };
+}
+
 export function getTursoSafeTargetLabel(): { host: string; dbName: string } {
-  const raw = (process.env.TURSO_DATABASE_URL || '').trim();
-  if (!raw) return { host: 'not-configured', dbName: 'turso' };
+  const defaultFileUrl = `file:${path.join(process.cwd(), 'data', 'shogi.db')}`;
+  const raw = (process.env.TURSO_DATABASE_URL || '').trim() || defaultFileUrl;
   if (raw.startsWith('file:')) {
     return { host: 'local-libsql-file', dbName: path.basename(raw.slice(5)) || 'shogi.db' };
   }
@@ -76,10 +207,8 @@ function requiresRemoteAuthToken(url: string): boolean {
 
 export function getTursoClient(): Client {
   if (tursoClient) return tursoClient;
-  const url = (process.env.TURSO_DATABASE_URL || '').trim();
-  if (!url) {
-    throw new Error('TURSO_DATABASE_URL 環境変数が設定されていません');
-  }
+  const defaultFileUrl = `file:${path.join(process.cwd(), 'data', 'shogi.db')}`;
+  const url = (process.env.TURSO_DATABASE_URL || '').trim() || defaultFileUrl;
   const authToken = (process.env.TURSO_AUTH_TOKEN || '').trim() || undefined;
   if (requiresRemoteAuthToken(url) && !authToken) {
     throw new Error(
@@ -458,33 +587,7 @@ export async function ensureTursoInitialized(): Promise<void> {
   return initPromise;
 }
 
-export async function pushLocalSqliteToTurso(): Promise<{
-  sourceLabel: string;
-  playersWritten: number;
-  matchesWritten: number;
-  archivesMonthsWritten: number;
-  archivesResultsWritten: number;
-  historyWritten: number;
-}> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
-  const localSeed = readLocalSeedSnapshot();
-  const summary = await writeFullDatasetToTurso(client, localSeed, {
-    replaceExisting: true,
-  });
 
-  await addSyncLog(
-    'turso_push_local',
-    'success',
-    `ローカルSQLite (${localSeed.sourceLabel}) → Tursoへデータ移行完了 (players=${summary.playersWritten}, matches=${summary.matchesWritten}, archives=${summary.archivesMonthsWritten}ヶ月/${summary.archivesResultsWritten}局)`,
-    summary.playersWritten + summary.matchesWritten + summary.archivesResultsWritten
-  );
-
-  return {
-    sourceLabel: localSeed.sourceLabel,
-    ...summary,
-  };
-}
 
 export async function addSyncLog(
   syncType: string,
@@ -994,7 +1097,7 @@ export async function recordPlayerNameChange(params: {
     oldName: oldTrim,
     newName: newTrim,
     changedAt,
-    note: params.note?.trim() || '氏名変更・改姓反映',
+    note: params.note?.trim() || '氏名変更・改名反映',
   };
 
   const manualFields = Array.from(
@@ -1555,30 +1658,33 @@ export async function restoreFromBackupJson(payload: any): Promise<{
 export async function importFromSqliteBuffer(buffer: Buffer) {
   const tmpPath = path.join(os.tmpdir(), `shogi-turso-import-${Date.now()}.db`);
   fs.writeFileSync(tmpPath, buffer);
+  const extClient = createClient({ url: `file:${tmpPath}` });
   try {
-    const extDb = new Database(tmpPath, { readonly: true });
-    const tableRows = extDb
-      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
-      .all() as Array<{ name: string }>;
-    const tableNames = new Set(tableRows.map((t) => t.name));
+    const tablesRes = await extClient.execute("SELECT name FROM sqlite_master WHERE type='table'");
+    const tableNames = new Set(tablesRes.rows.map((r) => String(r.name)));
 
     const payload: Record<string, unknown[]> = {};
     if (tableNames.has('players')) {
-      payload.players = extDb.prepare('SELECT * FROM players').all();
+      const pRes = await extClient.execute('SELECT * FROM players');
+      payload.players = pRes.rows;
     }
     if (tableNames.has('matches')) {
-      payload.matches = extDb.prepare('SELECT * FROM matches').all();
+      const mRes = await extClient.execute('SELECT * FROM matches');
+      payload.matches = mRes.rows;
     }
     if (tableNames.has('match_archives')) {
-      payload.match_archives = extDb.prepare('SELECT * FROM match_archives').all();
+      const aRes = await extClient.execute('SELECT * FROM match_archives');
+      payload.match_archives = aRes.rows;
     }
     if (tableNames.has('player_name_history')) {
-      payload.player_name_history = extDb.prepare('SELECT * FROM player_name_history').all();
+      const hRes = await extClient.execute('SELECT * FROM player_name_history');
+      payload.player_name_history = hRes.rows;
     }
-    extDb.close();
+    extClient.close();
     return await restoreFromBackupJson(payload);
   } finally {
     try {
+      extClient.close();
       fs.unlinkSync(tmpPath);
     } catch {}
   }

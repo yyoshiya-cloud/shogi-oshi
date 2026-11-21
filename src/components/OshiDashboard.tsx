@@ -389,51 +389,11 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
       </div>
 
       {/* Quick Shortcuts Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-        <button
-          onClick={onOpenCalendar}
-          className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 transition flex items-center justify-between text-left group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-              <Calendar size={20} />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-zinc-100 font-serif-jp">
-                対局カレンダーを開く
-              </h4>
-              <p className="text-xs text-zinc-400">
-                月間カレンダー表示・Googleカレンダー同期
-              </p>
-            </div>
-          </div>
-          <ChevronRight size={18} className="text-zinc-500 group-hover:text-amber-400 transition shrink-0" />
-        </button>
-
-        <button
-          onClick={onOpenDirectory}
-          className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 transition flex items-center justify-between text-left group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
-              <Heart size={20} />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-zinc-100 font-serif-jp">
-                推し棋士・女流棋士を探す
-              </h4>
-              <p className="text-xs text-zinc-400">
-                日本将棋連盟・LPSA・無所属の全棋士名鑑から検索・追加
-              </p>
-            </div>
-          </div>
-          <ChevronRight size={18} className="text-zinc-500 group-hover:text-rose-400 transition shrink-0" />
-        </button>
-
-        {onOpenAdminDb && (
+      {onOpenAdminDb && (
+        <div className="pt-2">
           <button
             onClick={onOpenAdminDb}
-            className="p-4 rounded-3xl bg-emerald-950/25 border border-emerald-500/35 hover:border-emerald-400 transition flex items-center justify-between text-left group cursor-pointer"
+            className="w-full p-4 rounded-3xl bg-emerald-950/25 border border-emerald-500/35 hover:border-emerald-400 transition flex items-center justify-between text-left group cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
@@ -445,14 +405,14 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                   <Lock size={12} className="text-emerald-400 shrink-0" />
                 </h4>
                 <p className="text-xs text-zinc-400">
-                  DB管理・改姓反映・JSON/SQLite取込（パスワード保護）
+                  DB管理・改名反映・JSON/Turso取込（パスワード保護）
                 </p>
               </div>
             </div>
             <ChevronRight size={18} className="text-emerald-400/70 group-hover:text-emerald-300 transition shrink-0" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

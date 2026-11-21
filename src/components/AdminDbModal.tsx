@@ -430,32 +430,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const isTursoActive = Boolean(overview?.engine?.toLowerCase().includes('turso'));
 
-  const handlePushLocalToTurso = async () => {
-    try {
-      setIsBusy(true);
-      showStatus('success', 'ローカルの data/shogi.db データを Turso データベースへ転送中...');
-      const res = await adminFetch('/api/admin/turso/push-local', {
-        method: 'POST',
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-      await loadAdminData();
-      await onDatabaseUpdated();
-      const s = json.summary;
-      showStatus(
-        'success',
-        `ローカル SQLite → Turso 同期完了（棋士: ${s.playersMigrated}名 / 予定: ${s.matchesMigrated}件 / 対局アーカイブ: ${s.archiveMonthsMigrated}ヶ月）`
-      );
-    } catch (err: any) {
-      showStatus('error', `Turso 同期エラー: ${err?.message || err}`);
-    } finally {
-      setIsBusy(false);
-    }
-  };
 
   const handleRebuildAllArchives = async (years: number[] = [2021, 2022, 2023, 2024, 2025, 2026]) => {
     try {
@@ -1454,14 +1429,8 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                 <h2 className="text-base sm:text-lg font-black font-serif-jp text-zinc-100 truncate">
                   棋士・女流棋士DB 管理画面
                 </h2>
-                <span
-                  className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
-                    isTursoActive
-                      ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40'
-                      : 'bg-zinc-800 text-amber-300 border-zinc-700'
-                  }`}
-                >
-                  {isTursoActive ? `Turso: ${overview?.dbPath || 'libSQL Cloud'}` : 'SQLite: data/shogi.db'}
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-emerald-950/70 text-emerald-300 border-emerald-500/40">
+                  Turso: {overview?.dbPath || 'libSQL'}
                 </span>
               </div>
               <p className="text-xs text-zinc-400 truncate">
@@ -1733,29 +1702,10 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           <span>連盟公式 → DB同期</span>
                         </div>
                         <span className="text-[11px] text-zinc-400">
-                          {isTursoActive
-                            ? '連盟・LPSA最新情報を取得して Turso DB を更新'
-                            : '連盟・LPSA最新情報を取得して data/shogi.db を更新'}
+                          連盟・LPSA最新情報を取得して Turso DB を更新
                         </span>
                       </button>
                     </div>
-
-                    {isTursoActive && (
-                      <div className="pt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                        <span className="text-[11px] text-emerald-300/90">
-                          現在 <strong className="font-mono">{overview?.engine}</strong> に接続中です。ローカルの <code className="text-zinc-200">data/shogi.db</code> を再反映したい場合は右のボタンを実行できます。
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handlePushLocalToTurso}
-                          disabled={isBusy}
-                          className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
-                        >
-                          <Database size={14} />
-                          <span>ローカル shogi.db → Turso 同期</span>
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   {/* FY2021-2026 Breakdown & Rebuild Actions */}

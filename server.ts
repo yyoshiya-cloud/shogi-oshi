@@ -19,7 +19,6 @@ import {
   closeDatabase,
   isTursoActive,
   getStorageBackendInfo,
-  pushLocalSqliteToTurso,
   getAllPlayers,
   upsertPlayer,
   upsertPlayersBulk,
@@ -339,19 +338,6 @@ async function startServer() {
       res.json({ success: true, overview: await getDatabaseOverview() });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to load DB overview' });
-    }
-  });
-
-  app.post('/api/admin/turso/push-local', requireAdmin, async (req, res) => {
-    try {
-      const summary = await pushLocalSqliteToTurso();
-      res.json({
-        success: true,
-        summary,
-        overview: await getDatabaseOverview(),
-      });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error?.message || 'Failed to push local SQLite to Turso' });
     }
   });
 
