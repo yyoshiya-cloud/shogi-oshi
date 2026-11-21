@@ -127,69 +127,6 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
         </div>
       )}
 
-      {/* SQLite Local Database Operation Banner */}
-      <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-900/90 to-zinc-900 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
-            <Database size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-zinc-100 font-serif-jp">
-                SQLite 3 データベース同期モード
-              </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold border border-emerald-500/30">
-                ローカル運用中
-              </span>
-            </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
-              公式データ・対局予定・成績は SQLite (<code className="text-emerald-300 font-mono">data/shogi.db</code>) から自動読み込みされ、データ更新は管理画面（DB管理）から行われます。
-            </p>
-          </div>
-        </div>
-        {onOpenAdminDb && (
-          <button
-            onClick={onOpenAdminDb}
-            className="self-end sm:self-auto px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
-          >
-            <Lock size={12} />
-            <span>DB管理画面を開く</span>
-          </button>
-        )}
-      </div>
-
-      {/* 棋士・女流棋士DB 統合管理画面 Top Banner */}
-      {onOpenAdminDb && (
-        <div
-          onClick={onOpenAdminDb}
-          className="cursor-pointer bg-gradient-to-r from-emerald-950/40 via-zinc-900/90 to-zinc-900 rounded-2xl p-3.5 sm:p-4 border border-emerald-500/40 hover:border-emerald-400 transition flex items-center justify-between group shadow-md"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shrink-0">
-              <Database size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                  <Lock size={10} />
-                  パスワード保護
-                </span>
-                <h4 className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-emerald-300 transition">
-                  棋士・女流棋士DB 管理画面
-                </h4>
-              </div>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
-                SQLite（data/shogi.db）の2021〜2026年度成績・公式日程・改姓履歴・バックアップ復元
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold group-hover:translate-x-1 transition shrink-0 ml-2">
-            <span>管理画面を開く</span>
-            <ChevronRight size={16} />
-          </div>
-        </div>
-      )}
-
       {/* 2026年 公式対局結果 Quick Banner */}
       <div
         onClick={onOpenResults || onOpenCalendar}

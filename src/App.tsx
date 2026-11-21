@@ -368,14 +368,15 @@ export default function App() {
             <RefreshCw size={16} className={`text-amber-400 shrink-0 ${isSyncingAll ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Local Storage & SQLite Status button */}
+          {/* App Info & Features button */}
           <button
             onClick={() => setShowAppInfoModal(true)}
-            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-            title="アプリ情報・SQLite DBステータス"
+            aria-label="アプリ情報"
+            className="h-9 px-2 sm:px-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-amber-300 hover:text-amber-200 border border-amber-500/30 hover:border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            title="機能一覧・アプリ情報・作者を表示"
           >
-            <Database size={14} className="text-emerald-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">ローカル保存</span>
+            <Sparkles size={14} className="text-amber-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold hidden md:inline">アプリ情報</span>
           </button>
 
           {/* Integrated Shogi DB Management Portal button (password-protected) */}
