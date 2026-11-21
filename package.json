@@ -10,10 +10,12 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "sync:worker": "tsx scripts/syncWorker.ts"
+    "sync:worker": "tsx scripts/syncWorker.ts",
+    "db:migrate:turso": "tsx scripts/migrateToTurso.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@libsql/client": "^0.18.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/better-sqlite3": "^9.6.0",
     "@types/iconv-lite": "^0.0.1",

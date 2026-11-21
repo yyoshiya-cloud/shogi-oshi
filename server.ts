@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
-import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import http from 'http';
@@ -14,8 +14,10 @@ import {
   rebuildAllFiscalYearArchives,
 } from './src/services/matchSyncService';
 import {
-  getDb,
-  closeDb,
+  initDatabase,
+  closeDatabase,
+  getStorageBackendInfo,
+  pushLocalSqliteToTurso,
   getAllPlayers,
   upsertPlayer,
   upsertPlayersBulk,
@@ -38,7 +40,7 @@ import {
   restoreFromBackupJson,
   importFromSqliteBuffer,
   syncNameHistoryAndRelinkArchives,
-} from './src/db/sqlite';
+} from './src/db/index';
 import { isPlayerRetired, detectManualFieldChanges } from './src/utils/playerUtils';
 import type { Player, Match, ShogiMonthlyResult } from './src/types/shogi';
 
@@ -158,8 +160,8 @@ function clearAdminCookie(req: Request, res: Response) {
 }
 
 async function startServer() {
-  // Initialize SQLite database (data/shogi.db) immediately on startup
-  getDb();
+  // Initialize active DB backend (Turso libSQL Cloud if TURSO_DATABASE_URL is set, otherwise local SQLite)
+  await initDatabase();
 
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -169,16 +171,16 @@ async function startServer() {
     '/api/admin/import-sqlite',
     requireAdmin,
     express.raw({ type: 'application/octet-stream', limit: '60mb' }),
-    (req, res) => {
+    async (req, res) => {
       try {
         if (!Buffer.isBuffer(req.body) || req.body.length < 100) {
           return res.status(400).json({ success: false, error: '有効なSQLiteデータベースファイルではありません' });
         }
-        const summary = importFromSqliteBuffer(req.body);
+        const summary = await importFromSqliteBuffer(req.body);
         res.json({
           success: true,
           summary,
-          overview: getDatabaseOverview(),
+          overview: await getDatabaseOverview(),
         });
       } catch (error: any) {
         console.error('SQLite import error:', error);
@@ -203,13 +205,15 @@ async function startServer() {
   // PUBLIC READ-ONLY DATABASE ENDPOINTS (将棋推し活アプリ 表画面データ取得元)
   // =========================================================================
 
-  app.get('/api/db/bootstrap', (req, res) => {
+  app.get('/api/db/bootstrap', async (req, res) => {
     try {
-      const players = getAllPlayers();
-      const matches = getAllMatches();
-      const fiscalResults = getAllMatchArchives();
-      const nameHistory = getNameHistory();
-      const overview = getDatabaseOverview();
+      const [players, matches, fiscalResults, nameHistory, overview] = await Promise.all([
+        getAllPlayers(),
+        getAllMatches(),
+        getAllMatchArchives(),
+        getNameHistory(),
+        getDatabaseOverview(),
+      ]);
       res.json({
         success: true,
         players,
@@ -224,30 +228,29 @@ async function startServer() {
     }
   });
 
-  app.get('/api/db/players', (req, res) => {
+  app.get('/api/db/players', async (req, res) => {
     try {
-      const players = getAllPlayers();
-      const nameHistory = getNameHistory();
+      const [players, nameHistory] = await Promise.all([getAllPlayers(), getNameHistory()]);
       res.json({ success: true, count: players.length, players, nameHistory });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to query players' });
     }
   });
 
-  app.get('/api/db/matches', (req, res) => {
+  app.get('/api/db/matches', async (req, res) => {
     try {
-      const matches = getAllMatches();
+      const matches = await getAllMatches();
       res.json({ success: true, count: matches.length, matches });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to query matches' });
     }
   });
 
-  app.get('/api/db/results', (req, res) => {
+  app.get('/api/db/results', async (req, res) => {
     try {
       const fiscalYear = req.query.fiscalYear ? parseInt(String(req.query.fiscalYear), 10) : undefined;
       const month = req.query.month ? String(req.query.month) : undefined;
-      const data = getAllMatchArchives(fiscalYear, month);
+      const data = await getAllMatchArchives(fiscalYear, month);
       if (month) {
         return res.json({ success: true, month, results: data[month.replace(/[^0-9]/g, '')] || [] });
       }
@@ -257,9 +260,9 @@ async function startServer() {
     }
   });
 
-  app.get('/api/db/name-history', (req, res) => {
+  app.get('/api/db/name-history', async (req, res) => {
     try {
-      const history = getNameHistory();
+      const history = await getNameHistory();
       res.json({ success: true, count: history.length, history });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to query name history' });
@@ -308,38 +311,51 @@ async function startServer() {
   // PASSWORD-PROTECTED ADMIN DB MANAGEMENT ENDPOINTS (棋士・女流棋士DB 管理)
   // =========================================================================
 
-  app.get('/api/admin/overview', requireAdmin, (req, res) => {
+  app.get('/api/admin/overview', requireAdmin, async (req, res) => {
     try {
-      res.json({ success: true, overview: getDatabaseOverview() });
+      res.json({ success: true, overview: await getDatabaseOverview() });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to load DB overview' });
     }
   });
 
-  app.post('/api/admin/players', requireAdmin, (req, res) => {
+  app.post('/api/admin/turso/push-local', requireAdmin, async (req, res) => {
+    try {
+      const summary = await pushLocalSqliteToTurso();
+      res.json({
+        success: true,
+        summary,
+        overview: await getDatabaseOverview(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to push local SQLite to Turso' });
+    }
+  });
+
+  app.post('/api/admin/players', requireAdmin, async (req, res) => {
     try {
       const incoming = req.body as Player;
       if (!incoming || !incoming.id || !incoming.name) {
         return res.status(400).json({ success: false, error: 'player.id と player.name が必須です' });
       }
-      const existing = getAllPlayers().find((p) => p.id === incoming.id);
+      const existing = (await getAllPlayers()).find((p) => p.id === incoming.id);
       const manualFields = detectManualFieldChanges(existing, incoming);
       const player: Player = {
         ...existing,
         ...incoming,
         ...(manualFields.length > 0 ? { manualFields } : {}),
       };
-      const saved = upsertPlayer(player);
-      addSyncLog('player_upsert', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
+      const saved = await upsertPlayer(player);
+      await addSyncLog('player_upsert', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
       res.json({ success: true, player: saved });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to save player' });
     }
   });
 
-  app.put('/api/admin/players/:id', requireAdmin, (req, res) => {
+  app.put('/api/admin/players/:id', requireAdmin, async (req, res) => {
     try {
-      const existing = getAllPlayers().find((p) => p.id === req.params.id);
+      const existing = (await getAllPlayers()).find((p) => p.id === req.params.id);
       const body = (req.body || {}) as Player & {
         nameChange?: {
           clear?: boolean;
@@ -398,19 +414,19 @@ async function startServer() {
         delete player.manualFields;
       }
 
-      let saved = upsertPlayer(player);
-      addSyncLog(
+      let saved = await upsertPlayer(player);
+      await addSyncLog(
         'player_update',
         'success',
-        `棋士段位・プロフィール更新 [SQLiteテーブル反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'}${saved.manualFields?.length ? `, 手動保護: ${saved.manualFields.length}項目` : ''})`,
+        `棋士段位・プロフィール更新 [DB反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'}${saved.manualFields?.length ? `, 手動保護: ${saved.manualFields.length}項目` : ''})`,
         1
       );
 
       if (nameChangePayload?.clear) {
-        const cleared = clearPlayerNameHistory(req.params.id);
+        const cleared = await clearPlayerNameHistory(req.params.id);
         if (cleared) saved = cleared;
       } else if (nameChangePayload?.oldName?.trim() && nameChangePayload?.newName?.trim()) {
-        const ncRes = recordPlayerNameChange({
+        const ncRes = await recordPlayerNameChange({
           playerId: req.params.id,
           oldName: nameChangePayload.oldName.trim(),
           newName: nameChangePayload.newName.trim(),
@@ -422,18 +438,18 @@ async function startServer() {
         }
       }
 
-      const freshPlayer = getAllPlayers().find((p) => p.id === req.params.id) || saved;
+      const freshPlayer = (await getAllPlayers()).find((p) => p.id === req.params.id) || saved;
       res.json({ success: true, player: freshPlayer, validated: true });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to update player' });
     }
   });
 
-  app.delete('/api/admin/players/:id', requireAdmin, (req, res) => {
+  app.delete('/api/admin/players/:id', requireAdmin, async (req, res) => {
     try {
-      const deleted = deletePlayerById(req.params.id);
+      const deleted = await deletePlayerById(req.params.id);
       if (deleted) {
-        addSyncLog('player_delete', 'success', `棋士削除: ${req.params.id}`, 1);
+        await addSyncLog('player_delete', 'success', `棋士削除: ${req.params.id}`, 1);
       }
       res.json({ success: deleted });
     } catch (error: any) {
@@ -441,13 +457,13 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/name-history', requireAdmin, (req, res) => {
+  app.post('/api/admin/name-history', requireAdmin, async (req, res) => {
     try {
       const { playerId, oldName, newName, changedAt, note } = req.body || {};
       if (!playerId || !oldName || !newName) {
         return res.status(400).json({ success: false, error: 'playerId, oldName, newName は必須です' });
       }
-      const result = recordPlayerNameChange({ playerId, oldName, newName, changedAt, note });
+      const result = await recordPlayerNameChange({ playerId, oldName, newName, changedAt, note });
       if (!result) {
         return res.status(404).json({ success: false, error: '対象の棋士が見つかりません' });
       }
@@ -457,22 +473,22 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/admin/name-history/:playerId', requireAdmin, (req, res) => {
+  app.delete('/api/admin/name-history/:playerId', requireAdmin, async (req, res) => {
     try {
-      const updated = clearPlayerNameHistory(req.params.playerId);
+      const updated = await clearPlayerNameHistory(req.params.playerId);
       res.json({ success: true, player: updated });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to clear name history' });
     }
   });
 
-  app.post('/api/admin/relink-names', requireAdmin, (req, res) => {
+  app.post('/api/admin/relink-names', requireAdmin, async (req, res) => {
     try {
-      const summary = syncNameHistoryAndRelinkArchives();
+      const summary = await syncNameHistoryAndRelinkArchives();
       res.json({
         success: true,
         summary,
-        overview: getDatabaseOverview(),
+        overview: await getDatabaseOverview(),
       });
     } catch (error: any) {
       console.error('Error in /api/admin/relink-names:', error);
@@ -480,25 +496,25 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/matches', requireAdmin, (req, res) => {
+  app.post('/api/admin/matches', requireAdmin, async (req, res) => {
     try {
       const match = req.body as Match;
       if (!match || !match.id || !match.date) {
         return res.status(400).json({ success: false, error: 'match.id と match.date は必須です' });
       }
-      const saved = upsertMatch(match);
-      addSyncLog('match_upsert', 'success', `公式対局予定を登録/更新: ${saved.date} ${saved.tournament}`, 1);
+      const saved = await upsertMatch(match);
+      await addSyncLog('match_upsert', 'success', `公式対局予定を登録/更新: ${saved.date} ${saved.tournament}`, 1);
       res.json({ success: true, match: saved });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to save match' });
     }
   });
 
-  app.delete('/api/admin/matches/:id', requireAdmin, (req, res) => {
+  app.delete('/api/admin/matches/:id', requireAdmin, async (req, res) => {
     try {
-      const deleted = deleteMatchById(req.params.id);
+      const deleted = await deleteMatchById(req.params.id);
       if (deleted) {
-        addSyncLog('match_delete', 'success', `対局予定を削除: ${req.params.id}`, 1);
+        await addSyncLog('match_delete', 'success', `対局予定を削除: ${req.params.id}`, 1);
       }
       res.json({ success: deleted });
     } catch (error: any) {
@@ -506,7 +522,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/results', requireAdmin, (req, res) => {
+  app.post('/api/admin/results', requireAdmin, async (req, res) => {
     try {
       const body = req.body;
       if (Array.isArray(body?.results)) {
@@ -517,31 +533,31 @@ async function startServer() {
           if (!grouped[m]) grouped[m] = [];
           grouped[m].push({ ...r, month: m });
         }
-        const existing = getAllMatchArchives();
+        const existing = await getAllMatchArchives();
         for (const [m, newList] of Object.entries(grouped)) {
           const map = new Map<string, ShogiMonthlyResult>();
           for (const item of existing[m] || []) map.set(item.id, item);
           for (const item of newList) map.set(item.id, item);
-          upsertMonthArchive(m, Array.from(map.values()), 'admin-bulk');
+          await upsertMonthArchive(m, Array.from(map.values()), 'admin-bulk');
         }
-        addSyncLog('results_bulk_import', 'success', `${body.results.length}件の対局結果を一括登録`, body.results.length);
-        return res.json({ success: true, count: body.results.length, fiscalResults: getAllMatchArchives() });
+        await addSyncLog('results_bulk_import', 'success', `${body.results.length}件の対局結果を一括登録`, body.results.length);
+        return res.json({ success: true, count: body.results.length, fiscalResults: await getAllMatchArchives() });
       }
 
       const single = body as ShogiMonthlyResult;
       if (!single || !single.id || !single.date) {
         return res.status(400).json({ success: false, error: 'result.id と result.date は必須です' });
       }
-      const updatedMonth = addMatchResultToArchive(single);
+      const updatedMonth = await addMatchResultToArchive(single);
       res.json({ success: true, month: single.month, results: updatedMonth });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to save match result' });
     }
   });
 
-  app.delete('/api/admin/results/:month/:id', requireAdmin, (req, res) => {
+  app.delete('/api/admin/results/:month/:id', requireAdmin, async (req, res) => {
     try {
-      const deleted = deleteMatchResultFromArchive(req.params.month, req.params.id);
+      const deleted = await deleteMatchResultFromArchive(req.params.month, req.params.id);
       res.json({ success: deleted });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to delete result' });
@@ -551,19 +567,22 @@ async function startServer() {
   app.post('/api/admin/sync/official', requireAdmin, async (req, res) => {
     try {
       const force = req.body?.force !== false;
-      const dbPlayersNow = getAllPlayers();
-      const dbHistoryNow = getNameHistory();
+      const [dbPlayersNow, dbHistoryNow, existingArchives] = await Promise.all([
+        getAllPlayers(),
+        getNameHistory(),
+        getAllMatchArchives(),
+      ]);
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
         scrapeAllActivePlayers(force, dbPlayersNow, dbHistoryNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
-        scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
+        scrapeIncrementalResults(existingArchives, force, dbPlayersNow, dbHistoryNow),
       ]);
 
       if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
-        upsertPlayersBulk(playersRes.players, 'official_scrape');
+        await upsertPlayersBulk(playersRes.players, 'official_scrape');
       }
       if (matchesRes?.success && Array.isArray(matchesRes.matches) && matchesRes.matches.length > 0) {
-        upsertMatchesBulk(matchesRes.matches, 'official_scrape');
+        await upsertMatchesBulk(matchesRes.matches, 'official_scrape');
       }
       if (incrementalResults?.merged) {
         const toSave: Record<string, ShogiMonthlyResult[]> = {};
@@ -573,19 +592,25 @@ async function startServer() {
           }
         }
         if (Object.keys(toSave).length > 0) {
-          upsertMatchArchivesBulk(toSave, 'official_scrape');
+          await upsertMatchArchivesBulk(toSave, 'official_scrape');
         }
       }
 
+      const [players, matches, fiscalResults, overview] = await Promise.all([
+        getAllPlayers(),
+        getAllMatches(),
+        getAllMatchArchives(),
+        getDatabaseOverview(),
+      ]);
       res.json({
         success: true,
-        players: getAllPlayers(),
-        matches: getAllMatches(),
-        fiscalResults: getAllMatchArchives(),
-        overview: getDatabaseOverview(),
+        players,
+        matches,
+        fiscalResults,
+        overview,
       });
     } catch (error: any) {
-      addSyncLog('official_scrape', 'error', error?.message || 'Official sync failed', 0);
+      await addSyncLog('official_scrape', 'error', error?.message || 'Official sync failed', 0).catch(() => {});
       res.status(500).json({ success: false, error: error?.message || 'Official sync failed' });
     }
   });
@@ -599,20 +624,23 @@ async function startServer() {
       const includePlayersAndMatches = req.body?.includePlayersAndMatches !== false;
 
       if (includePlayersAndMatches) {
-        const playersRes = await scrapeAllActivePlayers(true, getAllPlayers(), getNameHistory());
+        const [curPlayers, curHistory] = await Promise.all([getAllPlayers(), getNameHistory()]);
+        const playersRes = await scrapeAllActivePlayers(true, curPlayers, curHistory);
         if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
-          upsertPlayersBulk(playersRes.players, 'rebuild_2021_2026');
+          await upsertPlayersBulk(playersRes.players, 'rebuild_2021_2026');
         }
       }
 
-      const dbPlayers = getAllPlayers();
-      const dbHistory = getNameHistory();
-      const existingArchives = getAllMatchArchives();
+      const [dbPlayers, dbHistory, existingArchives] = await Promise.all([
+        getAllPlayers(),
+        getNameHistory(),
+        getAllMatchArchives(),
+      ]);
 
       if (includePlayersAndMatches) {
         const matchesRes = await scrapeMatchPlan(true, dbPlayers, dbHistory);
         if (matchesRes?.success && Array.isArray(matchesRes.matches) && matchesRes.matches.length > 0) {
-          upsertMatchesBulk(matchesRes.matches, 'rebuild_2021_2026');
+          await upsertMatchesBulk(matchesRes.matches, 'rebuild_2021_2026');
         }
       }
 
@@ -625,8 +653,14 @@ async function startServer() {
         concurrency: 4,
       });
 
-      upsertMatchArchivesBulk(rebuilt.archives, 'rebuild_2021_2026');
+      await upsertMatchArchivesBulk(rebuilt.archives, 'rebuild_2021_2026');
 
+      const [players, matches, fiscalResults, overview] = await Promise.all([
+        getAllPlayers(),
+        getAllMatches(),
+        getAllMatchArchives(),
+        getDatabaseOverview(),
+      ]);
       res.json({
         success: true,
         summary: {
@@ -637,21 +671,21 @@ async function startServer() {
           totalResults: rebuilt.totalResults,
           fiscalYearCounts: rebuilt.fiscalYearCounts,
         },
-        players: getAllPlayers(),
-        matches: getAllMatches(),
-        fiscalResults: getAllMatchArchives(),
-        overview: getDatabaseOverview(),
+        players,
+        matches,
+        fiscalResults,
+        overview,
       });
     } catch (error: any) {
-      addSyncLog('rebuild_2021_2026', 'error', error?.message || 'Rebuild failed', 0);
+      await addSyncLog('rebuild_2021_2026', 'error', error?.message || 'Rebuild failed', 0).catch(() => {});
       res.status(500).json({ success: false, error: error?.message || 'Failed to rebuild 2021-2026 archives' });
     }
   });
 
   // Backup Export & Restore (棋士・女流棋士DB 互換エンドポイント)
-  app.get('/api/backup/export', requireAdmin, (req, res) => {
+  app.get('/api/backup/export', requireAdmin, async (req, res) => {
     try {
-      const payload = exportBackupJson();
+      const payload = await exportBackupJson();
       res.setHeader('Content-Disposition', `attachment; filename="shogi-db-backup-${new Date().toISOString().slice(0, 10)}.json"`);
       res.json(payload);
     } catch (error: any) {
@@ -659,13 +693,13 @@ async function startServer() {
     }
   });
 
-  app.post('/api/backup/restore', requireAdmin, (req, res) => {
+  app.post('/api/backup/restore', requireAdmin, async (req, res) => {
     try {
-      const summary = restoreFromBackupJson(req.body);
+      const summary = await restoreFromBackupJson(req.body);
       res.json({
         success: true,
         summary,
-        overview: getDatabaseOverview(),
+        overview: await getDatabaseOverview(),
       });
     } catch (error: any) {
       console.error('Backup restore error:', error);
@@ -674,20 +708,22 @@ async function startServer() {
   });
 
   // =========================================================================
-  // ADMIN-ONLY SCRAPING ROUTES (sync back into SQLite data/shogi.db)
+  // ADMIN-ONLY SCRAPING ROUTES (sync back into active DB)
   // =========================================================================
 
   app.get('/api/players/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      const result = await scrapeAllActivePlayers(force, getAllPlayers(), getNameHistory());
+      const [curPlayers, curHistory] = await Promise.all([getAllPlayers(), getNameHistory()]);
+      const result = await scrapeAllActivePlayers(force, curPlayers, curHistory);
       if (result?.success && Array.isArray(result.players) && result.players.length >= 50) {
-        upsertPlayersBulk(result.players, 'api_sync');
+        await upsertPlayersBulk(result.players, 'api_sync');
       }
+      const [players, overview] = await Promise.all([getAllPlayers(), getDatabaseOverview()]);
       res.json({
         ...result,
-        players: getAllPlayers(),
-        overview: getDatabaseOverview(),
+        players,
+        overview,
       });
     } catch (error: any) {
       console.error('Error in /api/players/sync:', error);
@@ -701,14 +737,16 @@ async function startServer() {
   app.get('/api/matches/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      const result = await scrapeMatchPlan(force, getAllPlayers(), getNameHistory());
+      const [curPlayers, curHistory] = await Promise.all([getAllPlayers(), getNameHistory()]);
+      const result = await scrapeMatchPlan(force, curPlayers, curHistory);
       if (result?.success && Array.isArray(result.matches) && result.matches.length > 0) {
-        upsertMatchesBulk(result.matches, 'api_sync');
+        await upsertMatchesBulk(result.matches, 'api_sync');
       }
+      const [matches, overview] = await Promise.all([getAllMatches(), getDatabaseOverview()]);
       res.json({
         ...result,
-        matches: getAllMatches(),
-        overview: getDatabaseOverview(),
+        matches,
+        overview,
       });
     } catch (error: any) {
       console.error('Error in /api/matches/sync:', error);
@@ -725,22 +763,36 @@ async function startServer() {
       const force = req.query.force === 'true';
       const sinceDate = (req.query.sinceDate as string) || undefined;
       const all = req.query.all === 'true';
-      const dbPlayers = getAllPlayers();
-      const dbHistory = getNameHistory();
+      const [dbPlayers, dbHistory] = await Promise.all([getAllPlayers(), getNameHistory()]);
       if (all) {
         if (!force) {
-          return res.json({ success: true, all: true, data: getAllMatchArchives(), overview: getDatabaseOverview() });
+          return res.json({
+            success: true,
+            all: true,
+            data: await getAllMatchArchives(),
+            overview: await getDatabaseOverview(),
+          });
         }
-        const results = await getAll2026Results(force, getAllMatchArchives(), dbPlayers, dbHistory);
-        upsertMatchArchivesBulk(results, 'api_sync_all');
-        return res.json({ success: true, all: true, data: getAllMatchArchives(), overview: getDatabaseOverview() });
+        const results = await getAll2026Results(force, await getAllMatchArchives(), dbPlayers, dbHistory);
+        await upsertMatchArchivesBulk(results, 'api_sync_all');
+        return res.json({
+          success: true,
+          all: true,
+          data: await getAllMatchArchives(),
+          overview: await getDatabaseOverview(),
+        });
       }
       const result = await scrapeMonthlyResults(month, force, sinceDate, dbPlayers, dbHistory);
       if (result?.success && Array.isArray(result.results) && result.results.length > 0) {
-        const saved = upsertMonthArchive(month, result.results, 'api_sync_month');
-        return res.json({ ...result, results: saved, count: saved.length, overview: getDatabaseOverview() });
+        const saved = await upsertMonthArchive(month, result.results, 'api_sync_month');
+        return res.json({
+          ...result,
+          results: saved,
+          count: saved.length,
+          overview: await getDatabaseOverview(),
+        });
       }
-      res.json({ ...result, overview: getDatabaseOverview() });
+      res.json({ ...result, overview: await getDatabaseOverview() });
     } catch (error: any) {
       console.error('Error in /api/matches/results:', error);
       res.status(500).json({
@@ -755,19 +807,22 @@ async function startServer() {
       const force = req.query.force === 'true';
       console.log(`[Bulk Sync All] Starting data synchronization (force=${force})...`);
 
-      const dbPlayersNow = getAllPlayers();
-      const dbHistoryNow = getNameHistory();
+      const [dbPlayersNow, dbHistoryNow, existingArchives] = await Promise.all([
+        getAllPlayers(),
+        getNameHistory(),
+        getAllMatchArchives(),
+      ]);
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
         scrapeAllActivePlayers(force, dbPlayersNow, dbHistoryNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
-        scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
+        scrapeIncrementalResults(existingArchives, force, dbPlayersNow, dbHistoryNow),
       ]);
 
       if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
-        upsertPlayersBulk(playersRes.players, 'bulk_sync');
+        await upsertPlayersBulk(playersRes.players, 'bulk_sync');
       }
       if (matchesRes?.success && Array.isArray(matchesRes.matches) && matchesRes.matches.length > 0) {
-        upsertMatchesBulk(matchesRes.matches, 'bulk_sync');
+        await upsertMatchesBulk(matchesRes.matches, 'bulk_sync');
       }
       if (incrementalResults?.updatedMonths && incrementalResults.updatedMonths.length > 0) {
         const toSave: Record<string, ShogiMonthlyResult[]> = {};
@@ -775,13 +830,16 @@ async function startServer() {
           if (incrementalResults.merged[m]) toSave[m] = incrementalResults.merged[m];
         }
         if (Object.keys(toSave).length > 0) {
-          upsertMatchArchivesBulk(toSave, 'bulk_sync');
+          await upsertMatchArchivesBulk(toSave, 'bulk_sync');
         }
       }
 
-      const dbPlayers = getAllPlayers();
-      const dbMatches = getAllMatches();
-      const dbArchives = getAllMatchArchives();
+      const [dbPlayers, dbMatches, dbArchives, overview] = await Promise.all([
+        getAllPlayers(),
+        getAllMatches(),
+        getAllMatchArchives(),
+        getDatabaseOverview(),
+      ]);
 
       res.json({
         success: true,
@@ -790,7 +848,7 @@ async function startServer() {
         matches: { ...matchesRes, matches: dbMatches, count: dbMatches.length },
         results2026: dbArchives,
         updatedMonths: incrementalResults.updatedMonths,
-        overview: getDatabaseOverview(),
+        overview,
       });
     } catch (error: any) {
       console.error('Error in /api/sync/all:', error);
@@ -906,13 +964,14 @@ self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
     app.use(vite.middlewares);
   }
 
+  const backendInfo = getStorageBackendInfo();
   httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on http://0.0.0.0:${PORT} (SQLite: data/shogi.db)`);
+    console.log(`Server listening on http://0.0.0.0:${PORT} (DB: ${backendInfo.label})`);
   });
 
   const gracefulShutdown = (signal: string) => {
-    console.log(`[Server] Received ${signal}, closing SQLite DB cleanly...`);
-    closeDb();
+    console.log(`[Server] Received ${signal}, closing database cleanly...`);
+    closeDatabase();
     httpServer.close(() => {
       process.exit(0);
     });
@@ -922,7 +981,7 @@ self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
   process.once('SIGINT', () => gracefulShutdown('SIGINT'));
   process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.once('beforeExit', () => {
-    closeDb();
+    closeDatabase();
   });
 }
 

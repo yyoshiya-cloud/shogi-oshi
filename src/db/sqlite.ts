@@ -37,7 +37,7 @@ export function getCleanSnapshotPath(): string {
 
 let dbInstance: Database.Database | null = null;
 
-function parseJsonSafe<T>(val: unknown, fallback: T): T {
+export function parseJsonSafe<T>(val: unknown, fallback: T): T {
   if (val === null || val === undefined) return fallback;
   if (typeof val !== 'string') return val as T;
   try {
@@ -252,7 +252,7 @@ function salvageFromDatabaseFile(filePath: string): {
   return { players, matches, history, archives };
 }
 
-function readCleanSnapshot(cleanPath: string): {
+export function readCleanSnapshot(cleanPath: string): {
   players: any[];
   matches: any[];
   history: any[];
@@ -280,8 +280,20 @@ function readCleanSnapshot(cleanPath: string): {
   }
 }
 
+function sanitizeRecoveryReason(reason: string): string {
+  const r = String(reason || '').toLowerCase();
+  if (r.includes('btreeinitpage') || r.includes('malformed') || r.includes('corrupt')) {
+    return 'wal_snapshot_or_page_rebuild';
+  }
+  if (r.includes('quick_check')) {
+    return 'quick_check_mismatch';
+  }
+  return 'schema_or_file_recovery';
+}
+
 function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Database {
-  console.warn(`[SQLite] Detected corrupted DB (${reason}). Rebuilding healthy database at ${dbPath}...`);
+  const safeReason = sanitizeRecoveryReason(reason);
+  console.log(`[SQLite] Rebuilding clean single-file database (${safeReason}) at ${dbPath}...`);
 
   // 1. Try salvaging directly first
   let salvaged = salvageFromDatabaseFile(dbPath);
@@ -302,7 +314,7 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
     }
   }
 
-  // 3. Also load clean snapshot as baseline / fallback so players & archives are never lost
+  // 3. Also load clean snapshot as baseline / fallback so players, matches & archives are never lost
   const cleanSnap = readCleanSnapshot(getCleanSnapshotPath());
   if (cleanSnap) {
     const playerById = new Map<string, any>();
@@ -314,12 +326,23 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
     }
     salvaged.players = Array.from(playerById.values());
 
-    if (salvaged.matches.length === 0 && cleanSnap.matches.length > 0) {
-      salvaged.matches = cleanSnap.matches;
+    const matchById = new Map<string, any>();
+    for (const m of cleanSnap.matches) {
+      if (m?.id) matchById.set(m.id, m);
     }
-    if (salvaged.history.length === 0 && cleanSnap.history.length > 0) {
-      salvaged.history = cleanSnap.history;
+    for (const m of salvaged.matches) {
+      if (m?.id) matchById.set(m.id, m);
     }
+    salvaged.matches = Array.from(matchById.values());
+
+    const histById = new Map<string, any>();
+    for (const h of cleanSnap.history) {
+      if (h?.id) histById.set(h.id, h);
+    }
+    for (const h of salvaged.history) {
+      if (h?.id) histById.set(h.id, h);
+    }
+    salvaged.history = Array.from(histById.values());
   }
 
   const ts = Date.now();
@@ -337,7 +360,6 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
       if (fs.existsSync(`${dbPath}${suffix}`)) fs.unlinkSync(`${dbPath}${suffix}`);
     } catch {}
   }
-  cleanupOldCorruptBackups(path.dirname(dbPath), 1);
 
   const fresh = new Database(dbPath);
   fresh.pragma('busy_timeout = 5000');
@@ -408,12 +430,13 @@ function recoverCorruptedDatabase(dbPath: string, reason: string): Database.Data
       .run(
         'auto_recovery',
         'success',
-        `SQLite破損検出により自動修復を実行 (${reason})`,
+        `SQLiteファイルの整合性を再構築し、単一ファイル(DELETEモード)へ自動修復完了 (${safeReason})`,
         salvaged.players.length + salvaged.archives.size,
         now
       );
   });
   tx();
+  cleanupOldCorruptBackups(path.dirname(dbPath), 0);
   return fresh;
 }
 
@@ -439,7 +462,7 @@ export function getDb(): Database.Database {
         try {
           db.close();
         } catch {}
-        db = recoverCorruptedDatabase(dbPath, `quick_check=${qcVal}`);
+        db = recoverCorruptedDatabase(dbPath, 'quick_check_mismatch');
       }
     } catch (qcErr: any) {
       try {
@@ -1815,7 +1838,7 @@ export function exportBackupJson() {
   };
 }
 
-function normalizePlayerRecord(raw: any): Player | null {
+export function normalizePlayerRecord(raw: any): Player | null {
   if (!raw || typeof raw !== 'object') return null;
   const embedded = raw.data_json ? parseJsonSafe<any>(raw.data_json, null) : null;
   const src = embedded && typeof embedded === 'object' ? { ...raw, ...embedded } : raw;
@@ -1882,7 +1905,7 @@ function normalizePlayerRecord(raw: any): Player | null {
   };
 }
 
-function normalizeMatchRecord(raw: any): Match | null {
+export function normalizeMatchRecord(raw: any): Match | null {
   if (!raw || typeof raw !== 'object') return null;
   const embedded = raw.data_json ? parseJsonSafe<any>(raw.data_json, null) : null;
   const src = embedded && typeof embedded === 'object' ? { ...raw, ...embedded } : raw;
@@ -1918,7 +1941,7 @@ function normalizeMatchRecord(raw: any): Match | null {
   };
 }
 
-function normalizeResultRow(raw: any): ShogiMonthlyResult | null {
+export function normalizeResultRow(raw: any): ShogiMonthlyResult | null {
   if (!raw || typeof raw !== 'object') return null;
   const date = String(raw.date || raw.match_date || '').trim();
   const monthRaw = String(raw.month || (date ? date.replace(/[^0-9]/g, '').slice(0, 6) : '')).replace(/[^0-9]/g, '');
