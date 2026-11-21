@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
-import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch, getPlayerNumberPrefix } from '../utils/playerUtils';
+import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, isPlayerRetiredStatus, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { formatProRyuoClass, formatProJunisenClass } from './PlayerProfileModal';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import {
@@ -216,7 +216,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
               {aff}
             </span>
 
-            {isPlayerRetired(player) && (
+            {isPlayerRetiredStatus(player) && (
               <span
                 className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80"
                 title={formatPlayerRetirementDate(player)}
@@ -240,7 +240,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
           </div>
 
           {/* 竜王戦・順位戦クラスバッジ（引退棋士・引退女流棋士は非表示） */}
-          {!isPlayerRetired(player) && player.type !== 'women' && (
+          {!isPlayerRetiredStatus(player) && player.type !== 'women' && (
             <div className="flex items-center gap-1.5 flex-wrap my-1">
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-600/40">
                 竜王戦 {formatProRyuoClass(player)}
@@ -250,7 +250,7 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
               </span>
             </div>
           )}
-          {!isPlayerRetired(player) && player.type === 'women' && player.junisenClass && player.junisenClass !== '-' && (
+          {!isPlayerRetiredStatus(player) && player.type === 'women' && player.junisenClass && player.junisenClass !== '-' && (
             <div className="flex items-center gap-1.5 flex-wrap my-1">
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-zinc-800/90 text-zinc-300 border border-zinc-700">
                 女流順位戦 {player.junisenClass}
@@ -394,6 +394,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
   const [filterType, setFilterType] = useState<'all' | 'pro' | 'women'>('all');
   const [affiliationFilter, setAffiliationFilter] = useState<PlayerAffiliation | 'all' | 'oshi'>('all');
   const [titleFilter, setTitleFilter] = useState<'all' | 'hasTitle' | 'noTitle'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'onLeave' | 'retired'>('all');
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [junisenFilter, setJunisenFilter] = useState<string>('all');
   const [ryuoFilter, setRyuoFilter] = useState<string>('all');
@@ -404,7 +405,38 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     return new Map(followedList.map((f) => [f.playerId, f]));
   }, [followedList]);
 
-  // Helper to count matching players for a given rank under current filterType, affiliationFilter & titleFilter
+  const matchesStatusFilter = (p: Player, status: 'all' | 'onLeave' | 'retired') => {
+    if (status === 'all') return true;
+    if (status === 'onLeave') return isPlayerOnLeave(p);
+    if (status === 'retired') return isPlayerRetiredStatus(p);
+    return true;
+  };
+
+  const getStatusCount = (status: 'onLeave' | 'retired') => {
+    return players.filter((p) => {
+      if (filterType === 'pro' && p.type === 'women') return false;
+      if (filterType === 'women' && p.type !== 'women') return false;
+      if (affiliationFilter === 'oshi') {
+        if (!followedMap.has(p.id)) return false;
+      } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
+        return false;
+      }
+      if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
+      if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
+      return matchesStatusFilter(p, status);
+    }).length;
+  };
+
+  const onLeaveCount = useMemo(
+    () => getStatusCount('onLeave'),
+    [players, filterType, affiliationFilter, titleFilter, followedMap]
+  );
+  const retiredCount = useMemo(
+    () => getStatusCount('retired'),
+    [players, filterType, affiliationFilter, titleFilter, followedMap]
+  );
+
+  // Helper to count matching players for a given rank under current filterType, affiliationFilter, titleFilter & statusFilter
   const getRankCount = (rank: string) => {
     return players.filter((p) => {
       if (filterType === 'pro' && p.type === 'women') return false;
@@ -416,6 +448,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
       }
       if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
       if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
+      if (!matchesStatusFilter(p, statusFilter)) return false;
       if (!matchJunisenFilter(p, junisenFilter)) return false;
       if (!matchRyuoFilter(p, ryuoFilter)) return false;
       return matchesRankFilter(p, rank);
@@ -429,12 +462,21 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
     }
   }, [filterType, affiliationFilter]);
 
-  // If selected rankFilter has 0 matching players under current filterType, affiliationFilter & titleFilter, reset to 'all'
+  // If selected rankFilter has 0 matching players under current filters, reset to 'all'
   useEffect(() => {
     if (rankFilter !== 'all' && getRankCount(rankFilter) === 0) {
       setRankFilter('all');
     }
-  }, [filterType, affiliationFilter, titleFilter, rankFilter, junisenFilter, ryuoFilter, players]);
+  }, [filterType, affiliationFilter, titleFilter, statusFilter, rankFilter, junisenFilter, ryuoFilter, players]);
+
+  // If selected statusFilter has 0 matching players under current filters, reset to 'all'
+  useEffect(() => {
+    if (statusFilter === 'onLeave' && onLeaveCount === 0) {
+      setStatusFilter('all');
+    } else if (statusFilter === 'retired' && retiredCount === 0) {
+      setStatusFilter('all');
+    }
+  }, [statusFilter, onLeaveCount, retiredCount]);
 
   // Filter and sort players with guaranteed total titles and reactive recalculation
   const filteredPlayers = useMemo(() => {
@@ -452,6 +494,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           if (titleFilter === 'hasTitle' && (!p.heldTitles || p.heldTitles.length === 0)) return false;
           if (titleFilter === 'noTitle' && p.heldTitles && p.heldTitles.length > 0) return false;
 
+          if (!matchesStatusFilter(p, statusFilter)) return false;
           if (!matchesRankFilter(p, rankFilter)) return false;
           if (!matchJunisenFilter(p, junisenFilter)) return false;
           if (!matchRyuoFilter(p, ryuoFilter)) return false;
@@ -489,7 +532,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
           (a.playerNumber || 999) - (b.playerNumber || 999)
         );
       });
-  }, [players, followedMap, filterType, affiliationFilter, titleFilter, rankFilter, junisenFilter, ryuoFilter, searchQuery, sortBy]);
+  }, [players, followedMap, filterType, affiliationFilter, titleFilter, statusFilter, rankFilter, junisenFilter, ryuoFilter, searchQuery, sortBy]);
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -687,7 +730,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                   } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
                     return false;
                   }
-                  return p.heldTitles && p.heldTitles.length > 0;
+                  return p.heldTitles && p.heldTitles.length > 0 && matchesStatusFilter(p, statusFilter);
                 }).length})
               </span>
             </button>
@@ -714,9 +757,48 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                   } else if (affiliationFilter !== 'all' && p.affiliation !== affiliationFilter) {
                     return false;
                   }
-                  return !p.heldTitles || p.heldTitles.length === 0;
+                  return (!p.heldTitles || p.heldTitles.length === 0) && matchesStatusFilter(p, statusFilter);
                 }).length})
               </span>
+            </button>
+          </div>
+
+          {/* Status Filter (状態: 休場 / 引退) */}
+          <div className="flex items-center gap-2 flex-wrap pt-0.5">
+            <span className={`font-semibold mr-1 transition-colors ${affiliationFilter === 'oshi' ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              状態:
+            </span>
+            <button
+              type="button"
+              disabled={affiliationFilter === 'oshi' || onLeaveCount === 0}
+              onClick={() => setStatusFilter((prev) => (prev === 'onLeave' ? 'all' : 'onLeave'))}
+              title={affiliationFilter === 'oshi' ? '推し棋士選択時は不活性' : '休場中の棋士・女流棋士を表示'}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer ${
+                affiliationFilter === 'oshi' || onLeaveCount === 0
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : statusFilter === 'onLeave'
+                  ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                  : 'bg-zinc-950 text-amber-300 hover:text-amber-200 border border-amber-500/40'
+              }`}
+            >
+              <span>休場</span>
+              <span className="text-[10px] opacity-80">({onLeaveCount})</span>
+            </button>
+            <button
+              type="button"
+              disabled={affiliationFilter === 'oshi' || retiredCount === 0}
+              onClick={() => setStatusFilter((prev) => (prev === 'retired' ? 'all' : 'retired'))}
+              title={affiliationFilter === 'oshi' ? '推し棋士選択時は不活性' : '引退した棋士・女流棋士を表示'}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer ${
+                affiliationFilter === 'oshi' || retiredCount === 0
+                  ? 'opacity-25 cursor-not-allowed text-zinc-600 bg-zinc-950 border border-zinc-900 pointer-events-none'
+                  : statusFilter === 'retired'
+                  ? 'bg-zinc-200 text-zinc-950 font-bold shadow-sm'
+                  : 'bg-zinc-950 text-zinc-300 hover:text-white border border-zinc-700'
+              }`}
+            >
+              <span>引退</span>
+              <span className="text-[10px] opacity-80">({retiredCount})</span>
             </button>
           </div>
 
@@ -930,6 +1012,7 @@ export const PlayerDirectory: React.FC<PlayerDirectoryProps> = ({
                 setFilterType('all');
                 setAffiliationFilter('all');
                 setTitleFilter('all');
+                setStatusFilter('all');
                 setRankFilter('all');
                 setJunisenFilter('all');
                 setRyuoFilter('all');

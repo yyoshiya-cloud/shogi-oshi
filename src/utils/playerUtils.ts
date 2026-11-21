@@ -316,8 +316,6 @@ export function isPlayerOnLeave(
 
   if (player.highlights && player.highlights.some((h) => h.includes('休場'))) return true;
   if (player.shortBio && player.shortBio.includes('休場中')) return true;
-  const nameClean = player.name ? player.name.replace(/[\s\u3000※＊\*]/g, '') : '';
-  if (nameClean.includes('山田朱未') || nameClean.includes('早水千紗') || nameClean.includes('井道千尋')) return true;
   return false;
 }
 
@@ -358,7 +356,22 @@ export function isPlayerRetired(
   const retDate = (player.retirementDate || '').trim();
   if (retDate) {
     const today = referenceDate || getTodayDateString();
-    return today >= retDate;
+    if (today >= retDate) {
+      const getFy = (dStr: string) => {
+        const clean = String(dStr || '').replace(/[^0-9]/g, '');
+        if (clean.length < 8) return 2026;
+        const y = parseInt(clean.slice(0, 4), 10);
+        const m = parseInt(clean.slice(4, 6), 10);
+        if (isNaN(y) || isNaN(m)) return 2026;
+        return m >= 1 && m <= 3 ? y - 1 : y;
+      };
+      const retFy = getFy(retDate);
+      const todayFy = getFy(today);
+      if (retFy === todayFy) {
+        return false; // 当期（今年度内）に引退した場合、今年度内は引退扱いとせず表示する
+      }
+      return true;
+    }
   }
 
   // 1. Explicit rank check (e.g. "引退", "引退九段", "引退棋士", "引退女流...")
@@ -401,6 +414,30 @@ export function isPlayerRetired(
   return false;
 }
 
+/**
+ * 当期（今年度内）の引退日設定も含め、引退済みステータスかどうかを判定する（絞り込み・表示用）
+ */
+export function isPlayerRetiredStatus(
+  player: {
+    rank?: string;
+    shortBio?: string;
+    titleHistory?: string;
+    highlights?: string[];
+    retirementDate?: string;
+  },
+  referenceDate?: string
+): boolean {
+  if (!player) return false;
+  const retDate = (player.retirementDate || '').trim();
+  if (retDate) {
+    const today = referenceDate || getTodayDateString();
+    if (today >= retDate) {
+      return true;
+    }
+  }
+  return isPlayerRetired(player, referenceDate);
+}
+
 export function formatPlayerRetirementDate(player: Partial<Player>): string {
   const retDate = (player.retirementDate || '').trim();
   if (retDate) {
@@ -433,49 +470,6 @@ export function isBoilerplateBio(bio?: string | null): boolean {
 export function applyPlayerOverrides(p: Player): Player {
   const manualSet = new Set(Array.isArray(p.manualFields) ? p.manualFields : []);
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
-  const hasExplicitLeave = p.leaveInfo !== undefined || manualSet.has('leaveInfo');
-  if (nameClean.includes('山田朱未') && !hasExplicitLeave) {
-    return {
-      ...p,
-      ...(manualSet.has('careerWins') ? {} : { careerWins: 104 }),
-      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 117 }),
-      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.471 }),
-      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
-      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
-      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
-      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
-      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
-    };
-  }
-  if (nameClean.includes('早水千紗') && !hasExplicitLeave) {
-    return {
-      ...p,
-      ...(manualSet.has('careerWins') ? {} : { careerWins: 195 }),
-      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 182 }),
-      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.517 }),
-      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
-      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
-      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
-      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
-      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
-    };
-  }
-  if (nameClean.includes('井道千尋') && !hasExplicitLeave) {
-    return {
-      ...p,
-      ...(manualSet.has('careerWins') ? {} : { careerWins: 125 }),
-      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 149 }),
-      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.456 }),
-      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
-      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
-      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
-      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
-      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
-    };
-  }
 
   if (nameClean.includes('中倉宏美')) {
     return {

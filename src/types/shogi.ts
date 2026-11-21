@@ -29,7 +29,7 @@ export interface HeadToHeadRecord {
 export interface Player {
   id: string;
   name: string;
-  formerName?: string; // 旧姓・改姓前の氏名
+  formerName?: string; // 旧姓・改名前の氏名
   type: PlayerType;
   affiliation?: PlayerAffiliation; // 日本将棋連盟 | LPSA | 無所属
   rank: string; // 竜王・名人, 九段, 女流五冠, etc.

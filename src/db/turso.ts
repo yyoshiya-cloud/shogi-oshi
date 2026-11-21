@@ -85,40 +85,63 @@ export function readCleanSnapshot(filePath: string): {
 
 export function normalizePlayerRecord(raw: any): Player | null {
   if (!raw || !raw.id || !raw.name) return null;
-  const parsed = parseJsonSafe<Player>(raw.data_json, {} as Player);
+  const parsed = parseJsonSafe<Partial<Player>>(raw.data_json, {});
+  const src = { ...raw, ...parsed };
+
+  let rank = String(src.rank || '');
+  let danRank = src.danRank || src.dan_rank;
+  const isPro = src.type !== 'women';
+  const danRegex = isPro ? /([四五六七八九]段)/ : /(女流[1-2]級|女流[初一二三四五六七八]段)/;
+  if (!danRank && rank) {
+    const m = rank.match(danRegex);
+    if (m) danRank = m[1];
+  }
+
+  if (!rank && danRank) {
+    rank = danRank;
+  }
+
   return {
-    ...parsed,
-    id: String(raw.id),
-    name: String(raw.name),
-    type: (raw.type === 'women' ? 'women' : 'pro') as any,
-    rank: String(raw.rank || parsed.rank || ''),
-    birthDate: String(raw.birth_date || raw.birthDate || parsed.birthDate || '1970-01-01'),
-    birthPlace: String(raw.birth_place || raw.birthPlace || parsed.birthPlace || ''),
-    master: String(raw.master || parsed.master || ''),
-    style: (raw.style || parsed.style || '居飛車') as any,
-    ryuoClass: String(raw.ryuo_class || raw.ryuoClass || parsed.ryuoClass || ''),
-    junisenClass: String(raw.junisen_class || raw.junisenClass || parsed.junisenClass || ''),
-    heldTitles: Array.isArray(parsed.heldTitles) ? parsed.heldTitles : [],
-    totalTitles: Number(parsed.totalTitles || 0),
-    titleHistory: String(parsed.titleHistory || ''),
-    careerWins: Number(parsed.careerWins || 0),
-    careerLosses: Number(parsed.careerLosses || 0),
-    careerWinRate: Number(parsed.careerWinRate || 0),
-    currentYearWins: Number(parsed.currentYearWins || 0),
-    currentYearLosses: Number(parsed.currentYearLosses || 0),
-    currentYearWinRate: Number(parsed.currentYearWinRate || 0),
-    currentYearStreak: Number(parsed.currentYearStreak || 0),
-    rankingInFederation: parsed.rankingInFederation || {},
-    colorAccent: String(parsed.colorAccent || '#f59e0b'),
-    avatarBg: String(parsed.avatarBg || '#27272a'),
-    shortBio: String(parsed.shortBio || ''),
-    highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
-    yearRecords: Array.isArray(parsed.yearRecords) ? parsed.yearRecords : [],
-    senteWinRate: Number(parsed.senteWinRate || 0),
-    goteWinRate: Number(parsed.goteWinRate || 0),
-    openingStats: Array.isArray(parsed.openingStats) ? parsed.openingStats : [],
-    headToHead: Array.isArray(parsed.headToHead) ? parsed.headToHead : [],
-    externalLinks: parsed.externalLinks || { officialProfile: '', kifuDatabase: '' },
+    ...src,
+    id: String(src.id),
+    name: String(src.name),
+    formerName: src.formerName || src.former_name || undefined,
+    type: (src.type === 'women' ? 'women' : 'pro') as any,
+    affiliation: src.affiliation || '日本将棋連盟',
+    rank,
+    danRank: danRank || undefined,
+    playerNumber: src.playerNumber ?? src.player_number ?? undefined,
+    photoUrl: src.photoUrl || src.photo_url || undefined,
+    birthDate: String(src.birthDate || src.birth_date || '1970-01-01'),
+    birthPlace: String(src.birthPlace || src.birth_place || ''),
+    master: String(src.master || ''),
+    style: (src.style || '居飛車') as any,
+    ryuoClass: String(src.ryuoClass || src.ryuo_class || ''),
+    junisenClass: String(src.junisenClass || src.junisen_class || ''),
+    heldTitles: Array.isArray(src.heldTitles) ? src.heldTitles : [],
+    totalTitles: Number(src.totalTitles ?? 0),
+    titleHistory: String(src.titleHistory || ''),
+    eiseiTitles: Array.isArray(src.eiseiTitles) ? src.eiseiTitles : undefined,
+    careerWins: Number(src.careerWins ?? 0),
+    careerLosses: Number(src.careerLosses ?? 0),
+    careerWinRate: Number(src.careerWinRate ?? 0),
+    currentYearWins: Number(src.currentYearWins ?? 0),
+    currentYearLosses: Number(src.currentYearLosses ?? 0),
+    currentYearWinRate: Number(src.currentYearWinRate ?? 0),
+    currentYearStreak: Number(src.currentYearStreak ?? 0),
+    rankingInFederation: src.rankingInFederation || {},
+    colorAccent: String(src.colorAccent || '#f59e0b'),
+    avatarBg: String(src.avatarBg || '#27272a'),
+    shortBio: String(src.shortBio || ''),
+    highlights: Array.isArray(src.highlights) ? src.highlights : [],
+    yearRecords: Array.isArray(src.yearRecords) ? src.yearRecords : [],
+    senteWinRate: Number(src.senteWinRate || 0.5),
+    goteWinRate: Number(src.goteWinRate || 0.5),
+    openingStats: Array.isArray(src.openingStats) ? src.openingStats : [],
+    headToHead: Array.isArray(src.headToHead) ? src.headToHead : [],
+    externalLinks: src.externalLinks || { officialProfile: '', kifuDatabase: '' },
+    manualFields: Array.isArray(src.manualFields) ? src.manualFields : undefined,
+    retirementDate: src.retirementDate ? String(src.retirementDate) : undefined,
   };
 }
 
@@ -1056,7 +1079,7 @@ export async function syncNameHistoryAndRelinkArchives(): Promise<{
     await addSyncLog(
       'relink_name_history',
       'success',
-      `改姓履歴・旧姓の反映と過去対局ID再紐付け完了 (改姓履歴追加: ${insertedHistoryCount}件, 棋士更新: ${updatedPlayersCount}名, 対局結果再紐付け: ${relinkedArchiveMatchesCount}局, 公式対局予定: ${relinkedUpcomingMatchesCount}件)`,
+      `改名履歴・旧名の反映と過去対局ID再紐付け完了 (改名履歴追加: ${insertedHistoryCount}件, 棋士更新: ${updatedPlayersCount}名, 対局結果再紐付け: ${relinkedArchiveMatchesCount}局, 公式対局予定: ${relinkedUpcomingMatchesCount}件)`,
       relinkedArchiveMatchesCount
     );
   }

@@ -365,7 +365,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const s = json.summary;
       showStatus(
         'success',
-        `JSONバックアップからDB復元完了（棋士: ${s.playersImported}名 / 予定: ${s.matchesImported}件 / 対局結果: ${s.archivesMonthsImported}ヶ月 ${s.archivesResultsImported}局 / 改姓履歴: ${s.nameHistoryImported}件）`
+        `JSONバックアップからDB復元完了（棋士: ${s.playersImported}名 / 予定: ${s.matchesImported}件 / 対局結果: ${s.archivesMonthsImported}ヶ月 ${s.archivesResultsImported}局 / 改名履歴: ${s.nameHistoryImported}件）`
       );
     } catch (err: any) {
       showStatus('error', `JSONリストアエラー: ${err?.message || err}`);
@@ -816,7 +816,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const s = json.summary;
       showStatus(
         'success',
-        `改姓・旧姓データの反映と過去対局IDの再紐付けが完了しました（アーカイブ対局: ${s.relinkedArchiveMatchesCount}局, 公式対局予定: ${s.relinkedUpcomingMatchesCount}件）`
+        `改名・旧姓データの反映と過去対局IDの再紐付けが完了しました（アーカイブ対局: ${s.relinkedArchiveMatchesCount}局, 公式対局予定: ${s.relinkedUpcomingMatchesCount}件）`
       );
     } catch (err: any) {
       showStatus('error', err?.message || '再紐付けエラー');
@@ -1435,7 +1435,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               </div>
               <p className="text-xs text-zinc-400 truncate">
                 {authenticated
-                  ? '全棋士プロフィール・2021〜2026年度対局情報・公式対局予定・改姓履歴の一元管理'
+                  ? '全棋士プロフィール・2021〜2026年度対局情報・公式対局予定・改名履歴の一元管理'
                   : 'データベース管理・インポート・編集を行うにはパスワード認証が必要です'}
               </p>
             </div>
@@ -1501,7 +1501,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                   管理者パスワード入力
                 </h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  棋士・女流棋士DBの編集、2021〜2026年度データ取り込み、改姓履歴管理を行うにはパスワードを入力してください。
+                  棋士・女流棋士DBの編集、2021〜2026年度データ取り込み、改名履歴管理を行うにはパスワードを入力してください。
                 </p>
               </div>
 
@@ -1558,7 +1558,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
             <div className="flex overflow-x-auto border-b border-zinc-800 bg-zinc-900/60 px-3 sm:px-5 pt-2 gap-1 shrink-0">
               {[
                 { id: 'overview', label: 'DB概要・復元', icon: HardDrive },
-                { id: 'players', label: '棋士プロフィール・改姓', icon: Users },
+                { id: 'players', label: '棋士プロフィール・改名', icon: Users },
                 { id: 'archives', label: '2021-2026 対局結果', icon: Trophy },
                 { id: 'manual_input', label: '対局手動入力', icon: PlusCircle },
                 { id: 'csv_import', label: 'CSVインポート', icon: FileSpreadsheet },
@@ -1622,7 +1622,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       </span>
                     </div>
                     <div className="bg-zinc-900/90 p-3.5 rounded-2xl border border-zinc-800">
-                      <span className="text-[11px] text-zinc-400 block">改姓履歴</span>
+                      <span className="text-[11px] text-zinc-400 block">改名履歴</span>
                       <span className="text-xl font-black text-rose-300 font-mono">
                         {overview?.counts.player_name_history ?? nameHistory.length}
                       </span>
@@ -2359,7 +2359,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                 onClick={handleRelinkNames}
                                 disabled={isBusy}
                                 className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-sky-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                                title="改姓前の旧氏名による過去対局記録を現在の棋士IDへ再紐付けします"
+                                title="改名前の旧氏名による過去対局記録を現在の棋士IDへ再紐付けします"
                               >
                                 <RefreshCw size={11} className={isBusy ? 'animate-spin' : ''} />
                                 <span>過去対局ID紐付け再実行</span>
@@ -2418,7 +2418,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                 type="text"
                                 value={profileNameChangeNote}
                                 onChange={(e) => setProfileNameChangeNote(e.target.value)}
-                                placeholder="例: 結婚による改姓"
+                                placeholder="例: 結婚による改名"
                                 className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-zinc-100 focus:border-sky-500 focus:outline-none"
                               />
                             </div>

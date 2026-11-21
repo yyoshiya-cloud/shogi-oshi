@@ -452,11 +452,8 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
   const nameClean = cleanName(player.name);
   const debutYear = getPlayerDebutFiscalYear(player);
 
-  // 通算成績が0勝0敗の棋士（未対局・新四段等）または休場中棋士は全年度0局0勝0敗
-  if (
-    (player.careerWins === 0 && player.careerLosses === 0) ||
-    (!player.leaveInfo && (nameClean.includes('早水千紗') || nameClean.includes('山田朱未')))
-  ) {
+  // 通算成績が0勝0敗の棋士（未対局・新四段等）は全年度0局0勝0敗
+  if (player.careerWins === 0 && player.careerLosses === 0) {
     return years.map((year) => ({
       year,
       wins: 0,
@@ -467,9 +464,12 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
   }
 
   const pId = player.id || '';
-  const sName = matchStatsMap.get(nameClean);
-  const sId = pId ? matchStatsMap.get(pId) : null;
-  const benchmark = HISTORICAL_BENCHMARKS[nameClean] || (pId ? HISTORICAL_BENCHMARKS[pId] : null);
+  const formerClean = cleanName(player.formerName);
+  const keys = [pId, nameClean, formerClean].filter(Boolean) as string[];
+  const benchmark =
+    HISTORICAL_BENCHMARKS[nameClean] ||
+    (formerClean ? HISTORICAL_BENCHMARKS[formerClean] : null) ||
+    (pId ? HISTORICAL_BENCHMARKS[pId] : null);
 
   return years.map((year) => {
     // プロ入り前の過年度は公式戦対局なし（プロ入り前）
@@ -486,10 +486,18 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
     let wins = 0;
     let losses = 0;
 
+    let dbWins = 0;
+    let dbLosses = 0;
+    for (const k of keys) {
+      const st = matchStatsMap.get(k);
+      if (st && st[year]) {
+        dbWins = Math.max(dbWins, st[year].wins);
+        dbLosses = Math.max(dbLosses, st[year].losses);
+      }
+    }
+
     if (year <= 2024) {
       // 2021〜2024年度: 実対局DBアーカイブに該当年度の対局記録がある場合は最優先で集計
-      const dbWins = Math.max(sName?.[year]?.wins || 0, sId?.[year]?.wins || 0);
-      const dbLosses = Math.max(sName?.[year]?.losses || 0, sId?.[year]?.losses || 0);
       if (dbWins + dbLosses > 0) {
         wins = dbWins;
         losses = dbLosses;
@@ -513,8 +521,8 @@ export function generateCompleteYearRecords(player: Partial<Player>): YearRecord
       }
     } else {
       // 2025〜2026年度: 実対局データベースからの正確な集計
-      wins = Math.max(sName?.[year]?.wins || 0, sId?.[year]?.wins || 0);
-      losses = Math.max(sName?.[year]?.losses || 0, sId?.[year]?.losses || 0);
+      wins = dbWins;
+      losses = dbLosses;
 
       const explicit = (player.yearRecords || []).find((r) => r.year === year);
       if (wins + losses === 0 && explicit && explicit.wins + explicit.losses > 0) {
