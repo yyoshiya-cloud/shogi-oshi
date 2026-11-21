@@ -1,5 +1,6 @@
 import { createClient, type Client, type InValue } from '@libsql/client';
 import fs from 'fs';
+import { createRequire } from 'module';
 import os from 'os';
 import path from 'path';
 import type {
@@ -24,6 +25,168 @@ import {
 
 let tursoClient: Client | null = null;
 let initPromise: Promise<void> | null = null;
+let tursoDispatcher: unknown | null | undefined = undefined;
+
+export interface BootstrapBundle {
+  players: Player[];
+  matches: Match[];
+  fiscalResults: Record<string, ShogiMonthlyResult[]>;
+  nameHistory: PlayerNameHistoryItem[];
+  overview: DbOverview;
+  fallback?: boolean;
+}
+
+let memoryBootstrapCache: BootstrapBundle | null = null;
+let cacheWriteInProgress = false;
+
+const requireFromHere = createRequire(import.meta.url);
+
+function getTursoUndiciDispatcher(): unknown | undefined {
+  if (tursoDispatcher !== undefined) {
+    return tursoDispatcher || undefined;
+  }
+  try {
+    const undici = requireFromHere('undici') as {
+      Agent?: new (opts: Record<string, unknown>) => unknown;
+    };
+    if (undici && typeof undici.Agent === 'function') {
+      tursoDispatcher = new undici.Agent({
+        connect: {
+          timeout: 12_000,
+          autoSelectFamily: true,
+          autoSelectFamilyAttemptTimeout: 1000,
+        },
+        connections: 6,
+        keepAliveTimeout: 30_000,
+        keepAliveMaxTimeout: 60_000,
+      });
+      return tursoDispatcher;
+    }
+  } catch {
+    // Ignore if undici dispatcher is unavailable in runtime
+  }
+  tursoDispatcher = null;
+  return undefined;
+}
+
+function collectErrorSignals(err: unknown): { codes: Set<string>; text: string } {
+  const codes = new Set<string>();
+  const parts: string[] = [];
+  let cur: unknown = err;
+  for (let depth = 0; depth < 5 && cur && typeof cur === 'object'; depth++) {
+    const obj = cur as Record<string, unknown>;
+    if (typeof obj.code === 'string') codes.add(obj.code);
+    if (typeof obj.name === 'string') parts.push(obj.name);
+    if (typeof obj.message === 'string') parts.push(obj.message);
+    cur = obj.cause;
+  }
+  if (typeof err === 'string') parts.push(err);
+  return { codes, text: parts.join(' | ') };
+}
+
+function isConnectStageError(err: unknown): boolean {
+  const { codes, text } = collectErrorSignals(err);
+  if (
+    codes.has('UND_ERR_CONNECT_TIMEOUT') ||
+    codes.has('ECONNREFUSED') ||
+    codes.has('ENOTFOUND') ||
+    codes.has('EAI_AGAIN')
+  ) {
+    return true;
+  }
+  const lower = text.toLowerCase();
+  return (
+    lower.includes('connecttimeouterror') ||
+    lower.includes('connect timeout') ||
+    lower.includes('und_err_connect_timeout')
+  );
+}
+
+export function isTransientNetworkError(err: unknown): boolean {
+  if (isConnectStageError(err)) return true;
+  const { codes, text } = collectErrorSignals(err);
+  if (
+    codes.has('ECONNRESET') ||
+    codes.has('ETIMEDOUT') ||
+    codes.has('EPIPE') ||
+    codes.has('UND_ERR_SOCKET') ||
+    codes.has('UND_ERR_HEADERS_TIMEOUT') ||
+    codes.has('UND_ERR_BODY_TIMEOUT')
+  ) {
+    return true;
+  }
+  const lower = text.toLowerCase();
+  return (
+    lower.includes('fetch failed') ||
+    lower.includes('socket hang up') ||
+    lower.includes('network timeout') ||
+    lower.includes('econnreset') ||
+    lower.includes('etimedout') ||
+    lower.includes('eai_again')
+  );
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function tursoResilientFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const dispatcher = getTursoUndiciDispatcher();
+  const method = (input instanceof Request ? input.method : init?.method || 'GET').toUpperCase();
+  const isIdempotent = method === 'GET' || method === 'HEAD';
+  const maxAttempts = 2;
+  let lastErr: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const reqInput = input instanceof Request ? input.clone() : input;
+      const reqInit: RequestInit & { dispatcher?: unknown } = {
+        ...(init || {}),
+        ...(dispatcher ? { dispatcher } : {}),
+      };
+      const res = await globalThis.fetch(reqInput, reqInit);
+      if (isIdempotent && (res.status === 502 || res.status === 503 || res.status === 504) && attempt < maxAttempts) {
+        try {
+          await res.body?.cancel();
+        } catch {}
+        await sleepMs(300 * attempt);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      const canRetry =
+        attempt < maxAttempts && (isConnectStageError(err) || (isIdempotent && isTransientNetworkError(err)));
+      if (!canRetry) {
+        throw err;
+      }
+      console.warn(`[Turso fetch] attempt ${attempt}/${maxAttempts} transient error, retrying:`, (err as Error)?.message || err);
+      await sleepMs(350 * attempt);
+    }
+  }
+
+  throw lastErr;
+}
+
+async function withTursoReadRetry<T>(fn: () => Promise<T>, label = 'read'): Promise<T> {
+  const maxAttempts = 2;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      // Avoid stacking outer retries when tursoResilientFetch already retried connect timeouts
+      if (attempt < maxAttempts && isTransientNetworkError(err) && !isConnectStageError(err)) {
+        console.warn(`[Turso ${label}] attempt ${attempt}/${maxAttempts} failed (${(err as Error)?.message || err}), retrying...`);
+        await sleepMs(400 * attempt);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
 
 export function isTursoConfigured(): boolean {
   return true; // Turso (libSQL) is the sole database engine
@@ -238,9 +401,11 @@ export function getTursoClient(): Client {
       'TURSO_AUTH_TOKEN 環境変数が設定されていません（Turso Cloud への認証接続にはトークンが必要です）'
     );
   }
+  const isRemote = !url.startsWith('file:');
   tursoClient = createClient({
     url,
     ...(authToken ? { authToken } : {}),
+    ...(isRemote ? { fetch: tursoResilientFetch as typeof globalThis.fetch, concurrency: 4 } : {}),
   });
   return tursoClient;
 }
@@ -645,39 +810,43 @@ export async function getSyncLogs(limit = 50): Promise<SyncLogEntry[]> {
 }
 
 export async function getNameHistory(): Promise<PlayerNameHistoryItem[]> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
-  const res = await client.execute(
-    `SELECT id, player_id, old_name, new_name, changed_at, note FROM player_name_history ORDER BY changed_at DESC, id DESC`
-  );
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const res = await client.execute(
+        `SELECT id, player_id, old_name, new_name, changed_at, note FROM player_name_history ORDER BY changed_at DESC, id DESC`
+      );
 
-  return res.rows.map((r) => ({
-    id: String(r.id),
-    playerId: String(r.player_id),
-    oldName: String(r.old_name),
-    newName: String(r.new_name),
-    changedAt: String(r.changed_at),
-    note: r.note ? String(r.note) : undefined,
-  }));
+      return res.rows.map((r) => ({
+        id: String(r.id),
+        playerId: String(r.player_id),
+        oldName: String(r.old_name),
+        newName: String(r.new_name),
+        changedAt: String(r.changed_at),
+        note: r.note ? String(r.note) : undefined,
+      }));
+    }, 'getNameHistory');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getNameHistory failed; serving cached fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle().nameHistory;
+    }
+    throw err;
+  }
 }
 
-export async function getAllPlayers(): Promise<Player[]> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
-  const [rowsRes, history] = await Promise.all([
-    client.execute(
-      `SELECT id, name, former_name, data_json FROM players ORDER BY COALESCE(player_number, 9999) ASC, name ASC`
-    ),
-    getNameHistory(),
-  ]);
-
+function hydratePlayersFromRows(
+  rows: Array<{ id?: unknown; name?: unknown; former_name?: unknown; data_json?: unknown }>,
+  history: PlayerNameHistoryItem[]
+): Player[] {
   const historyByPlayer = new Map<string, PlayerNameHistoryItem[]>();
   for (const h of history) {
     if (!historyByPlayer.has(h.playerId)) historyByPlayer.set(h.playerId, []);
     historyByPlayer.get(h.playerId)!.push(h);
   }
 
-  return rowsRes.rows.map((row) => {
+  return rows.map((row) => {
     const id = String(row.id);
     const name = String(row.name);
     const parsed = parseJsonSafe<Player>(row.data_json, {
@@ -703,6 +872,37 @@ export async function getAllPlayers(): Promise<Player[]> {
     }
     return playerObj;
   });
+}
+
+export async function getAllPlayers(): Promise<Player[]> {
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const [rowsRes, histRes] = await client.batch(
+        [
+          `SELECT id, name, former_name, data_json FROM players ORDER BY COALESCE(player_number, 9999) ASC, name ASC`,
+          `SELECT id, player_id, old_name, new_name, changed_at, note FROM player_name_history ORDER BY changed_at DESC, id DESC`,
+        ],
+        'read'
+      );
+      const history: PlayerNameHistoryItem[] = histRes.rows.map((r) => ({
+        id: String(r.id),
+        playerId: String(r.player_id),
+        oldName: String(r.old_name),
+        newName: String(r.new_name),
+        changedAt: String(r.changed_at),
+        note: r.note ? String(r.note) : undefined,
+      }));
+      return hydratePlayersFromRows(rowsRes.rows as any[], history);
+    }, 'getAllPlayers');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getAllPlayers failed; serving cached fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle().players;
+    }
+    throw err;
+  }
 }
 
 export async function upsertPlayer(player: Player): Promise<Player> {
@@ -1172,10 +1372,20 @@ export async function recordPlayerNameChange(params: {
 }
 
 export async function getAllMatches(): Promise<Match[]> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
-  const res = await client.execute(`SELECT data_json FROM matches ORDER BY date DESC, time ASC`);
-  return res.rows.map((r) => parseJsonSafe<Match>(r.data_json, {} as Match)).filter((m) => Boolean(m && m.id));
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const res = await client.execute(`SELECT data_json FROM matches ORDER BY date DESC, time ASC`);
+      return res.rows.map((r) => parseJsonSafe<Match>(r.data_json, {} as Match)).filter((m) => Boolean(m && m.id));
+    }, 'getAllMatches');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getAllMatches failed; serving cached fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle().matches;
+    }
+    throw err;
+  }
 }
 
 export async function upsertMatch(match: Match): Promise<Match> {
@@ -1284,29 +1494,51 @@ export async function getAllMatchArchives(
   fiscalYear?: number,
   month?: string
 ): Promise<Record<string, ShogiMonthlyResult[]>> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
 
-  let res;
-  if (month) {
-    res = await client.execute({
-      sql: `SELECT month, results_json FROM match_archives WHERE month = ?`,
-      args: [month.replace(/[^0-9]/g, '')],
-    });
-  } else if (fiscalYear && !isNaN(fiscalYear)) {
-    res = await client.execute({
-      sql: `SELECT month, results_json FROM match_archives WHERE fiscal_year = ? ORDER BY month ASC`,
-      args: [fiscalYear],
-    });
-  } else {
-    res = await client.execute(`SELECT month, results_json FROM match_archives ORDER BY month ASC`);
-  }
+      let res;
+      if (month) {
+        res = await client.execute({
+          sql: `SELECT month, results_json FROM match_archives WHERE month = ?`,
+          args: [month.replace(/[^0-9]/g, '')],
+        });
+      } else if (fiscalYear && !isNaN(fiscalYear)) {
+        res = await client.execute({
+          sql: `SELECT month, results_json FROM match_archives WHERE fiscal_year = ? ORDER BY month ASC`,
+          args: [fiscalYear],
+        });
+      } else {
+        res = await client.execute(`SELECT month, results_json FROM match_archives ORDER BY month ASC`);
+      }
 
-  const out: Record<string, ShogiMonthlyResult[]> = {};
-  for (const r of res.rows) {
-    out[String(r.month)] = parseJsonSafe<ShogiMonthlyResult[]>(r.results_json, []);
+      const out: Record<string, ShogiMonthlyResult[]> = {};
+      for (const r of res.rows) {
+        out[String(r.month)] = parseJsonSafe<ShogiMonthlyResult[]>(r.results_json, []);
+      }
+      return out;
+    }, 'getAllMatchArchives');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getAllMatchArchives failed; serving cached fallback:', (err as Error)?.message);
+      const fallbackArchives = loadFallbackBootstrapBundle().fiscalResults;
+      if (month) {
+        const cleanM = month.replace(/[^0-9]/g, '');
+        return fallbackArchives[cleanM] ? { [cleanM]: fallbackArchives[cleanM] } : {};
+      }
+      if (fiscalYear && !isNaN(fiscalYear)) {
+        const filtered: Record<string, ShogiMonthlyResult[]> = {};
+        for (const [m, list] of Object.entries(fallbackArchives)) {
+          if (getFiscalYearFromMonth(m) === fiscalYear) filtered[m] = list;
+        }
+        return filtered;
+      }
+      return fallbackArchives;
+    }
+    throw err;
   }
-  return out;
 }
 
 const DIRECT_ADMIN_ARCHIVE_SOURCES = new Set([
@@ -1439,75 +1671,300 @@ export async function deleteMatchResultFromArchive(month: string, resultId: stri
   return true;
 }
 
-export async function getDatabaseOverview(): Promise<DbOverview> {
-  await ensureTursoInitialized();
-  const client = getTursoClient();
-  const target = getTursoSafeTargetLabel();
+function getBootstrapCachePath(): string {
+  return path.join(process.cwd(), 'data', 'turso-cache.json');
+}
 
-  const [pRes, mRes, aRes, hRes, lRes, sizeRes, recentLogs] = await Promise.all([
-    client.execute('SELECT COUNT(*) AS cnt FROM players'),
-    client.execute('SELECT COUNT(*) AS cnt FROM matches'),
-    client.execute('SELECT month, fiscal_year, count, source, updated_at FROM match_archives ORDER BY month DESC'),
-    client.execute('SELECT COUNT(*) AS cnt FROM player_name_history'),
-    client.execute('SELECT COUNT(*) AS cnt FROM sync_logs'),
-    client.execute(
-      `SELECT
-        (SELECT COALESCE(SUM(LENGTH(data_json)), 0) FROM players) +
-        (SELECT COALESCE(SUM(LENGTH(data_json)), 0) FROM matches) +
-        (SELECT COALESCE(SUM(LENGTH(results_json)), 0) FROM match_archives) AS total_bytes`
-    ),
-    getSyncLogs(30),
-  ]);
+function saveBootstrapCache(bundle: BootstrapBundle): void {
+  const cleanBundle: BootstrapBundle = {
+    players: bundle.players,
+    matches: bundle.matches,
+    fiscalResults: bundle.fiscalResults,
+    nameHistory: bundle.nameHistory,
+    overview: bundle.overview,
+  };
+  memoryBootstrapCache = cleanBundle;
+  if (cacheWriteInProgress) return;
+  cacheWriteInProgress = true;
+  const cachePath = getBootstrapCachePath();
+  const tmpPath = `${cachePath}.tmp`;
+  fs.promises
+    .mkdir(path.dirname(cachePath), { recursive: true })
+    .then(() => fs.promises.writeFile(tmpPath, JSON.stringify(cleanBundle), 'utf-8'))
+    .then(() => fs.promises.rename(tmpPath, cachePath))
+    .catch(() => {})
+    .finally(() => {
+      cacheWriteInProgress = false;
+    });
+}
 
+function buildFiscalYearsSummary(archiveSummaries: MatchArchiveSummary[]) {
   const fyMap = new Map<number, { monthsCount: number; matchesCount: number }>();
   for (const fy of [2026, 2025, 2024, 2023, 2022, 2021]) {
     fyMap.set(fy, { monthsCount: 0, matchesCount: 0 });
   }
-
-  let totalResults = 0;
-  const archiveSummaries: MatchArchiveSummary[] = aRes.rows.map((r) => {
-    const count = Number(r.count ?? 0);
-    const fy = Number(r.fiscal_year ?? 2026);
-    totalResults += count;
-    const fyEntry = fyMap.get(fy) || { monthsCount: 0, matchesCount: 0 };
+  for (const arch of archiveSummaries) {
+    const fyEntry = fyMap.get(arch.fiscalYear) || { monthsCount: 0, matchesCount: 0 };
     fyEntry.monthsCount += 1;
-    fyEntry.matchesCount += count;
-    fyMap.set(fy, fyEntry);
-    return {
-      month: String(r.month),
-      fiscalYear: fy,
-      count,
-      source: r.source ? String(r.source) : 'turso-libsql',
-      updatedAt: String(r.updated_at || ''),
-    };
-  });
-
-  const fiscalYears = Array.from(fyMap.entries())
+    fyEntry.matchesCount += arch.count;
+    fyMap.set(arch.fiscalYear, fyEntry);
+  }
+  return Array.from(fyMap.entries())
     .sort((a, b) => b[0] - a[0])
     .map(([fiscalYear, stats]) => ({
       fiscalYear,
       monthsCount: stats.monthsCount,
       matchesCount: stats.matchesCount,
     }));
+}
+
+function loadFallbackBootstrapBundle(): BootstrapBundle {
+  if (memoryBootstrapCache) {
+    return { ...memoryBootstrapCache, fallback: true };
+  }
+
+  const cachePath = getBootstrapCachePath();
+  if (fs.existsSync(cachePath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(cachePath, 'utf-8')) as BootstrapBundle;
+      if (parsed && Array.isArray(parsed.players) && parsed.players.length > 0) {
+        memoryBootstrapCache = parsed;
+        return { ...parsed, fallback: true };
+      }
+    } catch {}
+  }
+
+  const seed = readLocalSeedSnapshot();
+  const target = getTursoSafeTargetLabel();
+  const fiscalResults: Record<string, ShogiMonthlyResult[]> = {};
+  const archiveSummaries: MatchArchiveSummary[] = [];
+  let totalResults = 0;
+
+  for (const arch of Array.from(seed.archives.values()).sort((a, b) => b.month.localeCompare(a.month))) {
+    fiscalResults[arch.month] = arch.results;
+    totalResults += arch.results.length;
+    archiveSummaries.push({
+      month: arch.month,
+      fiscalYear: arch.fiscalYear,
+      count: arch.results.length,
+      source: 'local-fallback',
+      updatedAt: '',
+    });
+  }
 
   return {
-    engine: 'Turso (libSQL Cloud)',
-    dbPath: target.host,
-    projectId: 'turso-cloud',
-    databaseId: target.dbName,
-    fileSizeBytes: Number(sizeRes.rows[0]?.total_bytes ?? 0),
-    counts: {
-      players: Number(pRes.rows[0]?.cnt ?? 0),
-      matches: Number(mRes.rows[0]?.cnt ?? 0),
-      match_archives: aRes.rows.length,
-      match_results_total: totalResults,
-      player_name_history: Number(hRes.rows[0]?.cnt ?? 0),
-      sync_logs: Number(lRes.rows[0]?.cnt ?? 0),
+    players: seed.players,
+    matches: seed.matches,
+    fiscalResults,
+    nameHistory: seed.history,
+    overview: {
+      engine: 'Turso (libSQL Cloud - Fallback)',
+      dbPath: target.host,
+      projectId: 'turso-cloud',
+      databaseId: target.dbName,
+      fileSizeBytes: 0,
+      counts: {
+        players: seed.players.length,
+        matches: seed.matches.length,
+        match_archives: archiveSummaries.length,
+        match_results_total: totalResults,
+        player_name_history: seed.history.length,
+        sync_logs: 0,
+      },
+      fiscalYears: buildFiscalYearsSummary(archiveSummaries),
+      archiveSummaries,
+      recentLogs: [],
     },
-    fiscalYears,
-    archiveSummaries,
-    recentLogs,
+    fallback: true,
   };
+}
+
+export async function getBootstrapBundle(): Promise<BootstrapBundle> {
+  try {
+    const bundle = await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const target = getTursoSafeTargetLabel();
+
+      const [playersRes, matchesRes, histRes, logsRes, logsCntRes] = await client.batch(
+        [
+          `SELECT id, name, former_name, data_json FROM players ORDER BY COALESCE(player_number, 9999) ASC, name ASC`,
+          `SELECT data_json FROM matches ORDER BY date DESC, time ASC`,
+          `SELECT id, player_id, old_name, new_name, changed_at, note FROM player_name_history ORDER BY changed_at DESC, id DESC`,
+          `SELECT id, sync_type, status, message, records_count, created_at FROM sync_logs ORDER BY id DESC LIMIT 30`,
+          `SELECT COUNT(*) AS cnt FROM sync_logs`,
+        ],
+        'read'
+      );
+
+      const archivesRes = await client.execute(
+        `SELECT month, fiscal_year, count, source, updated_at, results_json FROM match_archives ORDER BY month ASC`
+      );
+
+      const nameHistory: PlayerNameHistoryItem[] = histRes.rows.map((r) => ({
+        id: String(r.id),
+        playerId: String(r.player_id),
+        oldName: String(r.old_name),
+        newName: String(r.new_name),
+        changedAt: String(r.changed_at),
+        note: r.note ? String(r.note) : undefined,
+      }));
+
+      const players = hydratePlayersFromRows(playersRes.rows as any[], nameHistory);
+      const matches = matchesRes.rows
+        .map((r) => parseJsonSafe<Match>(r.data_json, {} as Match))
+        .filter((m) => Boolean(m && m.id));
+
+      const recentLogs: SyncLogEntry[] = logsRes.rows.map((r) => ({
+        id: Number(r.id),
+        syncType: String(r.sync_type || ''),
+        status: (r.status === 'error' || r.status === 'partial' ? r.status : 'success') as SyncLogEntry['status'],
+        message: String(r.message || ''),
+        recordsCount: Number(r.records_count ?? 0),
+        createdAt: String(r.created_at || ''),
+      }));
+
+      const fiscalResults: Record<string, ShogiMonthlyResult[]> = {};
+      const archiveSummariesDesc: MatchArchiveSummary[] = [];
+      let totalResults = 0;
+      let totalBytes = 0;
+
+      for (const r of playersRes.rows) {
+        if (typeof r.data_json === 'string') totalBytes += r.data_json.length;
+      }
+      for (const r of matchesRes.rows) {
+        if (typeof r.data_json === 'string') totalBytes += r.data_json.length;
+      }
+
+      for (const r of archivesRes.rows) {
+        const month = String(r.month);
+        const list = parseJsonSafe<ShogiMonthlyResult[]>(r.results_json, []);
+        fiscalResults[month] = list;
+        if (typeof r.results_json === 'string') totalBytes += r.results_json.length;
+        const count = Number(r.count ?? list.length);
+        const fy = Number(r.fiscal_year ?? getFiscalYearFromMonth(month));
+        totalResults += count;
+        archiveSummariesDesc.push({
+          month,
+          fiscalYear: fy,
+          count,
+          source: r.source ? String(r.source) : 'turso-libsql',
+          updatedAt: String(r.updated_at || ''),
+        });
+      }
+      archiveSummariesDesc.sort((a, b) => b.month.localeCompare(a.month));
+
+      const overview: DbOverview = {
+        engine: 'Turso (libSQL Cloud)',
+        dbPath: target.host,
+        projectId: 'turso-cloud',
+        databaseId: target.dbName,
+        fileSizeBytes: totalBytes,
+        counts: {
+          players: players.length,
+          matches: matches.length,
+          match_archives: archiveSummariesDesc.length,
+          match_results_total: totalResults,
+          player_name_history: nameHistory.length,
+          sync_logs: Number(logsCntRes.rows[0]?.cnt ?? recentLogs.length),
+        },
+        fiscalYears: buildFiscalYearsSummary(archiveSummariesDesc),
+        archiveSummaries: archiveSummariesDesc,
+        recentLogs,
+      };
+
+      return {
+        players,
+        matches,
+        fiscalResults,
+        nameHistory,
+        overview,
+      };
+    }, 'getBootstrapBundle');
+
+    saveBootstrapCache(bundle);
+    return bundle;
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] /api/db/bootstrap failed after retries; serving cached/local fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle();
+    }
+    throw err;
+  }
+}
+
+export async function getDatabaseOverview(): Promise<DbOverview> {
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const target = getTursoSafeTargetLabel();
+
+      const [pRes, mRes, aRes, hRes, lRes, sizeRes, recentLogsRes] = await client.batch(
+        [
+          'SELECT COUNT(*) AS cnt FROM players',
+          'SELECT COUNT(*) AS cnt FROM matches',
+          'SELECT month, fiscal_year, count, source, updated_at FROM match_archives ORDER BY month DESC',
+          'SELECT COUNT(*) AS cnt FROM player_name_history',
+          'SELECT COUNT(*) AS cnt FROM sync_logs',
+          `SELECT
+            (SELECT COALESCE(SUM(LENGTH(data_json)), 0) FROM players) +
+            (SELECT COALESCE(SUM(LENGTH(data_json)), 0) FROM matches) +
+            (SELECT COALESCE(SUM(LENGTH(results_json)), 0) FROM match_archives) AS total_bytes`,
+          'SELECT id, sync_type, status, message, records_count, created_at FROM sync_logs ORDER BY id DESC LIMIT 30',
+        ],
+        'read'
+      );
+
+      const recentLogs: SyncLogEntry[] = recentLogsRes.rows.map((r) => ({
+        id: Number(r.id),
+        syncType: String(r.sync_type || ''),
+        status: (r.status === 'error' || r.status === 'partial' ? r.status : 'success') as SyncLogEntry['status'],
+        message: String(r.message || ''),
+        recordsCount: Number(r.records_count ?? 0),
+        createdAt: String(r.created_at || ''),
+      }));
+
+      let totalResults = 0;
+      const archiveSummaries: MatchArchiveSummary[] = aRes.rows.map((r) => {
+        const count = Number(r.count ?? 0);
+        const fy = Number(r.fiscal_year ?? 2026);
+        totalResults += count;
+        return {
+          month: String(r.month),
+          fiscalYear: fy,
+          count,
+          source: r.source ? String(r.source) : 'turso-libsql',
+          updatedAt: String(r.updated_at || ''),
+        };
+      });
+
+      return {
+        engine: 'Turso (libSQL Cloud)',
+        dbPath: target.host,
+        projectId: 'turso-cloud',
+        databaseId: target.dbName,
+        fileSizeBytes: Number(sizeRes.rows[0]?.total_bytes ?? 0),
+        counts: {
+          players: Number(pRes.rows[0]?.cnt ?? 0),
+          matches: Number(mRes.rows[0]?.cnt ?? 0),
+          match_archives: aRes.rows.length,
+          match_results_total: totalResults,
+          player_name_history: Number(hRes.rows[0]?.cnt ?? 0),
+          sync_logs: Number(lRes.rows[0]?.cnt ?? 0),
+        },
+        fiscalYears: buildFiscalYearsSummary(archiveSummaries),
+        archiveSummaries,
+        recentLogs,
+      };
+    }, 'getDatabaseOverview');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getDatabaseOverview failed; serving cached fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle().overview;
+    }
+    throw err;
+  }
 }
 
 export async function exportBackupJson() {

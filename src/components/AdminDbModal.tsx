@@ -59,9 +59,15 @@ import type {
   FollowedPlayerConfig,
 } from '../types/shogi';
 
+export interface AdminDbPartialUpdate {
+  players?: Player[];
+  matches?: Match[];
+  monthArchivePatch?: { month: string; results: ShogiMonthlyResult[] };
+}
+
 interface AdminDbModalProps {
   onClose: () => void;
-  onDatabaseUpdated: () => Promise<void> | void;
+  onDatabaseUpdated: (partial?: AdminDbPartialUpdate) => Promise<void> | void;
   followedList?: FollowedPlayerConfig[];
 }
 
@@ -119,7 +125,9 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [players, setPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [nameHistory, setNameHistory] = useState<PlayerNameHistoryItem[]>([]);
-  const [isBusy, setIsBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const isBusy = busyAction !== null;
+  const setIsBusy = (busy: boolean, action = 'other') => setBusyAction(busy ? action : null);
   const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Players tab state
@@ -323,7 +331,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleExportBackup = async () => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'export');
       const res = await adminFetch('/api/backup/export');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
@@ -335,7 +343,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showStatus('success', 'SQLiteデータベースのバックアップJSONをエクスポートしました');
+      showStatus('success', 'Turso DBのバックアップJSONをエクスポートしました');
     } catch (e: any) {
       showStatus('error', `エクスポート失敗: ${e?.message || e}`);
     } finally {
@@ -374,67 +382,9 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     }
   };
 
-  const handleImportSqliteDbFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    try {
-      setIsBusy(true);
-      const buffer = await file.arrayBuffer();
-      const res = await adminFetch('/api/admin/import-sqlite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/octet-stream' },
-        body: buffer,
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-      await loadAdminData();
-      await onDatabaseUpdated();
-      const s = json.summary;
-      showStatus(
-        'success',
-        `SQLite(.db)取り込み完了（棋士: ${s.playersImported}名 / 予定: ${s.matchesImported}件 / 対局アーカイブ: ${s.archivesMonthsImported}ヶ月 ${s.archivesResultsImported}局）`
-      );
-    } catch (err: any) {
-      showStatus('error', `SQLiteファイル取り込みエラー: ${err?.message || err}`);
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleOfficialSyncToDb = async () => {
-    try {
-      setIsBusy(true);
-      showStatus('success', '公式データ（棋士プロフィール・対局予定・最新結果）を取得してSQLite DBへ反映中...');
-      const res = await adminFetch('/api/admin/sync/official', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force: true }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-      await loadAdminData();
-      await onDatabaseUpdated();
-      showStatus(
-        'success',
-        `公式データを${overview?.engine?.toLowerCase().includes('turso') ? 'Turso DB' : 'SQLite DB（data/shogi.db）'}へ同期完了しました！`
-      );
-    } catch (err: any) {
-      showStatus('error', `公式同期エラー: ${err?.message || err}`);
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-
-
   const handleRebuildAllArchives = async (years: number[] = [2021, 2022, 2023, 2024, 2025, 2026]) => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'rebuild');
       showStatus(
         'success',
         `${years[0]}〜${years[years.length - 1]}年度の公式対局アーカイブ（手動・CSV保護データは維持）を再構築中...（30〜60秒程度かかります）`
@@ -467,14 +417,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleSyncPlayersOnly = async () => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'sync_players');
       showStatus('success', '日本将棋連盟・LPSAから最新棋士・女流棋士プロフィールを取得中...');
       const res = await adminFetch('/api/players/sync?force=true');
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
-      await loadAdminData();
-      await onDatabaseUpdated();
-      showStatus('success', `棋士・女流棋士プロフィールをSQLite DBへ更新しました（${json.players?.length || 0}名）`);
+      if (json.overview) setOverview(json.overview);
+      if (Array.isArray(json.players)) setPlayers(json.players);
+      await onDatabaseUpdated(Array.isArray(json.players) ? { players: json.players } : undefined);
+      showStatus('success', `棋士・女流棋士プロフィールをTurso DBへ更新しました（${json.players?.length || 0}名）`);
     } catch (err: any) {
       showStatus('error', `プロフィール更新エラー: ${err?.message || err}`);
     } finally {
@@ -484,14 +435,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleSyncMatchesOnly = async () => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'sync_matches');
       showStatus('success', '日本将棋連盟から最新の公式対局予定を取得中...');
       const res = await adminFetch('/api/matches/sync?force=true');
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
-      await loadAdminData();
-      await onDatabaseUpdated();
-      showStatus('success', `公式対局予定をSQLite DBへ更新しました（${json.matches?.length || 0}件）`);
+      if (json.overview) setOverview(json.overview);
+      if (Array.isArray(json.matches)) setMatches(json.matches);
+      await onDatabaseUpdated(Array.isArray(json.matches) ? { matches: json.matches } : undefined);
+      showStatus('success', `公式対局予定をTurso DBへ更新しました（${json.matches?.length || 0}件）`);
     } catch (err: any) {
       showStatus('error', `対局予定更新エラー: ${err?.message || err}`);
     } finally {
@@ -501,15 +453,23 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleSyncArchiveMonth = async (monthStr: string) => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'sync_month');
       showStatus('success', `${monthStr.slice(0, 4)}年${parseInt(monthStr.slice(4), 10)}月の公式対局結果を取得中...`);
       const res = await adminFetch(`/api/matches/results?month=${encodeURIComponent(monthStr)}&force=true`);
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
-      await loadArchiveMonth(monthStr);
-      await loadAdminData();
-      await onDatabaseUpdated();
-      showStatus('success', `${monthStr} の公式対局結果をSQLite DBへ同期しました（${json.count || 0}局・保護データ維持）`);
+      if (json.overview) setOverview(json.overview);
+      if (Array.isArray(json.results) && selectedArchiveMonth === monthStr) {
+        setArchiveMonthResults(json.results);
+      } else if (activeTab === 'archives') {
+        await loadArchiveMonth(monthStr);
+      }
+      await onDatabaseUpdated(
+        Array.isArray(json.results)
+          ? { monthArchivePatch: { month: monthStr, results: json.results } }
+          : undefined
+      );
+      showStatus('success', `${monthStr} の公式対局結果をTurso DBへ同期しました（${json.count || 0}局・保護データ維持）`);
     } catch (err: any) {
       showStatus('error', `月別対局結果同期エラー: ${err?.message || err}`);
     } finally {
@@ -788,7 +748,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const statusBadges: string[] = [];
       if (savedPlayer.danRank) statusBadges.push(`段位: ${savedPlayer.danRank}`);
       if (savedPlayer.rank) statusBadges.push(`称号: ${savedPlayer.rank}`);
-      if (json.validated) statusBadges.push('SQLiteテーブル反映検証済');
+      if (json.validated) statusBadges.push('Turso DB反映検証済');
       if (currentlyRetired) statusBadges.push('引退バッジ適用中');
       if (currentlyOnLeave) statusBadges.push('休場バッジ適用中');
       if (trimmedOld && trimmedNew) statusBadges.push(`氏名変更記録: ${trimmedOld} → ${trimmedNew}`);
@@ -807,7 +767,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const handleRelinkNames = async () => {
     try {
-      setIsBusy(true);
+      setIsBusy(true, 'relink_names');
       const res = await adminFetch('/api/admin/relink-names', { method: 'POST' });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error || '再紐付けに失敗しました');
@@ -1028,7 +988,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       resetMatchForm();
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', `公式対局予定をSQLite DBに${wasEditing ? '更新' : '追加'}しました`);
+      showStatus('success', `公式対局予定をTurso DBに${wasEditing ? '更新' : '追加'}しました`);
     } catch (err: any) {
       showStatus('error', err?.message || '予定保存エラー');
     } finally {
@@ -1178,7 +1138,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       }
       await loadAdminData();
       await onDatabaseUpdated();
-      showStatus('success', `${manualDate}「${senteName} vs ${goteName}」をSQLite DBへ手動登録しました`);
+      showStatus('success', `${manualDate}「${senteName} vs ${goteName}」をTurso DBへ手動登録しました`);
     } catch (err: any) {
       showStatus('error', err?.message || '対局手動登録エラー');
     } finally {
@@ -1376,7 +1336,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       await onDatabaseUpdated();
       showStatus(
         'success',
-        `CSVから ${parsedResults.length}件 の対局結果をSQLite DBへ一括登録しました${skipped > 0 ? `（スキップ: ${skipped}件）` : ''}`
+        `CSVから ${parsedResults.length}件 の対局結果をTurso DBへ一括登録しました${skipped > 0 ? `（スキップ: ${skipped}件）` : ''}`
       );
     } catch (err: any) {
       showStatus('error', err?.message || 'CSV一括登録エラー');
@@ -1629,48 +1589,31 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Backup / Restore / SQLite Import Actions */}
+                  {/* Backup / Restore Actions */}
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
                     <div>
                       <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
                         <FileJson size={16} />
-                        <span>「棋士・女流棋士DB」バックアップ取込・SQLite移行・エクスポート</span>
+                        <span>Turso DB バックアップ取込・エクスポート</span>
                       </h3>
                       <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                        別アプリ版の「棋士・女流棋士DB」で生成された <code className="text-zinc-200">/api/backup/export</code> の JSON ファイル、または <code className="text-zinc-200">data/shogi.db</code> ファイルをそのまま取り込んで表画面（2021〜2026年度全対局・プロフィール・対局予定）へ反映できます。
+                        <code className="text-zinc-200">/api/backup/export</code> で出力したバックアップ JSON ファイルを取り込んで Turso DB（全棋士プロフィール・2021〜2026年度対局結果・対局予定・改名履歴）を復元・出力できます。
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <label className="flex flex-col justify-between p-3.5 rounded-xl bg-zinc-950 border border-amber-500/40 hover:border-amber-400 cursor-pointer transition gap-2">
                         <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
                           <Upload size={15} />
                           <span>JSON リストア取込</span>
                         </div>
                         <span className="text-[11px] text-zinc-400">
-                          /api/backup/export 形式の JSON を選択してDBを復元
+                          /api/backup/export 形式の JSON を選択して Turso DB を復元
                         </span>
                         <input
                           type="file"
                           accept=".json,application/json"
                           onChange={handleRestoreJsonFile}
-                          disabled={isBusy}
-                          className="hidden"
-                        />
-                      </label>
-
-                      <label className="flex flex-col justify-between p-3.5 rounded-xl bg-zinc-950 border border-sky-500/40 hover:border-sky-400 cursor-pointer transition gap-2">
-                        <div className="flex items-center gap-2 text-sky-300 font-bold text-xs">
-                          <Database size={15} />
-                          <span>SQLite (.db) 取込</span>
-                        </div>
-                        <span className="text-[11px] text-zinc-400">
-                          shogi.db ファイルを直接読み込んで統合DBへ反映
-                        </span>
-                        <input
-                          type="file"
-                          accept=".db,.sqlite,.sqlite3"
-                          onChange={handleImportSqliteDbFile}
                           disabled={isBusy}
                           className="hidden"
                         />
@@ -1687,22 +1630,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           <span>バックアップ出力</span>
                         </div>
                         <span className="text-[11px] text-zinc-400">
-                          現在の統合DBを JSON でダウンロード（/api/backup/export）
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleOfficialSyncToDb}
-                        disabled={isBusy}
-                        className="flex flex-col justify-between p-3.5 rounded-xl bg-zinc-950 border border-purple-500/40 hover:border-purple-400 text-left transition gap-2 cursor-pointer disabled:opacity-50"
-                      >
-                        <div className="flex items-center gap-2 text-purple-300 font-bold text-xs">
-                          <RefreshCw size={15} className={isBusy ? 'animate-spin' : ''} />
-                          <span>連盟公式 → DB同期</span>
-                        </div>
-                        <span className="text-[11px] text-zinc-400">
-                          連盟・LPSA最新情報を取得して Turso DB を更新
+                          現在の Turso DB を JSON でダウンロード（/api/backup/export）
                         </span>
                       </button>
                     </div>
@@ -1716,7 +1644,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           年度別 対局アーカイブ収録状況（2021年度〜2026年度）
                         </h4>
                         <p className="text-[11px] text-zinc-400 mt-0.5">
-                          手動入力・CSVインポート登録対局（保護済み）を保持したまま、連盟公式データを再構築・個別更新できます。
+                          手動入力・CSVインポート登録対局（保護済み）を保持したまま、2021〜2026年度の連盟公式データを一括再構築できます。
                         </p>
                       </div>
                       <button
@@ -1725,7 +1653,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         disabled={isBusy}
                         className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0 shadow-md"
                       >
-                        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
+                        <RefreshCw size={14} className={busyAction === 'rebuild' ? 'animate-spin' : ''} />
                         <span>2021〜2026年度 対局情報を再構築</span>
                       </button>
                     </div>
@@ -1748,15 +1676,31 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         </div>
                       ))}
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  {/* Individual Partial Updates (never triggers 2021-2026 rebuild) */}
+                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-zinc-100">
+                        個別データ最新化（対象のみ更新）
+                      </h4>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                        「2021〜2026年度 対局情報を再構築」を実行せず、選択した対象データのみを Turso DB へ個別更新します。
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <button
                         type="button"
                         onClick={handleSyncPlayersOnly}
                         disabled={isBusy}
                         className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-amber-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                       >
-                        <Users size={14} className="text-amber-400" />
+                        {busyAction === 'sync_players' ? (
+                          <RefreshCw size={14} className="text-amber-400 animate-spin" />
+                        ) : (
+                          <Users size={14} className="text-amber-400" />
+                        )}
                         <span>棋士・女流プロフィール更新</span>
                       </button>
                       <button
@@ -1769,7 +1713,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         disabled={isBusy}
                         className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-emerald-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                       >
-                        <Trophy size={14} className="text-emerald-400" />
+                        {busyAction === 'sync_month' ? (
+                          <RefreshCw size={14} className="text-emerald-400 animate-spin" />
+                        ) : (
+                          <Trophy size={14} className="text-emerald-400" />
+                        )}
                         <span>今月の最新対局結果を更新</span>
                       </button>
                       <button
@@ -1778,7 +1726,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         disabled={isBusy}
                         className="px-3.5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 hover:border-sky-400 text-xs font-bold text-zinc-200 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                       >
-                        <Calendar size={14} className="text-sky-400" />
+                        {busyAction === 'sync_matches' ? (
+                          <RefreshCw size={14} className="text-sky-400 animate-spin" />
+                        ) : (
+                          <Calendar size={14} className="text-sky-400" />
+                        )}
                         <span>公式対局予定を更新</span>
                       </button>
                     </div>
@@ -2361,7 +2313,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                 className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[11px] text-sky-300 flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                 title="改名前の旧氏名による過去対局記録を現在の棋士IDへ再紐付けします"
                               >
-                                <RefreshCw size={11} className={isBusy ? 'animate-spin' : ''} />
+                                <RefreshCw size={11} className={busyAction === 'relink_names' ? 'animate-spin' : ''} />
                                 <span>過去対局ID紐付け再実行</span>
                               </button>
                               <button
@@ -2516,7 +2468,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             <Save size={14} />
-                            <span>プロフィールをSQLite DBに更新保存</span>
+                            <span>プロフィールをTurso DBに更新保存</span>
                           </button>
                         </div>
                       </form>
@@ -2564,7 +2516,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         disabled={isBusy}
                         className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-bold text-emerald-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
-                        <RefreshCw size={13} className={isBusy ? 'animate-spin' : ''} />
+                        <RefreshCw size={13} className={busyAction === 'sync_month' ? 'animate-spin' : ''} />
                         <span>選択月を公式同期</span>
                       </button>
                     </div>
@@ -2747,7 +2699,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                         <span>対局手動入力機能</span>
                       </h4>
                       <p className="text-xs text-zinc-400 mt-0.5">
-                        未登録の過去対局・公式対局結果を直接入力して SQLite データベースへ登録します
+                        未登録の過去対局・公式対局結果を直接入力して Turso データベースへ登録します
                       </p>
                     </div>
                     <button
@@ -3105,7 +3057,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           disabled={isBusy}
                           className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-bold text-sky-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
-                          <RefreshCw size={12} className={isBusy ? 'animate-spin' : ''} />
+                          <RefreshCw size={12} className={busyAction === 'sync_matches' ? 'animate-spin' : ''} />
                           <span>対局予定を公式更新</span>
                         </button>
                         <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs">

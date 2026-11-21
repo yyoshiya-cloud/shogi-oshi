@@ -36,6 +36,7 @@ import {
   recordPlayerNameChange,
   clearPlayerNameHistory,
   getDatabaseOverview,
+  getBootstrapBundle,
   addSyncLog,
   exportBackupJson,
   restoreFromBackupJson,
@@ -229,20 +230,19 @@ async function startServer() {
 
   app.get('/api/db/bootstrap', async (req, res) => {
     try {
-      const [players, matches, fiscalResults, nameHistory, overview] = await Promise.all([
-        getAllPlayers(),
-        getAllMatches(),
-        getAllMatchArchives(),
-        getNameHistory(),
-        getDatabaseOverview(),
-      ]);
+      const bundle = await getBootstrapBundle();
+      if (!bundle.fallback) {
+        dbReady = true;
+        dbInitError = null;
+      }
       res.json({
         success: true,
-        players,
-        matches,
-        fiscalResults,
-        nameHistory,
-        overview,
+        players: bundle.players,
+        matches: bundle.matches,
+        fiscalResults: bundle.fiscalResults,
+        nameHistory: bundle.nameHistory,
+        overview: bundle.overview,
+        ...(bundle.fallback ? { fallback: true } : {}),
       });
     } catch (error: any) {
       console.error('Error in /api/db/bootstrap:', error);

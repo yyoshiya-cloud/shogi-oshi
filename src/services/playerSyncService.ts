@@ -703,7 +703,9 @@ export async function scrapeAllActivePlayers(
               },
             };
             const updated = mergePreservingManualFields(existing, scrapedUpdate);
-            updated.yearRecords = generateCompleteYearRecords(updated);
+            if (!existing.yearRecords || existing.yearRecords.length === 0) {
+              updated.yearRecords = generateCompleteYearRecords(updated);
+            }
             scrapedPlayers.push(updated);
           } else {
             const accent = getAccentColor('pro', '日本将棋連盟', finalRank);
@@ -897,7 +899,9 @@ export async function scrapeAllActivePlayers(
               },
             };
             const updated = mergePreservingManualFields(existing, scrapedUpdate);
-            updated.yearRecords = generateCompleteYearRecords(updated);
+            if (!existing.yearRecords || existing.yearRecords.length === 0) {
+              updated.yearRecords = generateCompleteYearRecords(updated);
+            }
             scrapedPlayers.push(updated);
           } else {
             const accent = getAccentColor('women', '日本将棋連盟', finalRank);
@@ -1155,7 +1159,9 @@ export async function scrapeAllActivePlayers(
             },
           };
           const updated = mergePreservingManualFields(existing, scrapedUpdate);
-          updated.yearRecords = generateCompleteYearRecords(updated);
+          if (!existing.yearRecords || existing.yearRecords.length === 0) {
+            updated.yearRecords = generateCompleteYearRecords(updated);
+          }
           scrapedPlayers.push(updated);
         } else {
           const newPlayer: Player = {
@@ -1253,7 +1259,9 @@ export async function scrapeAllActivePlayers(
         goteWinRate,
       };
       const updatedStatic = mergePreservingManualFields(p, scrapedStatic);
-      updatedStatic.yearRecords = generateCompleteYearRecords(updatedStatic);
+      if (!p.yearRecords || p.yearRecords.length === 0) {
+        updatedStatic.yearRecords = generateCompleteYearRecords(updatedStatic);
+      }
       scrapedPlayers.push(updatedStatic);
     }
   }

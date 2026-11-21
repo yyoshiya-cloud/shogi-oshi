@@ -11,3 +11,5 @@ data/*.db-shm
 data/*.db-journal
 data/*.corrupt-*
 data/*.clean
+data/turso-cache.json
+data/turso-cache.json.tmp

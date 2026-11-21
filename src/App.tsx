@@ -606,7 +606,33 @@ export default function App() {
         <AdminDbModal
           followedList={followedList}
           onClose={() => setShowAdminDbModal(false)}
-          onDatabaseUpdated={async () => {
+          onDatabaseUpdated={async (partial) => {
+            if (partial && (partial.players || partial.matches || partial.monthArchivePatch)) {
+              if (partial.players && partial.players.length > 0) {
+                const initializedPlayers = partial.players.map((p) => initializePlayerRecords(p));
+                setPlayersList(initializedPlayers);
+                saveStoredPlayers(initializedPlayers);
+                setSelectedPlayer((cur) => {
+                  if (!cur) return null;
+                  return initializedPlayers.find((p) => p.id === cur.id) || cur;
+                });
+              }
+              if (partial.matches) {
+                const dedupedMatches = deduplicateMatches(partial.matches);
+                setMatchesList(dedupedMatches);
+                saveStoredMatches(dedupedMatches);
+              }
+              if (partial.monthArchivePatch) {
+                const { month, results } = partial.monthArchivePatch;
+                const mergedFiscal = {
+                  ...getStoredFiscalResults(),
+                  [month]: results,
+                };
+                replaceStoredFiscalResults(mergedFiscal);
+                handleResultsReloaded(mergedFiscal);
+              }
+              return;
+            }
             await hydrateFromSqliteDb(true);
           }}
         />
