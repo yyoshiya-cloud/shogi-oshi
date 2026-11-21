@@ -388,15 +388,7 @@ export default function App() {
             <span className="text-[11px] sm:text-xs font-bold hidden md:inline">アプリ情報</span>
           </button>
 
-          {/* Integrated Shogi DB Management Portal button (password-protected) */}
-          <button
-            onClick={() => setShowAdminDbModal(true)}
-            className="h-9 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 hover:text-emerald-200 border border-emerald-500/50 hover:border-emerald-400 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
-            title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
-          >
-            <Database size={14} className="text-emerald-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold whitespace-nowrap">DB管理</span>
-          </button>
+
 
           {/* Quick notification bell */}
           <button
@@ -488,7 +480,7 @@ export default function App() {
 
       {/* Android Bottom Navigation Bar (Material 3 style) */}
       <nav className="fixed sm:sticky bottom-0 left-0 right-0 z-30 bg-zinc-950 border-t border-zinc-800/80 px-2 py-1.5">
-        <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
           {/* Dashboard Tab */}
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -549,18 +541,6 @@ export default function App() {
               <Users size={20} />
             </div>
             <span className="text-[10px] mt-0.5">棋士名鑑</span>
-          </button>
-
-          {/* Integrated DB Management Button (Password-Protected) */}
-          <button
-            onClick={() => setShowAdminDbModal(true)}
-            className="flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition text-emerald-400 hover:text-emerald-300"
-            title="棋士・女流棋士DB 管理画面（パスワード保護）を開く"
-          >
-            <div className="p-1 rounded-xl bg-emerald-500/20 text-emerald-400">
-              <Database size={20} />
-            </div>
-            <span className="text-[10px] mt-0.5 font-bold text-emerald-400">DB管理</span>
           </button>
 
           {/* App Info & Features Button */}
