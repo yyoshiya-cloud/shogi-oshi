@@ -687,7 +687,7 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
             </div>
 
             {/* Horizontal Scrollable Date Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+            <div className="flex items-center gap-2 overflow-x-auto pl-[10px] pr-[10px] pb-1.5 pt-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
               {weekStripDays.map((d) => {
                 const isSelected = d.dateStr === selectedDate;
                 const isSun = d.dayOfWeekIdx === 0;
