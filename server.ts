@@ -39,7 +39,7 @@ import {
   importFromSqliteBuffer,
   syncNameHistoryAndRelinkArchives,
 } from './src/db/sqlite';
-import { isPlayerRetired } from './src/utils/playerUtils';
+import { isPlayerRetired, detectManualFieldChanges } from './src/utils/playerUtils';
 import type { Player, Match, ShogiMonthlyResult } from './src/types/shogi';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -318,10 +318,17 @@ async function startServer() {
 
   app.post('/api/admin/players', requireAdmin, (req, res) => {
     try {
-      const player = req.body as Player;
-      if (!player || !player.id || !player.name) {
+      const incoming = req.body as Player;
+      if (!incoming || !incoming.id || !incoming.name) {
         return res.status(400).json({ success: false, error: 'player.id と player.name が必須です' });
       }
+      const existing = getAllPlayers().find((p) => p.id === incoming.id);
+      const manualFields = detectManualFieldChanges(existing, incoming);
+      const player: Player = {
+        ...existing,
+        ...incoming,
+        ...(manualFields.length > 0 ? { manualFields } : {}),
+      };
       const saved = upsertPlayer(player);
       addSyncLog('player_upsert', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
       res.json({ success: true, player: saved });
@@ -379,11 +386,23 @@ async function startServer() {
         player.junisenClass = '';
       }
 
+      let manualFields = detectManualFieldChanges(existing, player);
+      if (nameChangePayload?.oldName?.trim() && nameChangePayload?.newName?.trim()) {
+        manualFields = Array.from(new Set([...manualFields, 'name', 'formerName']));
+      } else if (nameChangePayload?.clear) {
+        manualFields = manualFields.filter((f) => f !== 'formerName');
+      }
+      if (manualFields.length > 0) {
+        player.manualFields = manualFields;
+      } else {
+        delete player.manualFields;
+      }
+
       let saved = upsertPlayer(player);
       addSyncLog(
         'player_update',
         'success',
-        `棋士段位・プロフィール更新 [SQLiteテーブル反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'})`,
+        `棋士段位・プロフィール更新 [SQLiteテーブル反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'}${saved.manualFields?.length ? `, 手動保護: ${saved.manualFields.length}項目` : ''})`,
         1
       );
 
@@ -535,7 +554,7 @@ async function startServer() {
       const dbPlayersNow = getAllPlayers();
       const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
-        scrapeAllActivePlayers(force, dbPlayersNow),
+        scrapeAllActivePlayers(force, dbPlayersNow, dbHistoryNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
         scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);
@@ -580,7 +599,7 @@ async function startServer() {
       const includePlayersAndMatches = req.body?.includePlayersAndMatches !== false;
 
       if (includePlayersAndMatches) {
-        const playersRes = await scrapeAllActivePlayers(true, getAllPlayers());
+        const playersRes = await scrapeAllActivePlayers(true, getAllPlayers(), getNameHistory());
         if (playersRes?.success && Array.isArray(playersRes.players) && playersRes.players.length >= 50) {
           upsertPlayersBulk(playersRes.players, 'rebuild_2021_2026');
         }
@@ -661,7 +680,7 @@ async function startServer() {
   app.get('/api/players/sync', requireAdmin, async (req, res) => {
     try {
       const force = req.query.force === 'true';
-      const result = await scrapeAllActivePlayers(force, getAllPlayers());
+      const result = await scrapeAllActivePlayers(force, getAllPlayers(), getNameHistory());
       if (result?.success && Array.isArray(result.players) && result.players.length >= 50) {
         upsertPlayersBulk(result.players, 'api_sync');
       }
@@ -739,7 +758,7 @@ async function startServer() {
       const dbPlayersNow = getAllPlayers();
       const dbHistoryNow = getNameHistory();
       const [playersRes, matchesRes, incrementalResults] = await Promise.all([
-        scrapeAllActivePlayers(force, dbPlayersNow),
+        scrapeAllActivePlayers(force, dbPlayersNow, dbHistoryNow),
         scrapeMatchPlan(force, dbPlayersNow, dbHistoryNow),
         scrapeIncrementalResults(getAllMatchArchives(), force, dbPlayersNow, dbHistoryNow),
       ]);

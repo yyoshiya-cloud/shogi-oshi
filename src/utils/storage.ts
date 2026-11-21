@@ -221,6 +221,13 @@ export function saveStoredPlayers(data: Player[]): void {
       id: p.id,
       name: p.name,
       formerName: p.formerName,
+      type: p.type,
+      affiliation: p.affiliation,
+      playerNumber: p.playerNumber,
+      style: p.style,
+      birthDate: p.birthDate,
+      birthPlace: p.birthPlace,
+      master: p.master,
       currentYearWins: p.currentYearWins,
       currentYearLosses: p.currentYearLosses,
       currentYearWinRate: p.currentYearWinRate,
@@ -239,6 +246,7 @@ export function saveStoredPlayers(data: Player[]): void {
       highlights: p.highlights,
       leaveInfo: p.leaveInfo,
       retirementDate: p.retirementDate,
+      ...(Array.isArray(p.manualFields) && p.manualFields.length > 0 ? { manualFields: p.manualFields } : {}),
     }));
     localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(slim));
   } catch {

@@ -185,7 +185,7 @@ export function normalizeDateToYyyyMmDd(raw?: string | null): string {
     return `${isoLike[1]}-${mm}-${dd}`;
   }
 
-  const jp = clean.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  const jp = clean.match(/^(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
   if (jp) {
     const mm = jp[2].padStart(2, '0');
     const dd = jp[3].padStart(2, '0');
@@ -431,55 +431,58 @@ export function isBoilerplateBio(bio?: string | null): boolean {
 }
 
 export function applyPlayerOverrides(p: Player): Player {
+  const manualSet = new Set(Array.isArray(p.manualFields) ? p.manualFields : []);
   const nameClean = p.name ? p.name.replace(/[\s\u3000※＊\*]/g, '') : '';
-  const hasExplicitLeave = p.leaveInfo !== undefined;
+  const hasExplicitLeave = p.leaveInfo !== undefined || manualSet.has('leaveInfo');
   if (nameClean.includes('山田朱未') && !hasExplicitLeave) {
     return {
       ...p,
-      careerWins: 104,
-      careerLosses: 117,
-      careerWinRate: 0.471,
-      currentYearWins: 0,
-      currentYearLosses: 0,
-      currentYearWinRate: 0,
-      yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      highlights: ['休場中'],
-      shortBio: '現在は休場中。',
+      ...(manualSet.has('careerWins') ? {} : { careerWins: 104 }),
+      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 117 }),
+      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.471 }),
+      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
+      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
+      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
+      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
+      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
+      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
     };
   }
   if (nameClean.includes('早水千紗') && !hasExplicitLeave) {
     return {
       ...p,
-      careerWins: 195,
-      careerLosses: 182,
-      careerWinRate: 0.517,
-      currentYearWins: 0,
-      currentYearLosses: 0,
-      currentYearWinRate: 0,
-      yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      highlights: ['休場中'],
-      shortBio: '現在は休場中。',
+      ...(manualSet.has('careerWins') ? {} : { careerWins: 195 }),
+      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 182 }),
+      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.517 }),
+      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
+      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
+      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
+      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
+      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
+      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
     };
   }
   if (nameClean.includes('井道千尋') && !hasExplicitLeave) {
     return {
       ...p,
-      careerWins: 125,
-      careerLosses: 149,
-      careerWinRate: 0.456,
-      currentYearWins: 0,
-      currentYearLosses: 0,
-      currentYearWinRate: 0,
-      yearRecords: (p.yearRecords || []).map(yr => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
-      highlights: ['休場中'],
-      shortBio: '現在は休場中。',
+      ...(manualSet.has('careerWins') ? {} : { careerWins: 125 }),
+      ...(manualSet.has('careerLosses') ? {} : { careerLosses: 149 }),
+      ...(manualSet.has('careerWinRate') ? {} : { careerWinRate: 0.456 }),
+      ...(manualSet.has('currentYearWins') ? {} : { currentYearWins: 0 }),
+      ...(manualSet.has('currentYearLosses') ? {} : { currentYearLosses: 0 }),
+      ...(manualSet.has('currentYearWinRate') ? {} : { currentYearWinRate: 0 }),
+      yearRecords: (p.yearRecords || []).map((yr) => ({ ...yr, wins: 0, losses: 0, rate: 0 })),
+      ...(manualSet.has('highlights') ? {} : { highlights: ['休場中'] }),
+      ...(manualSet.has('shortBio') ? {} : { shortBio: '現在は休場中。' }),
     };
   }
 
   if (nameClean.includes('中倉宏美')) {
     return {
       ...p,
-      junisenClass: p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : 'フリークラス',
+      junisenClass: manualSet.has('junisenClass')
+        ? p.junisenClass
+        : (p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : 'フリークラス'),
     };
   }
   const PRO_CLASS_OVERRIDES: Record<string, { junisenClass: string; ryuoClass: string }> = {
@@ -504,12 +507,16 @@ export function applyPlayerOverrides(p: Player): Player {
       const hasStats = (p.careerWins || 0) > 0 || (p.careerLosses || 0) > 0;
       return {
         ...p,
-        junisenClass: p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : val.junisenClass,
-        ryuoClass: p.ryuoClass && p.ryuoClass !== '-' ? p.ryuoClass : val.ryuoClass,
-        ...(!hasStats && isFurui
+        junisenClass: manualSet.has('junisenClass')
+          ? p.junisenClass
+          : (p.junisenClass && p.junisenClass !== '-' ? p.junisenClass : val.junisenClass),
+        ryuoClass: manualSet.has('ryuoClass')
+          ? p.ryuoClass
+          : (p.ryuoClass && p.ryuoClass !== '-' ? p.ryuoClass : val.ryuoClass),
+        ...(!hasStats && isFurui && !manualSet.has('careerWins')
           ? { currentYearWins: 5, currentYearLosses: 5, currentYearWinRate: 0.5, careerWins: 5, careerLosses: 5, careerWinRate: 0.5 }
           : {}),
-        ...(!hasStats && isSumisaki
+        ...(!hasStats && isSumisaki && !manualSet.has('careerWins')
           ? { currentYearWins: 13, currentYearLosses: 7, currentYearWinRate: 0.65, careerWins: 13, careerLosses: 7, careerWinRate: 0.65 }
           : {}),
       };
@@ -875,5 +882,227 @@ export function normalizeAndCleanPlayersList(stored: Player[] | null | undefined
 
   return result;
 }
+
+export const EDITABLE_PLAYER_FIELDS = [
+  'name',
+  'formerName',
+  'type',
+  'affiliation',
+  'rank',
+  'danRank',
+  'playerNumber',
+  'style',
+  'junisenClass',
+  'ryuoClass',
+  'heldTitles',
+  'totalTitles',
+  'currentYearWins',
+  'currentYearLosses',
+  'currentYearWinRate',
+  'careerWins',
+  'careerLosses',
+  'careerWinRate',
+  'birthDate',
+  'birthPlace',
+  'master',
+  'photoUrl',
+  'shortBio',
+  'leaveInfo',
+  'retirementDate',
+  'bloodType',
+  'motto',
+  'favPiece',
+  'achievements',
+  'titleHistory',
+  'eiseiTitles',
+  'highlights',
+] as const;
+
+export const MANUAL_FIELD_LABELS: Record<string, string> = {
+  name: '氏名',
+  formerName: '旧氏名',
+  type: '区分',
+  affiliation: '所属',
+  rank: '称号',
+  danRank: '公式段位',
+  playerNumber: '棋士/LPSA番号',
+  style: '戦型',
+  junisenClass: '順位戦クラス',
+  ryuoClass: '竜王戦クラス',
+  heldTitles: '保持タイトル',
+  totalTitles: 'タイトル獲得合計',
+  currentYearWins: '今年度勝',
+  currentYearLosses: '今年度敗',
+  currentYearWinRate: '今年度勝率',
+  careerWins: '通算勝',
+  careerLosses: '通算敗',
+  careerWinRate: '通算勝率',
+  birthDate: '生年月日',
+  birthPlace: '出身地',
+  master: '師匠',
+  photoUrl: '顔写真URL',
+  shortBio: '短評',
+  leaveInfo: '休場情報',
+  retirementDate: '引退年月日',
+  bloodType: '血液型',
+  motto: '座右の銘',
+  favPiece: '好きな駒',
+  achievements: '主な戦績',
+  titleHistory: 'タイトル履歴',
+  eiseiTitles: '永世・クイーン称号',
+  highlights: '注目実績',
+};
+
+function normalizeRankForCompare(rank?: string | null): string {
+  let clean = String(rank || '')
+    .trim()
+    .replace(/１/g, '1')
+    .replace(/２/g, '2');
+  if (/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(clean)) {
+    return '';
+  }
+  if (clean.includes('(永世称号有資格者)')) return '永世称号有資格者';
+  if (clean.includes('(クイーン称号有資格者)')) return 'クイーン称号有資格者';
+  return clean;
+}
+
+function normalizeLeaveForCompare(leave?: Player['leaveInfo'] | null): string {
+  if (!leave) return 'false|||';
+  const isOn = Boolean(leave.isOnLeave);
+  const start = normalizeDateToYyyyMmDd(leave.startDate || '');
+  const end = normalizeDateToYyyyMmDd(leave.endDate || '');
+  const reason = (leave.reason || '').trim();
+  if (!isOn && !start && !end && !reason) return 'false|||';
+  return `${isOn}|${start}|${end}|${reason}`;
+}
+
+function normalizeFieldForCompare(field: string, value: unknown): string {
+  switch (field) {
+    case 'birthDate':
+    case 'retirementDate':
+      return normalizeDateToYyyyMmDd(typeof value === 'string' ? value : '');
+    case 'rank':
+      return normalizeRankForCompare(typeof value === 'string' ? value : '');
+    case 'danRank':
+      return String(value || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+    case 'leaveInfo':
+      return normalizeLeaveForCompare(value as Player['leaveInfo']);
+    case 'heldTitles':
+    case 'eiseiTitles':
+    case 'highlights':
+      return JSON.stringify(
+        Array.isArray(value) ? value.map((v) => String(v || '').trim()).filter(Boolean) : []
+      );
+    case 'playerNumber':
+      return value === undefined || value === null || value === '' ? '' : String(Number(value));
+    case 'totalTitles':
+    case 'currentYearWins':
+    case 'currentYearLosses':
+    case 'careerWins':
+    case 'careerLosses':
+      return String(Number(value) || 0);
+    case 'currentYearWinRate':
+    case 'careerWinRate':
+      return String(Math.round((Number(value) || 0) * 10000));
+    case 'shortBio':
+      return String(value || '').replace(/現在は休場中。?/g, '').trim();
+    default:
+      return String(value ?? '').trim();
+  }
+}
+
+/**
+ * Detects which editable fields were manually modified compared to the previous persisted player record.
+ */
+export function detectManualFieldChanges(
+  prev: Partial<Player> | undefined,
+  next: Partial<Player>
+): string[] {
+  const changed = new Set<string>(Array.isArray(prev?.manualFields) ? prev!.manualFields! : []);
+  if (Array.isArray(next.manualFields)) {
+    for (const f of next.manualFields) {
+      if (f) changed.add(f);
+    }
+  }
+
+  if (!prev) {
+    for (const field of EDITABLE_PLAYER_FIELDS) {
+      const val = (next as any)[field];
+      if (val !== undefined && val !== null && normalizeFieldForCompare(field, val) !== '') {
+        changed.add(field);
+      }
+    }
+    return Array.from(changed);
+  }
+
+  for (const field of EDITABLE_PLAYER_FIELDS) {
+    if (!(field in next)) continue;
+    const prevNorm = normalizeFieldForCompare(field, (prev as any)[field]);
+    const nextNorm = normalizeFieldForCompare(field, (next as any)[field]);
+    if (prevNorm !== nextNorm) {
+      changed.add(field);
+    }
+  }
+
+  // If user edited wins/losses manually, keep derived rates consistent as manual
+  if (changed.has('careerWins') || changed.has('careerLosses')) {
+    changed.add('careerWinRate');
+  }
+  if (changed.has('currentYearWins') || changed.has('currentYearLosses')) {
+    changed.add('currentYearWinRate');
+  }
+
+  return Array.from(changed);
+}
+
+/**
+ * Merges incoming (scraped or bulk-synced) player fields onto an existing player while strictly
+ * preserving every field listed in existing.manualFields (never overwriting manual user edits).
+ */
+export function mergePreservingManualFields(prev: Player, incoming: Partial<Player>): Player {
+  const manualList = Array.from(
+    new Set([
+      ...(Array.isArray(prev.manualFields) ? prev.manualFields : []),
+      ...(Array.isArray(incoming.manualFields) ? incoming.manualFields : []),
+    ])
+  ).filter(Boolean);
+
+  const merged: Player = {
+    ...prev,
+    ...incoming,
+    id: prev.id || incoming.id || '',
+    formerName:
+      manualList.includes('formerName')
+        ? prev.formerName
+        : (incoming.formerName || prev.formerName),
+    leaveInfo:
+      manualList.includes('leaveInfo')
+        ? prev.leaveInfo
+        : (incoming.leaveInfo || prev.leaveInfo),
+    yearRecords:
+      incoming.yearRecords && incoming.yearRecords.length > 0
+        ? incoming.yearRecords
+        : (prev.yearRecords || []),
+  };
+
+  for (const field of manualList) {
+    if (field in prev && (prev as any)[field] !== undefined) {
+      (merged as any)[field] = (prev as any)[field];
+    } else if (field === 'formerName' || field === 'retirementDate' || field === 'photoUrl') {
+      delete (merged as any)[field];
+    } else if (field === 'birthDate' || field === 'birthPlace' || field === 'master' || field === 'rank' || field === 'shortBio') {
+      (merged as any)[field] = (prev as any)[field] ?? '';
+    }
+  }
+
+  if (manualList.length > 0) {
+    merged.manualFields = manualList;
+  } else {
+    delete merged.manualFields;
+  }
+
+  return merged;
+}
+
 
 

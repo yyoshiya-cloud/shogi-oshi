@@ -47,6 +47,7 @@ import {
   PRO_DAN_RANKS,
   WOMEN_DAN_RANKS,
   getPlayerNumberPrefix,
+  MANUAL_FIELD_LABELS,
 } from '../utils/playerUtils';
 import { isProtectedMatchResult } from '../utils/resultProtection';
 import type {
@@ -1873,6 +1874,17 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                               </div>
                             </div>
                           </div>
+                          {Array.isArray(editingProfile.manualFields) && editingProfile.manualFields.length > 0 && (
+                            <div className="w-full pt-2 mt-1 border-t border-zinc-800/80 flex items-center justify-between gap-2 flex-wrap text-[11px]">
+                              <span className="text-emerald-300/90">
+                                手入力保護中:{' '}
+                                {editingProfile.manualFields
+                                  .map((f) => MANUAL_FIELD_LABELS[f] || f)
+                                  .join('・')}
+                                （再構成・公式同期時も上書きされません）
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Basic Profile Grid */}

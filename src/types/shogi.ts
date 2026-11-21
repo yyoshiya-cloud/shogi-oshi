@@ -83,6 +83,7 @@ export interface Player {
     reason?: string;
   };
   retirementDate?: string; // YYYY-MM-DD (引退年月日)
+  manualFields?: string[]; // 手動編集されたフィールドキー一覧（公式同期・再構成時も上書きしない）
 }
 
 export interface FollowedPlayerConfig {

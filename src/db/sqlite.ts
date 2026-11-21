@@ -16,7 +16,11 @@ import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
 import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 import { getTodayDateString } from '../utils/dateUtils';
-import { normalizeShogiPlayerNameForMatch, isPlayerRetired } from '../utils/playerUtils';
+import {
+  normalizeShogiPlayerNameForMatch,
+  isPlayerRetired,
+  mergePreservingManualFields,
+} from '../utils/playerUtils';
 
 export const DB_PROJECT_ID = 'local-sqlite';
 export const DB_DATABASE_ID = 'local-sqlite';
@@ -515,8 +519,17 @@ export function migrateRanksAndDanRanks(db: Database.Database): number {
         ? /([四五六七八九]段)/
         : /(女流[1-2]級|女流[初一二三四五六七八]段)/;
 
+      let pObj: any = {};
+      try {
+        pObj = JSON.parse(r.data_json);
+      } catch {
+        pObj = { id: r.id, type: r.type };
+      }
+
+      const manualSet = new Set<string>(Array.isArray(pObj.manualFields) ? pObj.manualFields : []);
+
       // 1. dan が未設定で rank から段位が抽出できる場合
-      if (!dan) {
+      if (!dan && !manualSet.has('danRank')) {
         const match = rank.match(danRegex);
         if (match) {
           dan = match[1];
@@ -525,23 +538,18 @@ export function migrateRanksAndDanRanks(db: Database.Database): number {
       }
 
       // 2. ユーザー指定: 「称号は永世、名誉資格など段位で無いものを登録する」
-      // 純粋な段位のみ（例: "九段", "六段", "女流初段"）は称号欄からは空にする
-      if (/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(rank)) {
-        rank = '';
-        changed = true;
-      } else if (rank.includes('(永世称号有資格者)')) {
-        rank = '永世称号有資格者';
-        changed = true;
-      } else if (rank.includes('(クイーン称号有資格者)')) {
-        rank = 'クイーン称号有資格者';
-        changed = true;
-      }
-
-      let pObj: any = {};
-      try {
-        pObj = JSON.parse(r.data_json);
-      } catch {
-        pObj = { id: r.id, type: r.type };
+      // 純粋な段位のみ（例: "九段", "六段", "女流初段"）は称号欄からは空にする（手動保護を除く）
+      if (!manualSet.has('rank')) {
+        if (/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(rank)) {
+          rank = '';
+          changed = true;
+        } else if (rank.includes('(永世称号有資格者)')) {
+          rank = '永世称号有資格者';
+          changed = true;
+        } else if (rank.includes('(クイーン称号有資格者)')) {
+          rank = 'クイーン称号有資格者';
+          changed = true;
+        }
       }
 
       // ユーザー指定: 女流棋士は既に登録されている竜王戦クラス項目の内容を消去する
@@ -1207,6 +1215,14 @@ export function upsertPlayer(player: Player): Player {
   } else {
     cleanPlayer.retirementDate = cleanPlayer.retirementDate.trim();
   }
+  if (Array.isArray(cleanPlayer.manualFields)) {
+    const dedupManual = Array.from(new Set(cleanPlayer.manualFields.filter((f) => typeof f === 'string' && f.trim())));
+    if (dedupManual.length > 0) {
+      cleanPlayer.manualFields = dedupManual;
+    } else {
+      delete cleanPlayer.manualFields;
+    }
+  }
   if (cleanPlayer.type === 'women' || isPlayerRetired(cleanPlayer)) {
     cleanPlayer.ryuoClass = '';
   }
@@ -1309,13 +1325,27 @@ export function upsertPlayersBulk(players: Player[], source = 'sync'): number {
   const tx = db.transaction((items: Player[]) => {
     for (const p of items) {
       const prev = existingMap.get(p.id);
-      const merged: Player = {
-        ...prev,
-        ...p,
-        formerName: p.formerName || prev?.formerName,
-        leaveInfo: p.leaveInfo || prev?.leaveInfo,
-        yearRecords: p.yearRecords && p.yearRecords.length > 0 ? p.yearRecords : (prev?.yearRecords || []),
-      };
+      const merged: Player = prev
+        ? mergePreservingManualFields(prev, p)
+        : { ...p };
+
+      // Legacy fallback guard: never wipe non-empty birthDate / birthPlace / master / retirementDate with empty strings
+      const manualSet = new Set(Array.isArray(merged.manualFields) ? merged.manualFields : []);
+      if (prev) {
+        if (!manualSet.has('birthDate') && !merged.birthDate && prev.birthDate) {
+          merged.birthDate = prev.birthDate;
+        }
+        if (!manualSet.has('birthPlace') && !merged.birthPlace && prev.birthPlace) {
+          merged.birthPlace = prev.birthPlace;
+        }
+        if (!manualSet.has('master') && !merged.master && prev.master) {
+          merged.master = prev.master;
+        }
+        if (!manualSet.has('retirementDate') && !merged.retirementDate && prev.retirementDate) {
+          merged.retirementDate = prev.retirementDate;
+        }
+      }
+
       if (merged.type === 'women' || isPlayerRetired(merged)) {
         merged.ryuoClass = '';
       }
@@ -1362,6 +1392,9 @@ export function clearPlayerNameHistory(playerId: string): Player | null {
       const currentPlayer = parseJsonSafe<Player>(existingRow.data_json, {} as Player);
       const nextPlayer: Player = { ...currentPlayer };
       delete nextPlayer.formerName;
+      if (Array.isArray(nextPlayer.manualFields)) {
+        nextPlayer.manualFields = nextPlayer.manualFields.filter((f) => f !== 'formerName');
+      }
       updatedPlayer = upsertPlayer(nextPlayer);
     }
     if (delInfo.changes > 0 || existingRow) {
@@ -1406,10 +1439,19 @@ export function recordPlayerNameChange(params: {
     note: params.note?.trim() || '氏名変更・改姓反映',
   };
 
+  const manualFields = Array.from(
+    new Set([
+      ...(Array.isArray(currentPlayer.manualFields) ? currentPlayer.manualFields : []),
+      'name',
+      'formerName',
+    ])
+  );
+
   const updatedPlayer: Player = {
     ...currentPlayer,
     name: newTrim,
     formerName: oldTrim,
+    manualFields,
   };
 
   const tx = db.transaction(() => {
@@ -1830,6 +1872,7 @@ function normalizePlayerRecord(raw: any): Player | null {
     headToHead: parseJsonSafe(src.headToHead ?? src.head_to_head, []),
     ...(src.leaveInfo ? { leaveInfo: src.leaveInfo } : {}),
     ...(src.retirementDate || src.retirement_date ? { retirementDate: String(src.retirementDate || src.retirement_date) } : {}),
+    ...(Array.isArray(src.manualFields) && src.manualFields.length > 0 ? { manualFields: src.manualFields } : {}),
     externalLinks: externalLinksRaw && typeof externalLinksRaw === 'object'
       ? externalLinksRaw
       : {

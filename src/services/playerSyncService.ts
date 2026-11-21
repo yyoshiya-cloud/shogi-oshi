@@ -1,9 +1,14 @@
 import * as cheerio from 'cheerio';
-import { Player, PlayerType, PlayerAffiliation } from '../types/shogi';
+import { Player, PlayerType, PlayerAffiliation, PlayerNameHistoryItem } from '../types/shogi';
 import { PLAYERS_DATA } from '../data/shogiDatabase';
 import { generateCompleteYearRecords } from '../utils/yearRecordsGenerator';
 import { getPlayerTotalTitles, getPlayerEiseiTitles } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge } from '../utils/playerUtils';
+import {
+  formatPlayerName,
+  formatBirthDateWithAge,
+  normalizeShogiPlayerNameForMatch,
+  mergePreservingManualFields,
+} from '../utils/playerUtils';
 
 export interface ScrapeResult {
   success: boolean;
@@ -299,31 +304,143 @@ export async function fetchLatestHakureiLeagueMap(): Promise<{ term: number; map
  * Scrape all active shogi players from Japan Shogi Association and LPSA,
  * and merge with official career win/loss records.
  */
-export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Player[]): Promise<ScrapeResult> {
+export async function scrapeAllActivePlayers(
+  force = false,
+  baselinePlayers?: Player[],
+  nameHistory?: PlayerNameHistoryItem[]
+): Promise<ScrapeResult> {
   const now = Date.now();
   if (!force && !baselinePlayers && cachedResult && now - lastScrapeTime < CACHE_TTL_MS) {
     return cachedResult;
   }
 
-  // Map existing static players first, then overlay current SQLite DB players so manual edits persist on non-scraped fields
-  const existingByName = new Map<string, Player>();
-  const registerBaseline = (p: Player) => {
-    existingByName.set(p.name.replace(/\s+/g, ''), p);
-    existingByName.set(cleanPlayerName(p.name), p);
-    existingByName.set(p.name, p);
-    if (p.formerName) {
-      existingByName.set(p.formerName.replace(/\s+/g, ''), p);
-      existingByName.set(cleanPlayerName(p.formerName), p);
-    }
+  // Prioritize SQLite baselinePlayers strictly over static PLAYERS_DATA so renames and manual edits are never shadowed
+  const baselineById = new Map<string, Player>();
+  const baselineCoveredNames = new Set<string>();
+  const addCoveredName = (n?: string | null) => {
+    if (!n) return;
+    const c1 = n.replace(/\s+/g, '');
+    const c2 = cleanPlayerName(n);
+    const c3 = normalizeShogiPlayerNameForMatch(n);
+    if (c1) baselineCoveredNames.add(c1);
+    if (c2) baselineCoveredNames.add(c2);
+    if (c3) baselineCoveredNames.add(c3);
   };
-  for (const p of PLAYERS_DATA) {
-    registerBaseline(p);
-  }
+
   if (Array.isArray(baselinePlayers)) {
     for (const p of baselinePlayers) {
-      registerBaseline(p);
+      if (!p?.id) continue;
+      baselineById.set(p.id, p);
+      addCoveredName(p.name);
+      addCoveredName(p.formerName);
     }
   }
+  if (Array.isArray(nameHistory)) {
+    for (const h of nameHistory) {
+      if (h.playerId && baselineById.has(h.playerId)) {
+        addCoveredName(h.oldName);
+        addCoveredName(h.newName);
+      }
+    }
+  }
+
+  const unifiedBaseline: Player[] = Array.from(baselineById.values());
+  for (const sp of PLAYERS_DATA) {
+    if (baselineById.has(sp.id)) continue;
+    const spNorm = normalizeShogiPlayerNameForMatch(sp.name);
+    const spClean = cleanPlayerName(sp.name);
+    if (baselineCoveredNames.has(spClean) || (spNorm && baselineCoveredNames.has(spNorm))) {
+      continue;
+    }
+    unifiedBaseline.push(sp);
+  }
+
+  const existingById = new Map<string, Player>();
+  const existingByProfilePath = new Map<string, Player>();
+  const existingByNumber = new Map<string, Player>();
+  const existingByName = new Map<string, Player>();
+
+  const registerNameLookup = (nameStr: string | null | undefined, playerObj: Player) => {
+    if (!nameStr) return;
+    const noSpace = nameStr.replace(/\s+/g, '');
+    const clean = cleanPlayerName(nameStr);
+    const norm = normalizeShogiPlayerNameForMatch(nameStr);
+    if (noSpace && !existingByName.has(noSpace)) existingByName.set(noSpace, playerObj);
+    if (clean && !existingByName.has(clean)) existingByName.set(clean, playerObj);
+    if (!existingByName.has(nameStr)) existingByName.set(nameStr, playerObj);
+    if (norm && !existingByName.has(norm)) existingByName.set(norm, playerObj);
+  };
+
+  const registerBaseline = (p: Player) => {
+    existingById.set(p.id, p);
+    const profUrl = p.externalLinks?.officialProfile || '';
+    if (profUrl) {
+      existingByProfilePath.set(profUrl, p);
+      try {
+        const u = new URL(profUrl);
+        if (u.pathname && u.pathname !== '/') {
+          existingByProfilePath.set(u.pathname, p);
+        }
+      } catch {}
+    }
+    if (p.playerNumber && p.playerNumber > 0) {
+      const affKey = p.affiliation === 'LPSA' ? 'lpsa' : 'fed';
+      existingByNumber.set(`${p.type}:${affKey}:${p.playerNumber}`, p);
+      if (!existingByNumber.has(`${p.type}:${p.playerNumber}`)) {
+        existingByNumber.set(`${p.type}:${p.playerNumber}`, p);
+      }
+    }
+    registerNameLookup(p.name, p);
+    registerNameLookup(p.formerName, p);
+  };
+
+  for (const p of unifiedBaseline) {
+    registerBaseline(p);
+  }
+  if (Array.isArray(nameHistory)) {
+    for (const h of nameHistory) {
+      const target = existingById.get(h.playerId);
+      if (target) {
+        registerNameLookup(h.oldName, target);
+        registerNameLookup(h.newName, target);
+      }
+    }
+  }
+
+  const findExistingPlayer = (opts: {
+    candidateId?: string;
+    href?: string;
+    type: PlayerType;
+    isLpsa?: boolean;
+    playerNumber?: number;
+    cleanName: string;
+  }): Player | undefined => {
+    if (opts.candidateId && existingById.has(opts.candidateId)) {
+      return existingById.get(opts.candidateId);
+    }
+    if (opts.href) {
+      const byHref =
+        existingByProfilePath.get(opts.href) ||
+        existingByProfilePath.get(`https://www.shogi.or.jp${opts.href}`);
+      if (byHref) return byHref;
+    }
+    if (opts.playerNumber && opts.playerNumber > 0) {
+      const affKey = opts.isLpsa ? 'lpsa' : 'fed';
+      const byNum =
+        existingByNumber.get(`${opts.type}:${affKey}:${opts.playerNumber}`) ||
+        existingByNumber.get(`${opts.type}:${opts.playerNumber}`);
+      if (byNum && byNum.type === opts.type) return byNum;
+    }
+    const noSpace = opts.cleanName.replace(/\s+/g, '');
+    const clean = cleanPlayerName(opts.cleanName);
+    const norm = normalizeShogiPlayerNameForMatch(opts.cleanName);
+    return (
+      existingByName.get(noSpace) ||
+      existingByName.get(clean) ||
+      existingByName.get(opts.cleanName) ||
+      (norm ? existingByName.get(norm) : undefined)
+    );
+  };
 
   let proCount = 0;
   let ladyFedCount = 0;
@@ -511,7 +628,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
         const playerNumber = numMatch ? parseInt(numMatch[1], 10) : 0;
         const slug = href.replace('/player/', '').replace(/[^a-zA-Z0-9_-]/g, '');
 
-        const existing = existingByName.get(cleanName.replace(/\s+/g, ''));
+        const existing = findExistingPlayer({
+          candidateId: slug ? `pro-${slug}` : undefined,
+          href,
+          type: 'pro',
+          playerNumber,
+          cleanName,
+        });
         const id = existing?.id || (slug ? `pro-${slug}` : `pro-${playerNumber || cleanName}`);
 
         if (!registeredIds.has(id)) {
@@ -532,12 +655,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
           const siteDan = profileDan || existing?.danRank || sectionRank;
 
           const cleanKey = cleanPlayerName(cleanName);
-          const career = careerMap.get(cleanKey);
+          const existingCleanKey = existing?.name ? cleanPlayerName(existing.name) : '';
+          const career = careerMap.get(cleanKey) || (existingCleanKey ? careerMap.get(existingCleanKey) : undefined);
           const careerWins = career ? career.wins : (existing?.careerWins || 0);
           const careerLosses = career ? career.losses : (existing?.careerLosses || 0);
           const careerWinRate = career ? career.winRate : (existing?.careerWinRate || 0);
 
-          const yr = yearResultMap.get(cleanKey);
+          const yr = yearResultMap.get(cleanKey) || (existingCleanKey ? yearResultMap.get(existingCleanKey) : undefined);
           const currentYearWins = yr ? yr.wins : (existing?.currentYearWins || 0);
           const currentYearLosses = yr ? yr.losses : (existing?.currentYearLosses || 0);
           const currentYearWinRate = yr ? yr.winRate : (existing?.currentYearWinRate || 0);
@@ -552,11 +676,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
               : existing?.goteWinRate || 0.5;
 
           if (existing) {
-            const totalTitles =
-              existing.id === 'ito-takumi' || existing.name.includes('伊藤 匠')
-                ? 4
-                : existing.totalTitles;
-            const updated: Player = {
+            const scrapedUpdate: Player = {
               ...existing,
               affiliation: existing.affiliation || '日本将棋連盟',
               rank: siteRank || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
@@ -582,6 +702,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
                 officialProfile: `https://www.shogi.or.jp${href}`,
               },
             };
+            const updated = mergePreservingManualFields(existing, scrapedUpdate);
             updated.yearRecords = generateCompleteYearRecords(updated);
             scrapedPlayers.push(updated);
           } else {
@@ -693,7 +814,14 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
         const playerNumber = numMatch ? parseInt(numMatch[1], 10) : 0;
         const slug = href.replace('/player/', '').replace(/[^a-zA-Z0-9_-]/g, '');
 
-        const existing = existingByName.get(cleanName.replace(/\s+/g, ''));
+        const existing = findExistingPlayer({
+          candidateId: slug ? `lady-${slug}` : undefined,
+          href,
+          type: 'women',
+          isLpsa: false,
+          playerNumber,
+          cleanName,
+        });
         const id = existing?.id || (slug ? `lady-${slug}` : `lady-${playerNumber || cleanName}`);
 
         if (!registeredIds.has(id)) {
@@ -714,12 +842,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
           const siteDan = profileDan || existing?.danRank || sectionRank;
 
           const cleanKey = cleanPlayerName(cleanName);
-          const career = careerMap.get(cleanKey);
+          const existingCleanKey = existing?.name ? cleanPlayerName(existing.name) : '';
+          const career = careerMap.get(cleanKey) || (existingCleanKey ? careerMap.get(existingCleanKey) : undefined);
           const careerWins = career ? career.wins : (existing?.careerWins || 0);
           const careerLosses = career ? career.losses : (existing?.careerLosses || 0);
           const careerWinRate = career ? career.winRate : (existing?.careerWinRate || 0);
 
-          const yr = yearResultMap.get(cleanKey);
+          const yr = yearResultMap.get(cleanKey) || (existingCleanKey ? yearResultMap.get(existingCleanKey) : undefined);
           const currentYearWins = yr ? yr.wins : (existing?.currentYearWins || 0);
           const currentYearLosses = yr ? yr.losses : (existing?.currentYearLosses || 0);
           const currentYearWinRate = yr ? yr.winRate : (existing?.currentYearWinRate || 0);
@@ -733,10 +862,14 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
               ? Math.max(0.05, Math.round((careerWinRate - 0.035) * 1000) / 1000)
               : existing?.goteWinRate || 0.5;
 
-          const hakureiClass = hakureiLeagueMap.get(cleanName.replace(/\s+/g, '')) || hakureiLeagueMap.get(cleanPlayerName(cleanName)) || 'フリークラス';
+          const hakureiClass =
+            hakureiLeagueMap.get(cleanName.replace(/\s+/g, '')) ||
+            hakureiLeagueMap.get(cleanPlayerName(cleanName)) ||
+            (existingCleanKey ? hakureiLeagueMap.get(existingCleanKey) : undefined) ||
+            'フリークラス';
 
           if (existing) {
-            const updated: Player = {
+            const scrapedUpdate: Player = {
               ...existing,
               affiliation: existing.affiliation || '日本将棋連盟',
               rank: siteRank || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
@@ -763,6 +896,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
                 officialProfile: `https://www.shogi.or.jp${href}`,
               },
             };
+            const updated = mergePreservingManualFields(existing, scrapedUpdate);
             updated.yearRecords = generateCompleteYearRecords(updated);
             scrapedPlayers.push(updated);
           } else {
@@ -938,7 +1072,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
         }
       });
 
-      const existing = existingByName.get(cleanNoSpace);
+      const existing = findExistingPlayer({
+        candidateId: num ? `lpsa-${num}` : undefined,
+        type: 'women',
+        isLpsa: true,
+        playerNumber: num,
+        cleanName,
+      });
       const id = existing?.id || `lpsa-${num || cleanName}`;
 
       if (cleanName && !registeredIds.has(id)) {
@@ -952,12 +1092,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
         const accent = getAccentColor('women', 'LPSA', finalRank);
 
         const cleanKey = cleanPlayerName(cleanName);
-        const career = careerMap.get(cleanKey);
+        const existingCleanKey = existing?.name ? cleanPlayerName(existing.name) : '';
+        const career = careerMap.get(cleanKey) || (existingCleanKey ? careerMap.get(existingCleanKey) : undefined);
         const careerWins = career ? career.wins : (existing?.careerWins || 0);
         const careerLosses = career ? career.losses : (existing?.careerLosses || 0);
         const careerWinRate = career ? career.winRate : (existing?.careerWinRate || 0);
 
-        const yr = yearResultMap.get(cleanKey);
+        const yr = yearResultMap.get(cleanKey) || (existingCleanKey ? yearResultMap.get(existingCleanKey) : undefined);
         const currentYearWins = yr ? yr.wins : (existing?.currentYearWins || 0);
         const currentYearLosses = yr ? yr.losses : (existing?.currentYearLosses || 0);
         const currentYearWinRate = yr ? yr.winRate : (existing?.currentYearWinRate || 0);
@@ -978,10 +1119,15 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
           OFFICIAL_LPSA_PHOTO_MAP[cleanNoSpace] ||
           (img ? (img.startsWith('http') ? img : `https://joshi-shogi.com${img}`) : undefined);
 
-        const lpsaHakureiClass = hakureiLeagueMap.get(cleanNoSpace) || hakureiLeagueMap.get(cleanPlayerName(cleanName)) || 'フリークラス';
+        const lpsaHakureiClass =
+          hakureiLeagueMap.get(cleanNoSpace) ||
+          hakureiLeagueMap.get(cleanPlayerName(cleanName)) ||
+          (existingCleanKey ? hakureiLeagueMap.get(existingCleanKey) : undefined) ||
+          'フリークラス';
 
         if (existing) {
-          const updated: Player = {
+          const existingHasFullBirthDate = Boolean(existing.birthDate && /^\d{4}/.test(existing.birthDate.trim()));
+          const scrapedUpdate: Player = {
             ...existing,
             affiliation: 'LPSA',
             rank: lpsaRankOnly || (existing.rank && !/^[一二三四五六七八九]段$|^女流[1-2]級$|^女流[初一二三四五六七八]段$/.test(existing.rank) ? existing.rank : ''),
@@ -989,7 +1135,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
             ryuoClass: '',
             photoUrl: photoUrl || existing.photoUrl,
             birthPlace: birthPlace || existing.birthPlace,
-            birthDate: birthDate || existing.birthDate,
+            birthDate: existingHasFullBirthDate ? existing.birthDate : (birthDate || existing.birthDate),
             style: existing.style || style,
             motto: motto || existing.motto,
             favPiece: favPiece || existing.favPiece,
@@ -1008,6 +1154,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
               officialProfile: careerUrl || 'https://joshi-shogi.com/profile/',
             },
           };
+          const updated = mergePreservingManualFields(existing, scrapedUpdate);
           updated.yearRecords = generateCompleteYearRecords(updated);
           scrapedPlayers.push(updated);
         } else {
@@ -1069,13 +1216,13 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
   }
 
   // 4. Ensure any existing DB or static players (e.g. independent Nakai Hiroe, retired/manually edited) are preserved with official stats
-  const fallbackPool = [...(Array.isArray(baselinePlayers) ? baselinePlayers : []), ...PLAYERS_DATA];
-  for (const p of fallbackPool) {
+  for (const p of unifiedBaseline) {
     if (!registeredIds.has(p.id)) {
       registeredIds.add(p.id);
       const cleanKey = cleanPlayerName(p.name);
-      const career = careerMap.get(cleanKey);
-      const yr = yearResultMap.get(cleanKey);
+      const formerCleanKey = p.formerName ? cleanPlayerName(p.formerName) : '';
+      const career = careerMap.get(cleanKey) || (formerCleanKey ? careerMap.get(formerCleanKey) : undefined);
+      const yr = yearResultMap.get(cleanKey) || (formerCleanKey ? yearResultMap.get(formerCleanKey) : undefined);
 
       const careerWins = career ? career.wins : p.careerWins;
       const careerLosses = career ? career.losses : p.careerLosses;
@@ -1093,9 +1240,9 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
           ? Math.max(0.05, Math.round((careerWinRate - 0.035) * 1000) / 1000)
           : p.goteWinRate || 0.5;
 
-      const updatedStatic: Player = {
+      const scrapedStatic: Player = {
         ...p,
-        totalTitles: getPlayerTotalTitles(p),
+        totalTitles: p.totalTitles > 0 ? p.totalTitles : getPlayerTotalTitles(p),
         careerWins,
         careerLosses,
         careerWinRate,
@@ -1105,6 +1252,7 @@ export async function scrapeAllActivePlayers(force = false, baselinePlayers?: Pl
         senteWinRate,
         goteWinRate,
       };
+      const updatedStatic = mergePreservingManualFields(p, scrapedStatic);
       updatedStatic.yearRecords = generateCompleteYearRecords(updatedStatic);
       scrapedPlayers.push(updatedStatic);
     }
