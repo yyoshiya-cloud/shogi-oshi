@@ -179,6 +179,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [newResSente, setNewResSente] = useState('');
   const [newResGote, setNewResGote] = useState('');
   const [newResWinner, setNewResWinner] = useState<'sente' | 'gote' | 'undecided'>('sente');
+  const [newResIsFusen, setNewResIsFusen] = useState(false);
   const [newResNote, setNewResNote] = useState('');
 
   // 対局手動入力機能 state (all fields initialized empty / un-entered)
@@ -187,6 +188,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const [manualSente, setManualSente] = useState('');
   const [manualGote, setManualGote] = useState('');
   const [manualWinner, setManualWinner] = useState<'' | 'sente' | 'gote' | 'undecided'>('');
+  const [manualIsFusen, setManualIsFusen] = useState(false);
   const [manualNote, setManualNote] = useState('');
 
   // CSVインポート機能 state
@@ -853,6 +855,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     } else {
       setNewResWinner('undecided');
     }
+    setNewResIsFusen(r.senteMark === '□' || r.goteMark === '□' || r.resultType === 'fusen');
     setNewResNote(r.note || '');
   };
 
@@ -863,6 +866,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     setNewResGote('');
     setNewResNote('');
     setNewResWinner('sente');
+    setNewResIsFusen(false);
   };
 
   const handleSaveArchiveResult = async (e: React.FormEvent) => {
@@ -881,6 +885,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         newResWinner === 'sente' ? goteClean : newResWinner === 'gote' ? senteClean : '';
       const isWomen = senteP?.type === 'women' || goteP?.type === 'women' || newResTournament.includes('女流');
 
+      const isFusen = newResIsFusen;
+      const senteMark = newResWinner === 'sente' ? (isFusen ? '□' : '○') : newResWinner === 'gote' ? (isFusen ? '■' : '●') : '';
+      const goteMark = newResWinner === 'gote' ? (isFusen ? '□' : '○') : newResWinner === 'sente' ? (isFusen ? '■' : '●') : '';
+      const resultType = isFusen ? 'fusen' : (editingArchiveResult?.resultType || 'normal');
+
       const resultObj: ShogiMonthlyResult = {
         ...(editingArchiveResult || {}),
         id: editingArchiveResult?.id || `db-res-${Date.now()}`,
@@ -892,13 +901,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         goteRaw: goteClean,
         sentePlayerId: senteP?.id,
         gotePlayerId: goteP?.id,
-        senteMark: newResWinner === 'sente' ? '○' : newResWinner === 'gote' ? '●' : '',
-        goteMark: newResWinner === 'gote' ? '○' : newResWinner === 'sente' ? '●' : '',
+        senteMark,
+        goteMark,
         winner,
         loser,
         winnerId: newResWinner === 'sente' ? senteP?.id : newResWinner === 'gote' ? goteP?.id : undefined,
         loserId: newResWinner === 'sente' ? goteP?.id : newResWinner === 'gote' ? senteP?.id : undefined,
-        resultType: editingArchiveResult?.resultType || 'normal',
+        resultType,
         tournament: newResTournament.trim() || '公式戦',
         note: newResNote.trim(),
         isWomen,
@@ -1127,6 +1136,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     setManualSente('');
     setManualGote('');
     setManualWinner('');
+    setManualIsFusen(false);
     setManualNote('');
   };
 
@@ -1151,6 +1161,11 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
       const loser =
         manualWinner === 'sente' ? goteName : manualWinner === 'gote' ? senteName : '';
 
+      const isFusen = manualIsFusen;
+      const senteMark = manualWinner === 'sente' ? (isFusen ? '□' : '○') : manualWinner === 'gote' ? (isFusen ? '■' : '●') : '';
+      const goteMark = manualWinner === 'gote' ? (isFusen ? '□' : '○') : manualWinner === 'sente' ? (isFusen ? '■' : '●') : '';
+      const resultType = isFusen ? 'fusen' : 'normal';
+
       const newResult: ShogiMonthlyResult = {
         id: `db-manual-${Date.now()}`,
         date: manualDate,
@@ -1161,13 +1176,13 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         goteRaw: goteName,
         sentePlayerId: senteP?.id,
         gotePlayerId: goteP?.id,
-        senteMark: manualWinner === 'sente' ? '○' : manualWinner === 'gote' ? '●' : '',
-        goteMark: manualWinner === 'gote' ? '○' : manualWinner === 'sente' ? '●' : '',
+        senteMark,
+        goteMark,
         winner,
         loser,
         winnerId: manualWinner === 'sente' ? senteP?.id : manualWinner === 'gote' ? goteP?.id : undefined,
         loserId: manualWinner === 'sente' ? goteP?.id : manualWinner === 'gote' ? senteP?.id : undefined,
-        resultType: 'normal',
+        resultType,
         tournament: tournamentName,
         note: manualNote.trim(),
         isWomen,
@@ -2654,7 +2669,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           キャンセル
                         </button>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                         <input
                           type="date"
                           value={newResDate}
@@ -2697,10 +2712,21 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                           <option value="gote">後手勝ち</option>
                           <option value="undecided">勝敗未定</option>
                         </select>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+                        <label className="flex items-center gap-2 text-xs text-amber-300 font-semibold cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newResIsFusen}
+                            onChange={(e) => setNewResIsFusen(e.target.checked)}
+                            className="accent-amber-500 rounded"
+                          />
+                          <span>不戦チェック（ONの場合は勝者: □ / 敗者: ■）</span>
+                        </label>
                         <button
                           type="submit"
                           disabled={isBusy}
-                          className="font-bold rounded-xl px-3 py-1.5 cursor-pointer disabled:opacity-50 bg-sky-500 hover:bg-sky-400 text-zinc-950"
+                          className="font-bold rounded-xl px-4 py-1.5 cursor-pointer disabled:opacity-50 bg-sky-500 hover:bg-sky-400 text-zinc-950 text-xs"
                         >
                           更新保存
                         </button>
@@ -2871,7 +2897,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-300 font-semibold block mb-2">勝者</label>
+                      <label className="text-zinc-300 font-semibold block mb-2">勝者・不戦</label>
                       <div className="flex flex-wrap items-center gap-4 py-1.5">
                         <label className="flex items-center gap-2 cursor-pointer text-zinc-200">
                           <input
@@ -2905,6 +2931,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                             className="accent-amber-500"
                           />
                           <span>勝敗未定</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-amber-300 font-semibold ml-2">
+                          <input
+                            type="checkbox"
+                            checked={manualIsFusen}
+                            onChange={(e) => setManualIsFusen(e.target.checked)}
+                            className="accent-amber-500 rounded"
+                          />
+                          <span>不戦チェック (□ / ■)</span>
                         </label>
                       </div>
                     </div>
