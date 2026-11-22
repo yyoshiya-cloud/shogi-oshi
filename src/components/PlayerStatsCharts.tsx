@@ -361,8 +361,6 @@ export const PlayerStatsCharts: React.FC<PlayerStatsChartsProps> = ({ player, on
   }, [isZoomModalOpen]);
 
   const onLeave = isPlayerOnLeave(player);
-  const hasCareerStats = player.careerWins > 0 || player.careerLosses > 0;
-  const hasYearStats = player.currentYearWins > 0 || player.currentYearLosses > 0;
 
   // Comprehensive 2021-2026 year records generated for all players
   const effectiveYearRecords = useMemo<YearRecord[]>(() => {

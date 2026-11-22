@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, memo } from 'react';
-import { Player, FollowedPlayerConfig, OshiBadge, PlayerAffiliation } from '../types/shogi';
+import { Player, FollowedPlayerConfig, PlayerAffiliation } from '../types/shogi';
 import { OshiConfigModal } from './OshiConfigModal';
 import { getPlayerTotalTitles, isEiseiPlayer, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import { formatPlayerName, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, isPlayerRetiredStatus, formatPlayerRetirementDate, formatPlayerRankAndDan, normalizeShogiPlayerNameForMatch, getPlayerNumberPrefix } from '../utils/playerUtils';
@@ -10,8 +10,6 @@ import {
   Heart,
   Trophy,
   SlidersHorizontal,
-  Check,
-  UserCheck,
   Sparkles,
   ChevronRight,
   RefreshCw,
@@ -36,13 +34,6 @@ interface PlayerDirectoryProps {
   mode?: 'directory' | 'select';
   selectedPlayerId?: string;
 }
-
-const BADGE_COLORS: Record<OshiBadge, { bg: string; text: string; border: string }> = {
-  本命: { bg: 'bg-rose-500/20', text: 'text-rose-300', border: 'border-rose-500/40' },
-  神推し: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/40' },
-  激推し: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/40' },
-  注目: { bg: 'bg-sky-500/20', text: 'text-sky-300', border: 'border-sky-500/40' },
-};
 
 const AFFILIATION_COLORS: Record<PlayerAffiliation, { bg: string; text: string; border: string }> = {
   日本将棋連盟: { bg: 'bg-zinc-800', text: 'text-zinc-300', border: 'border-zinc-700' },
@@ -149,7 +140,6 @@ interface PlayerCardItemProps {
  * Optimized and memoized Player Card component ensuring immediate, efficient rendering of career title badges.
  */
 const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directory', isSelected = false, onSelectPlayer, onOpenConfig }: PlayerCardItemProps) => {
-  const badgeStyle = isFollowed && followConfig ? BADGE_COLORS[followConfig.badge] : null;
   const aff: PlayerAffiliation = player.affiliation || '日本将棋連盟';
   const affStyle = AFFILIATION_COLORS[aff];
 
@@ -157,8 +147,6 @@ const PlayerCardItem = memo(({ player, isFollowed, followConfig, mode = 'directo
   const totalTitles = useMemo(() => getPlayerTotalTitles(player), [player]);
 
   const onLeave = isPlayerOnLeave(player);
-  const hasCareerStats = player.careerWins > 0 || player.careerLosses > 0;
-  const hasYearStats = player.currentYearWins > 0 || player.currentYearLosses > 0;
 
   return (
     <div

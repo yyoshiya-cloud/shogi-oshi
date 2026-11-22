@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Match, Player, FollowedPlayerConfig, ShogiMonthlyResult } from '../types/shogi';
-import { getGoogleCalendarUrl, downloadICSFile, downloadMultipleICSFile, MatchExportItem } from '../utils/calendarExport';
+import { getGoogleCalendarUrl, downloadMultipleICSFile, MatchExportItem } from '../utils/calendarExport';
 import { getTodayInfo, formatJapaneseDate } from '../utils/dateUtils';
 import { formatPlayerName, formatPlayerRankAndDan, resolvePlayer } from '../utils/playerUtils';
 import {
@@ -11,17 +11,12 @@ import {
   Heart,
   CalendarPlus,
   Download,
-  Filter,
   List,
   Grid,
   RefreshCw,
   ExternalLink,
   Trophy,
   Bookmark,
-  BookmarkCheck,
-  CheckSquare,
-  Square,
-  Check,
   X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -150,7 +145,6 @@ export const CalendarScheduleView: React.FC<CalendarScheduleViewProps> = ({
   };
 
   const followedPlayerIds = new Set(followedList.map((f) => f.playerId));
-  const playerMap = new Map(players.map((p) => [p.id, p]));
 
   const getPlayer = (id: string): Player => {
     return resolvePlayer(id, players);

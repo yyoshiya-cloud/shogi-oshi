@@ -314,7 +314,7 @@ export async function scrapeAllActivePlayers(
     return cachedResult;
   }
 
-  // Prioritize SQLite baselinePlayers strictly over static PLAYERS_DATA so renames and manual edits are never shadowed
+  // Prioritize Turso DB baselinePlayers strictly over static PLAYERS_DATA so renames and manual edits are never shadowed
   const baselineById = new Map<string, Player>();
   const baselineCoveredNames = new Set<string>();
   const addCoveredName = (n?: string | null) => {
@@ -450,7 +450,7 @@ export async function scrapeAllActivePlayers(
   const registeredIds = new Set<string>();
 
   // Fetch official sources & latest Hakurei league map in parallel
-  const [{ term: hakureiTerm, map: hakureiLeagueMap }, proHtml, ladyHtml, lpsaHtml, menAllHtml, ladyAllHtml, yearResultHtml, yearResultLadyHtml] = await Promise.all([
+  const [{ map: hakureiLeagueMap }, proHtml, ladyHtml, lpsaHtml, menAllHtml, ladyAllHtml, yearResultHtml, yearResultLadyHtml] = await Promise.all([
     fetchLatestHakureiLeagueMap().catch(() => ({ term: 7, map: new Map<string, string>() })),
     fetchWithTimeout('https://www.shogi.or.jp/player/index.php').catch((err) => {
       console.warn('Could not fetch shogi.or.jp pros:', err);
@@ -1595,24 +1595,6 @@ export async function fetchPlayerProfileDetail(url: string, name?: string): Prom
           }
         }
       }
-
-      // Romaji English name
-      let romaji: string | undefined = undefined;
-      const bodyText = $('body').text();
-      const h1 = $('h1').text().trim();
-      if (h1) {
-        const regex = new RegExp(
-          h1.replace(/\s+/g, '\\s*') + '\\s+([A-Za-z\\s]+)\\s+(?:棋士番号|女流棋士番号)'
-        );
-        const match = bodyText.match(regex);
-        if (match) {
-          romaji = match[1].trim();
-        }
-      }
-
-      const masterText = master ? `師匠: ${master}。` : '';
-      const birthText = birthPlace ? `出身地: ${birthPlace}。` : '';
-      const titlesText = totalTitles > 0 ? `通算タイトル獲得: ${totalTitles}期。` : '';
 
       const detailResult: PlayerProfileDetail = {
         danRank: danRank || undefined,

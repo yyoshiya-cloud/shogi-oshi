@@ -1,4 +1,6 @@
 import { getTodayDateString } from './dateUtils';
+import { getPlayerTotalTitles } from './titleUtils';
+import { initializePlayerRecords } from './yearRecordsGenerator';
 
 const KNOWN_NO_SPACE_NAMES: Record<string, string> = {
   // Active / notable players whose names on official sites lack spaces
@@ -837,10 +839,6 @@ export function resolvePlayer(id: string | undefined, players: Player[]): Player
   // 5. Fallback safe Player object
   return createFallbackPlayer(targetId);
 }
-
-import { getPlayerTotalTitles } from './titleUtils';
-import { initializePlayerRecords } from './yearRecordsGenerator';
-import { saveStoredPlayers } from './storage';
 
 /**
  * Normalizes, cleans, and initializes the player list on startup or sync.

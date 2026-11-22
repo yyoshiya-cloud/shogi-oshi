@@ -1,12 +1,11 @@
 import React from 'react';
-import { Player, FollowedPlayerConfig, Match, OshiBadge } from '../types/shogi';
+import { Player, FollowedPlayerConfig, Match } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
 import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
   Heart,
-  Calendar,
   Trophy,
   ChevronRight,
   Plus,
@@ -27,13 +26,6 @@ interface OshiDashboardProps {
   onRemoveFollow: (playerId: string) => void;
   onToggleFollow?: (config: FollowedPlayerConfig) => void;
 }
-
-const BADGE_COLORS: Record<OshiBadge, { bg: string; text: string; border: string }> = {
-  本命: { bg: 'bg-rose-500/20', text: 'text-rose-300', border: 'border-rose-500/40' },
-  神推し: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/40' },
-  激推し: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/40' },
-  注目: { bg: 'bg-sky-500/20', text: 'text-sky-300', border: 'border-sky-500/40' },
-};
 
 export const OshiDashboard: React.FC<OshiDashboardProps> = ({
   followedList,
@@ -195,8 +187,6 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
             {followedList.map((config) => {
               const player = followedPlayerMap.get(config.playerId);
               if (!player) return null;
-
-              const badgeStyle = BADGE_COLORS[config.badge];
 
               // Next upcoming match for this player
               const nextMatch = matches.find(

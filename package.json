@@ -10,7 +10,6 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "sync:worker": "tsx scripts/syncWorker.ts",
     "db:migrate:turso": "tsx scripts/migrateToTurso.ts"
   },
   "dependencies": {

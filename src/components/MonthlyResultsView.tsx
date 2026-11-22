@@ -213,7 +213,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     }
   }, [availableFiscalYearMonths, selectedMonth]);
 
-  const followedPlayerIds = useMemo(() => new Set(followedList.map((f) => f.playerId)), [followedList]);
   const followedPlayerNames = useMemo(() => {
     const set = new Set<string>();
     followedList.forEach((f) => {
@@ -225,17 +224,6 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     });
     return set;
   }, [followedList, players]);
-
-  // Fast player lookup
-  const playerMap = useMemo(() => {
-    const map = new Map<string, Player>();
-    players.forEach((p) => {
-      map.set(p.name.replace(/\s+/g, ''), p);
-      map.set(p.name, p);
-      map.set(p.id, p);
-    });
-    return map;
-  }, [players]);
 
   const totalFiscalYearMatches = useMemo(() => {
     return activeFiscalYearMonths.reduce((sum, m) => sum + (monthlyData[m.key]?.length || 0), 0);
@@ -360,7 +348,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     return () => window.removeEventListener('shogi_results_updated', handleResultsUpdated);
   }, []);
 
-  // SQLite DB（data/shogi.db）から最新の対局結果データを読み込む（読み取り専用）
+  // Turso DB から最新の対局結果データを読み込む（読み取り専用）
   const handleRefreshMonth = async () => {
     setIsRefreshing(true);
     setRefreshMessage(null);

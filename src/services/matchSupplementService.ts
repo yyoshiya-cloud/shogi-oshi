@@ -99,8 +99,7 @@ export function enrichAllResultsWithSupplements(
 ): Record<string, ShogiMonthlyResult[]> {
   const enriched: Record<string, ShogiMonthlyResult[]> = { ...resultsRecord };
 
-  // Enrich all months present in supplementByMonth
-  for (const [month, supps] of supplementByMonth.entries()) {
+  for (const month of supplementByMonth.keys()) {
     const current = enriched[month] || [];
     enriched[month] = enrichMonthlyResultsWithSupplements(month, current);
   }

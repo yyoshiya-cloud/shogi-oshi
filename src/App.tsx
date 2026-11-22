@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Player, Match, FollowedPlayerConfig, PushNotificationItem, ShogiMonthlyResult } from './types/shogi';
 import { PLAYERS_DATA, MATCHES_DATA } from './data/shogiDatabase';
@@ -44,7 +44,6 @@ import {
   Sparkles,
   X,
   RefreshCw,
-  Database
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'calendar' | 'directory';
@@ -93,14 +92,14 @@ export default function App() {
   const [showAppInfoModal, setShowAppInfoModal] = useState(false);
   const [showAdminDbModal, setShowAdminDbModal] = useState(false);
 
-  // Integrated DB read-only sync state (Turso libSQL or local SQLite)
+  // Integrated DB read-only sync state (Turso Cloud or local libSQL)
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(getStoredLastSync());
   const [lastMatchSyncTime, setLastMatchSyncTime] = useState<string | null>(getStoredMatchLastSync());
   const [syncToast, setSyncToast] = useState<string | null>(null);
   const [dbBackendLabel, setDbBackendLabel] = useState<string>('統合DB');
 
-  const hydrateFromSqliteDb = async (showToast = false): Promise<{ ok: boolean; error?: string }> => {
+  const hydrateFromDatabase = async (showToast = false): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await fetch('/api/db/bootstrap', { cache: 'no-store' });
       const data = await res.json().catch(() => null);
@@ -110,7 +109,7 @@ export default function App() {
       const engineStr = String(data.overview?.engine || '');
       const resolvedLabel = engineStr.toLowerCase().includes('turso')
         ? 'Turso (libSQL)'
-        : 'SQLite DB（data/shogi.db）';
+        : '統合DB (libSQL)';
       if (engineStr) {
         setDbBackendLabel(resolvedLabel);
       }
@@ -163,10 +162,10 @@ export default function App() {
     }
   };
 
-  const handleReloadFromSqlite = async () => {
+  const handleReloadFromDatabase = async () => {
     try {
       setIsSyncingAll(true);
-      const res = await hydrateFromSqliteDb(true);
+      const res = await hydrateFromDatabase(true);
       if (!res.ok) {
         setSyncToast(`${dbBackendLabel}からの読み込みに失敗しました${res.error ? `（${res.error}）` : ''}`);
         setTimeout(() => setSyncToast(null), 5000);
@@ -176,7 +175,7 @@ export default function App() {
     }
   };
 
-  // Load local followed list & hydrate official data strictly from SQLite DB (data/shogi.db)
+  // Load local followed list & hydrate official data from Turso DB
   useEffect(() => {
     const followed = getStoredFollowed();
     setFollowedList(followed);
@@ -200,8 +199,8 @@ export default function App() {
       setActiveHeadsUp(null);
     }
 
-    // Read-only hydration from SQLite database (data/shogi.db)
-    hydrateFromSqliteDb(false);
+    // Read-only hydration from Turso database
+    hydrateFromDatabase(false);
   }, []);
 
   const refreshNotifications = () => {
@@ -236,7 +235,7 @@ export default function App() {
     setActiveHeadsUp(null);
   };
 
-  // Handler when monthly results are reloaded from SQLite
+  // Handler when monthly results are reloaded from Turso DB
   const handleResultsReloaded = (
     updatedResults: Record<string, ShogiMonthlyResult[]>
   ) => {
@@ -301,32 +300,6 @@ export default function App() {
     setTimeout(() => setSyncToast(null), 3000);
   };
 
-  // Add fan comment handler
-  const handleAddComment = (playerId: string, text: string) => {
-    const idx = followedList.findIndex((f) => f.playerId === playerId);
-    if (idx >= 0) {
-      const updated = [...followedList];
-      const newComment = {
-        id: `com-${Date.now()}`,
-        text,
-        createdAt: new Date().toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-      const updatedConfig = {
-        ...updated[idx],
-        fanComments: [newComment, ...(updated[idx].fanComments || [])],
-      };
-      updated[idx] = updatedConfig;
-      setFollowedList(updated);
-      saveStoredFollowed(updated);
-    }
-  };
-
   // Unread notifications count (strictly today's matches & match results)
   const unreadCount = notifications.filter(
     (n) => !n.read && isTodayOrResultNotification(n, matchesList)
@@ -363,9 +336,9 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Reload all data strictly from active DB (read-only) */}
+          {/* Reload all data from active DB (read-only) */}
           <button
-            onClick={handleReloadFromSqlite}
+            onClick={handleReloadFromDatabase}
             disabled={isSyncingAll}
             aria-label="DB再読込"
             className={`h-9 w-9 rounded-xl border transition flex items-center justify-center cursor-pointer shadow-sm active:scale-95 ${
@@ -455,7 +428,7 @@ export default function App() {
             onSelectPlayer={(p) => setSelectedPlayer(p)}
             isSyncingMatches={isSyncingAll}
             lastMatchSyncTime={lastMatchSyncTime}
-            onRefreshMatches={handleReloadFromSqlite}
+            onRefreshMatches={handleReloadFromDatabase}
             activeSubTab={calendarSubTab}
             onChangeSubTab={(tab) => setCalendarSubTab(tab)}
             onUpdateResults={handleResultsReloaded}
@@ -469,10 +442,10 @@ export default function App() {
             onToggleFollow={handleToggleFollow}
             onRemoveFollow={handleRemoveFollow}
             onSelectPlayer={(p) => setSelectedPlayer(p)}
-            onRefreshMatches={handleReloadFromSqlite}
+            onRefreshMatches={handleReloadFromDatabase}
             isSyncingPlayers={isSyncingAll}
             lastSyncTime={lastSyncTime}
-            onSyncPlayers={handleReloadFromSqlite}
+            onSyncPlayers={handleReloadFromDatabase}
             onOpenAdminDb={() => setShowAdminDbModal(true)}
           />
         )}
@@ -586,7 +559,6 @@ export default function App() {
           onClose={() => setSelectedPlayer(null)}
           onRemoveFollow={handleRemoveFollow}
           onToggleFollow={handleToggleFollow}
-          onAddComment={handleAddComment}
           onSelectMatch={(m) => {
             setSelectedPlayer(null);
             setSelectedMatch(m);
@@ -634,7 +606,7 @@ export default function App() {
               }
               return;
             }
-            await hydrateFromSqliteDb(true);
+            await hydrateFromDatabase(true);
           }}
         />
       )}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles, Trophy, Heart, Calendar, Users, Bell, X, ExternalLink, TrendingUp, Swords, Smartphone } from 'lucide-react';
+import { Sparkles, Trophy, Heart, Calendar, Users, Bell, X, ExternalLink, TrendingUp, Swords } from 'lucide-react';
 
 interface AppInfoModalProps {
   onClose: () => void;
@@ -136,10 +136,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose, onOpenAdmin
               </div>
               <div>
                 <strong className="text-zinc-200 block mb-0.5 font-serif-jp">
-                  1. 推し棋士管理 & 統合データベース連携（Turso / SQLite）
+                  1. 推し棋士管理 & 統合データベース連携（Turso）
                 </strong>
                 <p className="text-zinc-400 leading-relaxed">
-                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定して端末内に保存。棋士プロフィール・公式対局予定・2021〜2026年度対局結果は統合データベース（Turso libSQL クラウドまたはローカル SQLite）から読み込み、データ更新はパスワード保護された管理画面（DB管理）から安全に行えます。
+                  本命・神推し・激推し・注目の4種バッジや推しカラー、応援メモを設定して端末内に保存。棋士プロフィール・公式対局予定・2021〜2026年度対局結果は統合データベース（Turso libSQL クラウド）から読み込み、データ更新はパスワード保護された管理画面（DB管理）から安全に行えます。
                 </p>
               </div>
             </div>

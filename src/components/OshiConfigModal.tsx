@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, OshiBadge } from '../types/shogi';
 import { X, Check, Bell, Palette, MessageSquareHeart, Trash2, Heart } from 'lucide-react';
 import { formatPlayerName } from '../utils/playerUtils';
-import { OSHI_BADGE_OPTIONS, getOshiBadgeConfig, renderOshiBadgeIcon } from '../utils/badgeUtils';
+import { OSHI_BADGE_OPTIONS, renderOshiBadgeIcon } from '../utils/badgeUtils';
 
 interface OshiConfigModalProps {
   player: Player;
@@ -71,8 +71,6 @@ export const OshiConfigModal: React.FC<OshiConfigModalProps> = ({
     onSave(newConfig);
     onClose();
   };
-
-  const selectedBadgeObj = getOshiBadgeConfig(selectedBadge);
 
   return createPortal(
     <div

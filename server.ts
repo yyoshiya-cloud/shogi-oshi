@@ -41,7 +41,6 @@ import {
   addSyncLog,
   exportBackupJson,
   restoreFromBackupJson,
-  importFromSqliteBuffer,
   syncNameHistoryAndRelinkArchives,
 } from './src/db/index';
 import { isPlayerRetired, detectManualFieldChanges } from './src/utils/playerUtils';
@@ -163,7 +162,7 @@ function clearAdminCookie(req: Request, res: Response) {
 }
 
 async function startServer() {
-  // Initialize active DB backend (Turso libSQL Cloud if TURSO_DATABASE_URL is set, otherwise local SQLite)
+  // Initialize active DB backend (Turso Cloud or local libSQL file)
   let dbReady = true;
   let dbInitError: string | null = null;
   try {
@@ -176,32 +175,6 @@ async function startServer() {
 
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-
-  // Raw binary upload endpoint for importing SQLite .db file directly
-  app.post(
-    '/api/admin/import-sqlite',
-    requireAdmin,
-    express.raw({ type: 'application/octet-stream', limit: '60mb' }),
-    async (req, res) => {
-      try {
-        if (!Buffer.isBuffer(req.body) || req.body.length < 100) {
-          return res.status(400).json({ success: false, error: '有効なSQLiteデータベースファイルではありません' });
-        }
-        const summary = await importFromSqliteBuffer(req.body);
-        res.json({
-          success: true,
-          summary,
-          overview: await getDatabaseOverview(),
-        });
-      } catch (error: any) {
-        console.error('SQLite import error:', error);
-        res.status(500).json({
-          success: false,
-          error: error?.message || 'SQLiteデータベースのインポートに失敗しました',
-        });
-      }
-    }
-  );
 
   app.use(express.json({ limit: '60mb' }));
 

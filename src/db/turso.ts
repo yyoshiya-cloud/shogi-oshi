@@ -1,7 +1,6 @@
 import { createClient, type Client, type InValue } from '@libsql/client';
 import fs from 'fs';
 import { createRequire } from 'module';
-import os from 'os';
 import path from 'path';
 import type {
   Player,
@@ -15,7 +14,7 @@ import type {
 import { PLAYERS_DATA, MATCHES_DATA } from '../data/shogiDatabase';
 import results2026Json from '../data/results2026.json';
 import { enrichAllResultsWithSupplements, enrichMonthlyResultsWithSupplements } from '../services/matchSupplementService';
-import { isProtectedMatchResult, mergeProtectedWithOfficialResults } from '../utils/resultProtection';
+import { mergeProtectedWithOfficialResults } from '../utils/resultProtection';
 import { getTodayDateString } from '../utils/dateUtils';
 import {
   normalizeShogiPlayerNameForMatch,
@@ -27,7 +26,7 @@ let tursoClient: Client | null = null;
 let initPromise: Promise<void> | null = null;
 let tursoDispatcher: unknown | null | undefined = undefined;
 
-export interface BootstrapBundle {
+interface BootstrapBundle {
   players: Player[];
   matches: Match[];
   fiscalResults: Record<string, ShogiMonthlyResult[]>;
@@ -102,7 +101,7 @@ function isConnectStageError(err: unknown): boolean {
   );
 }
 
-export function isTransientNetworkError(err: unknown): boolean {
+function isTransientNetworkError(err: unknown): boolean {
   if (isConnectStageError(err)) return true;
   const { codes, text } = collectErrorSignals(err);
   if (
@@ -188,28 +187,12 @@ async function withTursoReadRetry<T>(fn: () => Promise<T>, label = 'read'): Prom
   throw lastErr;
 }
 
-export function isTursoConfigured(): boolean {
-  return true; // Turso (libSQL) is the sole database engine
-}
-
 export function isRemoteTursoConfigured(): boolean {
   const raw = (process.env.TURSO_DATABASE_URL || '').trim();
   return Boolean(raw && !raw.startsWith('file:'));
 }
 
-export function isTursoAuthTokenConfigured(): boolean {
-  return Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim().length > 0);
-}
-
-export function getDbPath(): string {
-  return path.join(process.cwd(), 'data', 'shogi.db');
-}
-
-export function getCleanSnapshotPath(): string {
-  return path.join(process.cwd(), 'data', 'shogi.db.clean');
-}
-
-export function parseJsonSafe<T>(val: unknown, fallback: T): T {
+function parseJsonSafe<T>(val: unknown, fallback: T): T {
   if (val === null || val === undefined) return fallback;
   if (typeof val !== 'string') return val as T;
   try {
@@ -219,7 +202,7 @@ export function parseJsonSafe<T>(val: unknown, fallback: T): T {
   }
 }
 
-export function getFiscalYearFromMonth(monthStr: string): number {
+function getFiscalYearFromMonth(monthStr: string): number {
   const clean = String(monthStr || '').replace(/[^0-9]/g, '');
   if (clean.length < 6) return 2026;
   const y = parseInt(clean.slice(0, 4), 10);
@@ -228,27 +211,11 @@ export function getFiscalYearFromMonth(monthStr: string): number {
   return m >= 1 && m <= 3 ? y - 1 : y;
 }
 
-export function getJstTimestampString(): string {
+function getJstTimestampString(): string {
   const d = new Date();
   const jstMs = d.getTime() + (9 * 60 + d.getTimezoneOffset()) * 60 * 1000;
   const jstDate = new Date(jstMs);
   return jstDate.toISOString().replace('T', ' ').slice(0, 19);
-}
-
-export function readCleanSnapshot(filePath: string): {
-  players: any[];
-  matches: any[];
-  archives: any[];
-  history: any[];
-} | null {
-  if (!fs.existsSync(filePath)) return null;
-  try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return parsed;
-  } catch {
-    return null;
-  }
 }
 
 export function normalizePlayerRecord(raw: any): Player | null {
@@ -491,65 +458,6 @@ function readLocalSeedSnapshot(): {
   archives: Map<string, { month: string; fiscalYear: number; results: ShogiMonthlyResult[]; source: string }>;
   history: PlayerNameHistoryItem[];
 } {
-  const candidates = [getDbPath(), getCleanSnapshotPath()];
-  for (const filePath of candidates) {
-    if (!fs.existsSync(filePath)) continue;
-    const snap = readCleanSnapshot(filePath);
-    if (!snap || snap.players.length === 0) continue;
-
-    const players: Player[] = [];
-    for (const rawP of snap.players) {
-      const p = normalizePlayerRecord(rawP);
-      if (p) players.push(p);
-    }
-
-    const matches: Match[] = [];
-    for (const rawM of snap.matches) {
-      const m = normalizeMatchRecord(rawM);
-      if (m) matches.push(m);
-    }
-
-    const archives = new Map<
-      string,
-      { month: string; fiscalYear: number; results: ShogiMonthlyResult[]; source: string }
-    >();
-    for (const arch of snap.archives) {
-      const month = String(arch.month || '').replace(/[^0-9]/g, '');
-      if (month.length !== 6) continue;
-      const list = parseJsonSafe<ShogiMonthlyResult[]>(arch.results_json, []);
-      if (Array.isArray(list)) {
-        archives.set(month, {
-          month,
-          fiscalYear: arch.fiscal_year ?? getFiscalYearFromMonth(month),
-          results: enrichMonthlyResultsWithSupplements(month, list),
-          source: arch.source || 'sqlite-migration',
-        });
-      }
-    }
-
-    const history: PlayerNameHistoryItem[] = [];
-    for (const h of snap.history) {
-      if (!h?.player_id || !h?.old_name || !h?.new_name) continue;
-      history.push({
-        id: String(h.id),
-        playerId: String(h.player_id),
-        oldName: String(h.old_name),
-        newName: String(h.new_name),
-        changedAt: String(h.changed_at || new Date().toISOString().slice(0, 10)),
-        note: h.note ? String(h.note) : undefined,
-      });
-    }
-
-    return {
-      sourceLabel: path.basename(filePath),
-      players,
-      matches,
-      archives,
-      history,
-    };
-  }
-
-  // Fallback to bundled static seed data if no local .db file is present
   const archives = new Map<
     string,
     { month: string; fiscalYear: number; results: ShogiMonthlyResult[]; source: string }
@@ -799,7 +707,7 @@ export async function addSyncLog(
   });
 }
 
-export async function getSyncLogs(limit = 50): Promise<SyncLogEntry[]> {
+async function getSyncLogs(limit = 50): Promise<SyncLogEntry[]> {
   await ensureTursoInitialized();
   const client = getTursoClient();
   const res = await client.execute({
@@ -2141,39 +2049,4 @@ export async function restoreFromBackupJson(payload: any): Promise<{
     archivesResultsImported: written.archivesResultsWritten,
     nameHistoryImported: written.historyWritten,
   };
-}
-
-export async function importFromSqliteBuffer(buffer: Buffer) {
-  const tmpPath = path.join(os.tmpdir(), `shogi-turso-import-${Date.now()}.db`);
-  fs.writeFileSync(tmpPath, buffer);
-  const extClient = createClient({ url: `file:${tmpPath}` });
-  try {
-    const tablesRes = await extClient.execute("SELECT name FROM sqlite_master WHERE type='table'");
-    const tableNames = new Set(tablesRes.rows.map((r) => String(r.name)));
-
-    const payload: Record<string, unknown[]> = {};
-    if (tableNames.has('players')) {
-      const pRes = await extClient.execute('SELECT * FROM players');
-      payload.players = pRes.rows;
-    }
-    if (tableNames.has('matches')) {
-      const mRes = await extClient.execute('SELECT * FROM matches');
-      payload.matches = mRes.rows;
-    }
-    if (tableNames.has('match_archives')) {
-      const aRes = await extClient.execute('SELECT * FROM match_archives');
-      payload.match_archives = aRes.rows;
-    }
-    if (tableNames.has('player_name_history')) {
-      const hRes = await extClient.execute('SELECT * FROM player_name_history');
-      payload.player_name_history = hRes.rows;
-    }
-    extClient.close();
-    return await restoreFromBackupJson(payload);
-  } finally {
-    try {
-      extClient.close();
-      fs.unlinkSync(tmpPath);
-    } catch {}
-  }
 }

@@ -4,7 +4,6 @@ dotenv.config({ path: ['.env.local', '.env'], quiet: true });
 import fs from 'fs';
 import path from 'path';
 import {
-  getTursoClient,
   getAllPlayers,
   getNameHistory,
   normalizePlayerRecord,
@@ -12,7 +11,7 @@ import {
   closeTurso,
   getTursoSafeTargetLabel,
 } from '../src/db/turso';
-import { mergePreservingManualFields, isPlayerRetired } from '../src/utils/playerUtils';
+import { mergePreservingManualFields } from '../src/utils/playerUtils';
 import type { Player } from '../src/types/shogi';
 
 async function main() {

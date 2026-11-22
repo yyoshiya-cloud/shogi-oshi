@@ -28,7 +28,6 @@ interface PlayerProfileModalProps {
   onClose: () => void;
   onRemoveFollow: (playerId: string) => void;
   onToggleFollow?: (config: FollowedPlayerConfig) => void;
-  onAddComment: (playerId: string, text: string) => void;
   onSelectMatch: (match: Match) => void;
 }
 
@@ -73,13 +72,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
   onClose,
   onRemoveFollow,
   onToggleFollow,
-  onAddComment,
   onSelectMatch,
 }) => {
   if (!player) return null;
 
   const [activeTab, setActiveTab] = useState<'stats' | 'results' | 'matches'>('stats');
-  const [commentInput, setCommentInput] = useState('');
   const [activePlayer, setActivePlayer] = useState<Player>(player);
   const [resultsFiscalYear, setResultsFiscalYear] = useState<number>(2026);
   const [resultsMonthFilter, setResultsMonthFilter] = useState<string>('all');
@@ -284,19 +281,6 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
         : `${r.sente} 対 ${r.gote}（${r.tournament}）。結果未登録。`,
     };
     onSelectMatch(m);
-  };
-
-
-  const handleSendComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentInput.trim()) return;
-    onAddComment(activePlayer.id, commentInput.trim());
-    setCommentInput('');
-    confetti({
-      particleCount: 30,
-      spread: 40,
-      origin: { y: 0.8 },
-    });
   };
 
   return createPortal(
