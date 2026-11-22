@@ -192,6 +192,11 @@ export function isTursoConfigured(): boolean {
   return true; // Turso (libSQL) is the sole database engine
 }
 
+export function isRemoteTursoConfigured(): boolean {
+  const raw = (process.env.TURSO_DATABASE_URL || '').trim();
+  return Boolean(raw && !raw.startsWith('file:'));
+}
+
 export function isTursoAuthTokenConfigured(): boolean {
   return Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim().length > 0);
 }
@@ -735,6 +740,9 @@ export async function ensureTursoInitialized(): Promise<void> {
 
   initPromise = (async () => {
     const client = getTursoClient();
+    if (!isRemoteTursoConfigured()) {
+      await client.execute('PRAGMA journal_mode = DELETE');
+    }
     await client.batch(SCHEMA_STATEMENTS, 'write');
 
     const [pCountRes, mCountRes, aCountRes] = await Promise.all([

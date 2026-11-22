@@ -100,12 +100,12 @@ export default function App() {
   const [syncToast, setSyncToast] = useState<string | null>(null);
   const [dbBackendLabel, setDbBackendLabel] = useState<string>('統合DB');
 
-  const hydrateFromSqliteDb = async (showToast = false): Promise<boolean> => {
+  const hydrateFromSqliteDb = async (showToast = false): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await fetch('/api/db/bootstrap', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data?.success) return false;
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      if (!data?.success) return { ok: false, error: data?.error || 'DB初期化に失敗しました' };
 
       const engineStr = String(data.overview?.engine || '');
       const resolvedLabel = engineStr.toLowerCase().includes('turso')
@@ -152,23 +152,24 @@ export default function App() {
           setSyncToast(`${resolvedLabel}から最新データを読み込みました（棋士 ${initializedPlayers.length}名・対局予定 ${mCount}件）`);
           setTimeout(() => setSyncToast(null), 4000);
         }
-        return true;
+        return { ok: true };
       }
 
-      return false;
-    } catch (err) {
+      return { ok: false, error: '棋士データが空です' };
+    } catch (err: any) {
+      const msg = err?.message || String(err);
       console.warn('Database bootstrap error:', err);
-      return false;
+      return { ok: false, error: msg };
     }
   };
 
   const handleReloadFromSqlite = async () => {
     try {
       setIsSyncingAll(true);
-      const ok = await hydrateFromSqliteDb(true);
-      if (!ok) {
-        setSyncToast(`${dbBackendLabel}からの読み込みに失敗しました`);
-        setTimeout(() => setSyncToast(null), 3500);
+      const res = await hydrateFromSqliteDb(true);
+      if (!res.ok) {
+        setSyncToast(`${dbBackendLabel}からの読み込みに失敗しました${res.error ? `（${res.error}）` : ''}`);
+        setTimeout(() => setSyncToast(null), 5000);
       }
     } finally {
       setIsSyncingAll(false);

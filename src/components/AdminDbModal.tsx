@@ -129,6 +129,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
   const isBusy = busyAction !== null;
   const setIsBusy = (busy: boolean, action = 'other') => setBusyAction(busy ? action : null);
   const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [dbErrorInfo, setDbErrorInfo] = useState<{
+    message: string;
+    backendLabel?: string;
+    tursoUrlConfigured?: boolean;
+    tursoAuthTokenConfigured?: boolean;
+  } | null>(null);
 
   // Players tab state
   const [editingProfile, setEditingProfile] = useState<Player | null>(null);
@@ -222,25 +228,72 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
 
   const loadAdminData = async () => {
     try {
-      const [ovRes, bootRes] = await Promise.all([
+      const [ovRes, bootRes, healthRes] = await Promise.all([
         adminFetch('/api/admin/overview'),
         fetch('/api/db/bootstrap', { cache: 'no-store' }),
+        fetch('/api/health', { cache: 'no-store' }).catch(() => null),
       ]);
       if (ovRes.status === 401) {
         setAuthenticated(false);
         setStoredToken(null);
         return;
       }
-      const ovJson = await ovRes.json();
-      const bootJson = await bootRes.json();
-      if (ovJson.success && ovJson.overview) setOverview(ovJson.overview);
-      if (bootJson.success) {
+
+      const safeJson = async (res: Response | null) => {
+        if (!res) return null;
+        try {
+          return await res.json();
+        } catch {
+          return null;
+        }
+      };
+
+      const [ovJson, bootJson, healthJson] = await Promise.all([
+        safeJson(ovRes),
+        safeJson(bootRes),
+        safeJson(healthRes),
+      ]);
+
+      const errors: string[] = [];
+      if (!ovRes.ok || !ovJson?.success) {
+        errors.push(ovJson?.error || `DB概要取得エラー (HTTP ${ovRes.status})`);
+      }
+      if (!bootRes.ok || !bootJson?.success) {
+        errors.push(bootJson?.error || `DBデータ取得エラー (HTTP ${bootRes.status})`);
+      }
+      if (healthJson && healthJson.dbReady === false && healthJson.dbInitError) {
+        errors.push(String(healthJson.dbInitError));
+      }
+
+      if (ovJson?.success && ovJson.overview) setOverview(ovJson.overview);
+      if (bootJson?.success) {
         setPlayers(bootJson.players || []);
         setMatches(bootJson.matches || []);
         setNameHistory(bootJson.nameHistory || []);
       }
+
+      if (errors.length > 0) {
+        const uniqueMsg = Array.from(new Set(errors.filter(Boolean))).join(' / ');
+        setDbErrorInfo({
+          message: uniqueMsg,
+          backendLabel: healthJson?.backendLabel,
+          tursoUrlConfigured:
+            typeof healthJson?.tursoUrlConfigured === 'boolean'
+              ? healthJson.tursoUrlConfigured
+              : undefined,
+          tursoAuthTokenConfigured:
+            typeof healthJson?.tursoAuthTokenConfigured === 'boolean'
+              ? healthJson.tursoAuthTokenConfigured
+              : undefined,
+        });
+        showStatus('error', `DBエラー: ${uniqueMsg}`);
+      } else {
+        setDbErrorInfo(null);
+      }
     } catch (e: any) {
-      showStatus('error', `DBデータの読み込みに失敗しました: ${e?.message || e}`);
+      const msg = e?.message || String(e);
+      setDbErrorInfo({ message: msg });
+      showStatus('error', `DBデータの読み込みに失敗しました: ${msg}`);
     }
   };
 
@@ -294,6 +347,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
     setStoredToken(null);
     setAuthenticated(false);
     setOverview(null);
+    setDbErrorInfo(null);
   };
 
   const loadArchiveMonth = async (month: string) => {
@@ -1389,8 +1443,16 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                 <h2 className="text-base sm:text-lg font-black font-serif-jp text-zinc-100 truncate">
                   棋士・女流棋士DB 管理画面
                 </h2>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-emerald-950/70 text-emerald-300 border-emerald-500/40">
-                  Turso: {overview?.dbPath || 'libSQL'}
+                <span
+                  className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
+                    dbErrorInfo
+                      ? 'bg-rose-950/70 text-rose-300 border-rose-500/40'
+                      : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40'
+                  }`}
+                >
+                  {dbErrorInfo
+                    ? `DBエラー: ${dbErrorInfo.backendLabel || '接続失敗'}`
+                    : `Turso: ${overview?.dbPath || 'libSQL'}`}
                 </span>
               </div>
               <p className="text-xs text-zinc-400 truncate">
@@ -1438,6 +1500,49 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               <AlertTriangle size={15} className="text-rose-400 shrink-0" />
             )}
             <span>{statusBanner.text}</span>
+          </div>
+        )}
+
+        {/* Persistent DB Connection / Init Error Banner */}
+        {authenticated && dbErrorInfo && (
+          <div className="px-4 py-3 text-xs bg-rose-950/90 border-b border-rose-500/40 text-rose-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertTriangle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+              <div className="space-y-1 min-w-0">
+                <div className="font-bold text-rose-200">
+                  データベースの読み込み・初期化でエラーが発生しました
+                </div>
+                <div className="font-mono text-[11px] text-rose-100 break-all">
+                  {dbErrorInfo.message}
+                </div>
+                {(dbErrorInfo.backendLabel ||
+                  dbErrorInfo.tursoUrlConfigured !== undefined ||
+                  dbErrorInfo.tursoAuthTokenConfigured !== undefined) && (
+                  <div className="text-[11px] text-rose-300/90 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {dbErrorInfo.backendLabel && <span>接続先: {dbErrorInfo.backendLabel}</span>}
+                    {dbErrorInfo.tursoUrlConfigured !== undefined && (
+                      <span>
+                        TURSO_DATABASE_URL: {dbErrorInfo.tursoUrlConfigured ? '設定済' : '未設定'}
+                      </span>
+                    )}
+                    {dbErrorInfo.tursoAuthTokenConfigured !== undefined && (
+                      <span>
+                        TURSO_AUTH_TOKEN: {dbErrorInfo.tursoAuthTokenConfigured ? '設定済' : '未設定'}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadAdminData()}
+              disabled={isBusy}
+              className="px-3 py-1.5 rounded-lg bg-rose-800/70 hover:bg-rose-700/80 border border-rose-400/40 text-rose-100 font-bold text-[11px] flex items-center gap-1.5 shrink-0 self-start sm:self-center cursor-pointer transition disabled:opacity-50"
+            >
+              <RefreshCw size={12} />
+              <span>再読み込み</span>
+            </button>
           </div>
         )}
 

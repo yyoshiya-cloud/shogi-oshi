@@ -18,6 +18,7 @@ import {
   initDatabase,
   closeDatabase,
   isTursoActive,
+  isRemoteTursoConfigured,
   getStorageBackendInfo,
   getAllPlayers,
   upsertPlayer,
@@ -220,6 +221,7 @@ async function startServer() {
       backend: backend.mode,
       backendLabel: backend.label,
       tursoConfigured: isTursoActive(),
+      tursoUrlConfigured: isRemoteTursoConfigured(),
       tursoAuthTokenConfigured: Boolean(process.env.TURSO_AUTH_TOKEN && process.env.TURSO_AUTH_TOKEN.trim()),
     });
   });
@@ -245,8 +247,10 @@ async function startServer() {
         ...(bundle.fallback ? { fallback: true } : {}),
       });
     } catch (error: any) {
+      dbReady = false;
+      dbInitError = error?.message || 'Failed to load DB bootstrap';
       console.error('Error in /api/db/bootstrap:', error);
-      res.status(500).json({ success: false, error: error?.message || 'Failed to load DB bootstrap' });
+      res.status(500).json({ success: false, error: dbInitError });
     }
   });
 
@@ -335,9 +339,14 @@ async function startServer() {
 
   app.get('/api/admin/overview', requireAdmin, async (req, res) => {
     try {
-      res.json({ success: true, overview: await getDatabaseOverview() });
+      const overview = await getDatabaseOverview();
+      dbReady = true;
+      dbInitError = null;
+      res.json({ success: true, overview });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error?.message || 'Failed to load DB overview' });
+      dbReady = false;
+      dbInitError = error?.message || 'Failed to load DB overview';
+      res.status(500).json({ success: false, error: dbInitError });
     }
   });
 
