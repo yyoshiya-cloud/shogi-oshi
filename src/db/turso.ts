@@ -19,6 +19,7 @@ import { getTodayDateString } from '../utils/dateUtils';
 import {
   normalizeShogiPlayerNameForMatch,
   isPlayerRetired,
+  isPlayerOnLeave,
   mergePreservingManualFields,
 } from '../utils/playerUtils';
 
@@ -652,6 +653,12 @@ export async function ensureTursoInitialized(): Promise<void> {
       await client.execute('PRAGMA journal_mode = DELETE');
     }
     await client.batch(SCHEMA_STATEMENTS, 'write');
+
+    const today = getTodayDateString();
+    await client.execute({
+      sql: `DELETE FROM matches WHERE date < ?`,
+      args: [today],
+    });
 
     const [pCountRes, mCountRes, aCountRes] = await Promise.all([
       client.execute('SELECT COUNT(*) AS cnt FROM players'),
@@ -1685,6 +1692,7 @@ function loadFallbackBootstrapBundle(): BootstrapBundle {
         match_archives: archiveSummaries.length,
         match_results_total: totalResults,
         player_name_history: seed.history.length,
+        on_leave_players: seed.players.filter((p) => isPlayerOnLeave(p)).length,
         sync_logs: 0,
       },
       fiscalYears: buildFiscalYearsSummary(archiveSummaries),
@@ -1782,6 +1790,7 @@ export async function getBootstrapBundle(): Promise<BootstrapBundle> {
           match_archives: archiveSummariesDesc.length,
           match_results_total: totalResults,
           player_name_history: nameHistory.length,
+          on_leave_players: players.filter((p) => isPlayerOnLeave(p)).length,
           sync_logs: Number(logsCntRes.rows[0]?.cnt ?? recentLogs.length),
         },
         fiscalYears: buildFiscalYearsSummary(archiveSummariesDesc),
@@ -1816,7 +1825,7 @@ export async function getDatabaseOverview(): Promise<DbOverview> {
       const client = getTursoClient();
       const target = getTursoSafeTargetLabel();
 
-      const [pRes, mRes, aRes, hRes, lRes, sizeRes, recentLogsRes] = await client.batch(
+      const [pRes, mRes, aRes, hRes, lRes, sizeRes, recentLogsRes, allPlayersRes] = await client.batch(
         [
           'SELECT COUNT(*) AS cnt FROM players',
           'SELECT COUNT(*) AS cnt FROM matches',
@@ -1828,6 +1837,7 @@ export async function getDatabaseOverview(): Promise<DbOverview> {
             (SELECT COALESCE(SUM(LENGTH(data_json)), 0) FROM matches) +
             (SELECT COALESCE(SUM(LENGTH(results_json)), 0) FROM match_archives) AS total_bytes`,
           'SELECT id, sync_type, status, message, records_count, created_at FROM sync_logs ORDER BY id DESC LIMIT 30',
+          'SELECT id, name, former_name, data_json FROM players',
         ],
         'read'
       );
@@ -1840,6 +1850,9 @@ export async function getDatabaseOverview(): Promise<DbOverview> {
         recordsCount: Number(r.records_count ?? 0),
         createdAt: String(r.created_at || ''),
       }));
+
+      const overviewPlayers = hydratePlayersFromRows(allPlayersRes.rows as any[], []);
+      const onLeaveCount = overviewPlayers.filter((p) => isPlayerOnLeave(p)).length;
 
       let totalResults = 0;
       const archiveSummaries: MatchArchiveSummary[] = aRes.rows.map((r) => {
@@ -1867,6 +1880,7 @@ export async function getDatabaseOverview(): Promise<DbOverview> {
           match_archives: aRes.rows.length,
           match_results_total: totalResults,
           player_name_history: Number(hRes.rows[0]?.cnt ?? 0),
+          on_leave_players: onLeaveCount,
           sync_logs: Number(lRes.rows[0]?.cnt ?? 0),
         },
         fiscalYears: buildFiscalYearsSummary(archiveSummaries),

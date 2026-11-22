@@ -211,6 +211,7 @@ export interface DbOverview {
     match_archives: number;
     match_results_total: number;
     player_name_history: number;
+    on_leave_players: number;
     sync_logs: number;
   };
   fiscalYears: {

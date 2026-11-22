@@ -1661,7 +1661,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               {/* OVERVIEW & BACKUP/RESTORE */}
               {activeTab === 'overview' && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
                     <div className="bg-zinc-900/90 p-3.5 rounded-2xl border border-zinc-800">
                       <span className="text-[11px] text-zinc-400 block">players (棋士)</span>
                       <span className="text-xl font-black text-amber-300 font-mono">
@@ -1690,6 +1690,12 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       <span className="text-[11px] text-zinc-400 block">改名履歴</span>
                       <span className="text-xl font-black text-rose-300 font-mono">
                         {overview?.counts.player_name_history ?? nameHistory.length}
+                      </span>
+                    </div>
+                    <div className="bg-zinc-900/90 p-3.5 rounded-2xl border border-zinc-800">
+                      <span className="text-[11px] text-zinc-400 block">休場中</span>
+                      <span className="text-xl font-black text-orange-300 font-mono">
+                        {overview?.counts.on_leave_players ?? players.filter((p) => isPlayerOnLeave(p)).length}
                       </span>
                     </div>
                   </div>
