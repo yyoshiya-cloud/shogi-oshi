@@ -53,7 +53,7 @@ const __dirname = path.dirname(__filename);
 process.env.DISABLE_HMR = 'true';
 
 const ADMIN_COOKIE_NAME = 'shogi_admin_session';
-const DEFAULT_DEV_ADMIN_PASSWORD = 'shogi-admin';
+const DEFAULT_DEV_ADMIN_PASSWORD = 'yo0117';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
 const EPHEMERAL_SECRET = crypto.randomBytes(32).toString('hex');
 
