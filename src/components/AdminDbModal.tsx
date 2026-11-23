@@ -58,11 +58,13 @@ import type {
   PlayerNameHistoryItem,
   DbOverview,
   FollowedPlayerConfig,
+  SyncLogEntry,
 } from '../types/shogi';
 
 export interface AdminDbPartialUpdate {
   players?: Player[];
   matches?: Match[];
+  nameHistory?: PlayerNameHistoryItem[];
   monthArchivePatch?: { month: string; results: ShogiMonthlyResult[] };
 }
 
@@ -625,8 +627,23 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         delete nextEditing.formerName;
         setEditingProfile(nextEditing);
         setProfileClearNameHistory(false);
-        await loadAdminData();
-        await onDatabaseUpdated();
+
+        const nextPlayers = players.map((p) => (p.id === nextEditing.id ? nextEditing : p));
+        setPlayers(nextPlayers);
+        const nextNameHistory = nameHistory.filter((h) => h.playerId !== nextEditing.id);
+        setNameHistory(nextNameHistory);
+        setOverview((prev) =>
+          prev
+            ? {
+                ...prev,
+                counts: {
+                  ...prev.counts,
+                  player_name_history: nextNameHistory.length,
+                },
+              }
+            : prev
+        );
+        await onDatabaseUpdated({ players: nextPlayers, nameHistory: nextNameHistory });
         showStatus('success', `${nextEditing.name} の旧氏名・新氏名・改正年月日を消去しました`);
       } catch (err: any) {
         showStatus('error', err?.message || '氏名変更情報消去エラー');
@@ -798,8 +815,51 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
         setProfileNameChangeNote('');
       }
       setProfileClearNameHistory(false);
-      await loadAdminData();
-      await onDatabaseUpdated();
+
+      const exists = players.some((p) => p.id === savedPlayer.id);
+      const nextPlayers = exists
+        ? players.map((p) => (p.id === savedPlayer.id ? savedPlayer : p))
+        : [...players, savedPlayer];
+      setPlayers(nextPlayers);
+
+      let nextNameHistory = nameHistory;
+      let nameHistoryChanged = false;
+      if (json.clearedNameHistoryPlayerId) {
+        nextNameHistory = nameHistory.filter((h) => h.playerId !== json.clearedNameHistoryPlayerId);
+        setNameHistory(nextNameHistory);
+        nameHistoryChanged = true;
+      } else if (json.nameHistoryItem) {
+        const item = json.nameHistoryItem as PlayerNameHistoryItem;
+        nextNameHistory = [
+          item,
+          ...nameHistory.filter((h) => !(h.playerId === item.playerId && h.oldName === item.oldName)),
+        ];
+        setNameHistory(nextNameHistory);
+        nameHistoryChanged = true;
+      }
+
+      setOverview((prev) => {
+        if (!prev) return prev;
+        const nextLogs = json.logEntry
+          ? [json.logEntry as SyncLogEntry, ...prev.recentLogs].slice(0, 30)
+          : prev.recentLogs;
+        return {
+          ...prev,
+          counts: {
+            ...prev.counts,
+            players: nextPlayers.length,
+            on_leave_players: nextPlayers.filter((p) => isPlayerOnLeave(p)).length,
+            player_name_history: nextNameHistory.length,
+            sync_logs: prev.counts.sync_logs + (json.logEntry ? 1 : 0),
+          },
+          recentLogs: nextLogs,
+        };
+      });
+
+      await onDatabaseUpdated({
+        players: nextPlayers,
+        ...(nameHistoryChanged ? { nameHistory: nextNameHistory } : {}),
+      });
       const currentlyOnLeave = isPlayerOnLeave(savedPlayer);
       const currentlyRetired = isPlayerRetired(savedPlayer);
       const statusBadges: string[] = [];
@@ -1866,8 +1926,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
               )}
 
               {/* PLAYERS & NAME HISTORY */}
-              {activeTab === 'players' && (
-                <div className="space-y-5 min-h-[340px]">
+              <div className={activeTab === 'players' ? 'space-y-5 min-h-[340px]' : 'hidden'}>
                   {/* Player Profile & Leave Update Tool */}
                   <div className="bg-zinc-900/80 border border-sky-500/30 rounded-2xl p-4 space-y-4">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1894,14 +1953,15 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       )}
                     </div>
 
-                    {!editingProfile && (
+                    <div className={editingProfile ? 'hidden' : ''}>
                       <PlayerDirectory
                         players={players}
                         followedList={followedList}
                         mode="select"
+                        selectedPlayerId={editingProfile?.id}
                         onSelectPlayer={selectPlayerForProfileEdit}
                       />
-                    )}
+                    </div>
 
                     {editingProfile && (
                       <form onSubmit={handleSaveProfileUpdate} className="space-y-4 pt-3 border-t border-zinc-800">
@@ -2601,8 +2661,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                       </form>
                     )}
                   </div>
-                </div>
-              )}
+              </div>
 
               {/* FY2021-2026 MATCH ARCHIVES */}
               {activeTab === 'archives' && (

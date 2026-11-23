@@ -580,7 +580,10 @@ export default function App() {
           followedList={followedList}
           onClose={() => setShowAdminDbModal(false)}
           onDatabaseUpdated={async (partial) => {
-            if (partial && (partial.players || partial.matches || partial.monthArchivePatch)) {
+            if (partial && (partial.players || partial.matches || partial.nameHistory || partial.monthArchivePatch)) {
+              if (partial.nameHistory) {
+                registerDynamicNameHistory(partial.nameHistory);
+              }
               if (partial.players && partial.players.length > 0) {
                 const initializedPlayers = partial.players.map((p) => initializePlayerRecords(p));
                 setPlayersList(initializedPlayers);

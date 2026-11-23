@@ -20,6 +20,7 @@ import {
   isTursoActive,
   isRemoteTursoConfigured,
   getStorageBackendInfo,
+  getPlayerById,
   getAllPlayers,
   upsertPlayer,
   upsertPlayersBulk,
@@ -44,7 +45,7 @@ import {
   syncNameHistoryAndRelinkArchives,
 } from './src/db/index';
 import { isPlayerRetired, detectManualFieldChanges } from './src/utils/playerUtils';
-import type { Player, Match, ShogiMonthlyResult } from './src/types/shogi';
+import type { Player, Match, ShogiMonthlyResult, PlayerNameHistoryItem } from './src/types/shogi';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -329,7 +330,7 @@ async function startServer() {
       if (!incoming || !incoming.id || !incoming.name) {
         return res.status(400).json({ success: false, error: 'player.id と player.name が必須です' });
       }
-      const existing = (await getAllPlayers()).find((p) => p.id === incoming.id);
+      const existing = (await getPlayerById(incoming.id)) ?? undefined;
       const manualFields = detectManualFieldChanges(existing, incoming);
       const player: Player = {
         ...existing,
@@ -337,8 +338,8 @@ async function startServer() {
         ...(manualFields.length > 0 ? { manualFields } : {}),
       };
       const saved = await upsertPlayer(player);
-      await addSyncLog('player_upsert', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
-      res.json({ success: true, player: saved });
+      const logEntry = await addSyncLog('player_upsert', 'success', `棋士プロフィール更新: ${saved.name} (${saved.id})`, 1);
+      res.json({ success: true, player: saved, logEntry });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to save player' });
     }
@@ -346,7 +347,7 @@ async function startServer() {
 
   app.put('/api/admin/players/:id', requireAdmin, async (req, res) => {
     try {
-      const existing = (await getAllPlayers()).find((p) => p.id === req.params.id);
+      const existing = (await getPlayerById(req.params.id)) ?? undefined;
       const body = (req.body || {}) as Player & {
         nameChange?: {
           clear?: boolean;
@@ -406,16 +407,20 @@ async function startServer() {
       }
 
       let saved = await upsertPlayer(player);
-      await addSyncLog(
+      const logEntry = await addSyncLog(
         'player_update',
         'success',
         `棋士段位・プロフィール更新 [DB反映検証済]: ${saved.name} (段位: ${saved.danRank || '未設定'}, 称号: ${saved.rank || 'なし'}${saved.manualFields?.length ? `, 手動保護: ${saved.manualFields.length}項目` : ''})`,
         1
       );
 
+      let nameHistoryItem: PlayerNameHistoryItem | undefined;
+      let clearedNameHistoryPlayerId: string | undefined;
+
       if (nameChangePayload?.clear) {
-        const cleared = await clearPlayerNameHistory(req.params.id);
+        const cleared = await clearPlayerNameHistory(req.params.id, { preSavedPlayer: saved });
         if (cleared) saved = cleared;
+        clearedNameHistoryPlayerId = req.params.id;
       } else if (nameChangePayload?.oldName?.trim() && nameChangePayload?.newName?.trim()) {
         const ncRes = await recordPlayerNameChange({
           playerId: req.params.id,
@@ -423,14 +428,22 @@ async function startServer() {
           newName: nameChangePayload.newName.trim(),
           changedAt: nameChangePayload.changedAt?.trim(),
           note: nameChangePayload.note?.trim(),
+          preSavedPlayer: saved,
         });
-        if (ncRes?.player) {
+        if (ncRes) {
           saved = ncRes.player;
+          nameHistoryItem = ncRes.history;
         }
       }
 
-      const freshPlayer = (await getAllPlayers()).find((p) => p.id === req.params.id) || saved;
-      res.json({ success: true, player: freshPlayer, validated: true });
+      res.json({
+        success: true,
+        player: saved,
+        validated: true,
+        logEntry,
+        ...(nameHistoryItem ? { nameHistoryItem } : {}),
+        ...(clearedNameHistoryPlayerId ? { clearedNameHistoryPlayerId } : {}),
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to update player' });
     }
@@ -467,7 +480,7 @@ async function startServer() {
   app.delete('/api/admin/name-history/:playerId', requireAdmin, async (req, res) => {
     try {
       const updated = await clearPlayerNameHistory(req.params.playerId);
-      res.json({ success: true, player: updated });
+      res.json({ success: true, player: updated, clearedPlayerId: req.params.playerId });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Failed to clear name history' });
     }

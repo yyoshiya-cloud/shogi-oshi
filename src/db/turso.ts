@@ -1306,13 +1306,22 @@ export async function addSyncLog(
   status: 'success' | 'error' | 'partial',
   message: string,
   recordsCount = 0
-): Promise<void> {
+): Promise<SyncLogEntry> {
   await ensureTursoInitialized();
   const client = getTursoClient();
-  await client.execute({
+  const createdAt = getJstTimestampString();
+  const res = await client.execute({
     sql: `INSERT INTO sync_logs (sync_type, status, message, records_count, created_at) VALUES (?, ?, ?, ?, ?)`,
-    args: [syncType, status, message, recordsCount, getJstTimestampString()],
+    args: [syncType, status, message, recordsCount, createdAt],
   });
+  return {
+    id: Number(res.lastInsertRowid || Date.now()),
+    syncType,
+    status,
+    message,
+    recordsCount,
+    createdAt,
+  };
 }
 
 async function getSyncLogs(limit = 50): Promise<SyncLogEntry[]> {
@@ -1391,6 +1400,45 @@ function hydratePlayersFromRows(
   });
 }
 
+export async function getPlayerById(id: string): Promise<Player | null> {
+  if (!id) return null;
+  try {
+    return await withTursoReadRetry(async () => {
+      await ensureTursoInitialized();
+      const client = getTursoClient();
+      const [rowsRes, histRes] = await client.batch(
+        [
+          {
+            sql: `SELECT id, name, former_name, data_json FROM players WHERE id = ? LIMIT 1`,
+            args: [id],
+          },
+          {
+            sql: `SELECT id, player_id, old_name, new_name, changed_at, note FROM player_name_history WHERE player_id = ? ORDER BY changed_at DESC, id DESC`,
+            args: [id],
+          },
+        ],
+        'read'
+      );
+      if (rowsRes.rows.length === 0) return null;
+      const history: PlayerNameHistoryItem[] = histRes.rows.map((r) => ({
+        id: String(r.id),
+        playerId: String(r.player_id),
+        oldName: String(r.old_name),
+        newName: String(r.new_name),
+        changedAt: String(r.changed_at),
+        note: r.note ? String(r.note) : undefined,
+      }));
+      return hydratePlayersFromRows(rowsRes.rows as any[], history)[0] || null;
+    }, 'getPlayerById');
+  } catch (err) {
+    if (isTransientNetworkError(err)) {
+      console.warn('[Turso Fallback] getPlayerById failed; serving cached fallback:', (err as Error)?.message);
+      return loadFallbackBootstrapBundle().players.find((p) => p.id === id) || null;
+    }
+    throw err;
+  }
+}
+
 export async function getAllPlayers(): Promise<Player[]> {
   try {
     return await withTursoReadRetry(async () => {
@@ -1455,30 +1503,35 @@ export async function upsertPlayer(player: Player): Promise<Player> {
     cleanPlayer.junisenClass = '';
   }
 
-  await client.execute({
-    sql: `INSERT OR REPLACE INTO players
-      (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      cleanPlayer.id,
-      cleanPlayer.name,
-      cleanPlayer.formerName || null,
-      cleanPlayer.type || 'pro',
-      cleanPlayer.affiliation || '日本将棋連盟',
-      cleanPlayer.rank || '',
-      cleanPlayer.danRank || null,
-      cleanPlayer.playerNumber ?? null,
-      cleanPlayer.photoUrl || null,
-      JSON.stringify(cleanPlayer),
-      now,
+  // Write and verify in a single HTTP round-trip
+  const [, verifyRes] = await client.batch(
+    [
+      {
+        sql: `INSERT OR REPLACE INTO players
+          (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          cleanPlayer.id,
+          cleanPlayer.name,
+          cleanPlayer.formerName || null,
+          cleanPlayer.type || 'pro',
+          cleanPlayer.affiliation || '日本将棋連盟',
+          cleanPlayer.rank || '',
+          cleanPlayer.danRank || null,
+          cleanPlayer.playerNumber ?? null,
+          cleanPlayer.photoUrl || null,
+          JSON.stringify(cleanPlayer),
+          now,
+        ],
+      },
+      {
+        sql: `SELECT id, name, rank, dan_rank, data_json FROM players WHERE id = ?`,
+        args: [cleanPlayer.id],
+      },
     ],
-  });
+    'write'
+  );
 
-  // Post-write verification read from Turso
-  const verifyRes = await client.execute({
-    sql: `SELECT id, name, rank, dan_rank, data_json FROM players WHERE id = ?`,
-    args: [cleanPlayer.id],
-  });
   const verifiedRow = verifyRes.rows[0];
   if (!verifiedRow) {
     throw new Error(`[Tursoバリデーションエラー] 棋士データ (${cleanPlayer.name}: ${cleanPlayer.id}) が反映されていません`);
@@ -1555,9 +1608,29 @@ export async function deletePlayerById(id: string): Promise<boolean> {
   return (res.rowsAffected || 0) > 0;
 }
 
-export async function clearPlayerNameHistory(playerId: string): Promise<Player | null> {
+export async function clearPlayerNameHistory(
+  playerId: string,
+  options?: { preSavedPlayer?: Player }
+): Promise<Player | null> {
   await ensureTursoInitialized();
   const client = getTursoClient();
+
+  if (options?.preSavedPlayer) {
+    const delRes = await client.execute({
+      sql: `DELETE FROM player_name_history WHERE player_id = ?`,
+      args: [playerId],
+    });
+    if ((delRes.rowsAffected || 0) > 0) {
+      await addSyncLog(
+        'name_change_clear',
+        'success',
+        `氏名変更履歴（旧氏名・新氏名・改正年月日）を消去: ${options.preSavedPlayer.name || playerId}`,
+        1
+      );
+    }
+    return options.preSavedPlayer;
+  }
+
   const existingRes = await client.execute({
     sql: `SELECT data_json FROM players WHERE id = ?`,
     args: [playerId],
@@ -1815,6 +1888,7 @@ export async function recordPlayerNameChange(params: {
   newName: string;
   changedAt?: string;
   note?: string;
+  preSavedPlayer?: Player;
 }): Promise<{ player: Player; history: PlayerNameHistoryItem } | null> {
   await ensureTursoInitialized();
   const client = getTursoClient();
@@ -1822,14 +1896,34 @@ export async function recordPlayerNameChange(params: {
   const newTrim = String(params.newName || '').trim();
   if (!params.playerId || !oldTrim || !newTrim) return null;
 
-  const existingRes = await client.execute({
-    sql: `SELECT data_json FROM players WHERE id = ?`,
-    args: [params.playerId],
-  });
-  const row = existingRes.rows[0];
-  if (!row) return null;
+  let updatedPlayer: Player;
+  if (params.preSavedPlayer) {
+    updatedPlayer = params.preSavedPlayer;
+  } else {
+    const existingRes = await client.execute({
+      sql: `SELECT data_json FROM players WHERE id = ?`,
+      args: [params.playerId],
+    });
+    const row = existingRes.rows[0];
+    if (!row) return null;
 
-  const currentPlayer = parseJsonSafe<Player>(row.data_json, {} as Player);
+    const currentPlayer = parseJsonSafe<Player>(row.data_json, {} as Player);
+    const manualFields = Array.from(
+      new Set([
+        ...(Array.isArray(currentPlayer.manualFields) ? currentPlayer.manualFields : []),
+        'name',
+        'formerName',
+      ])
+    );
+
+    updatedPlayer = await upsertPlayer({
+      ...currentPlayer,
+      name: newTrim,
+      formerName: oldTrim,
+      manualFields,
+    });
+  }
+
   const changedAt = params.changedAt?.trim() || new Date().toISOString().slice(0, 10);
   const historyItem: PlayerNameHistoryItem = {
     id: `nh-${params.playerId}-${Date.now()}`,
@@ -1840,22 +1934,6 @@ export async function recordPlayerNameChange(params: {
     note: params.note?.trim() || '氏名変更・改名反映',
   };
 
-  const manualFields = Array.from(
-    new Set([
-      ...(Array.isArray(currentPlayer.manualFields) ? currentPlayer.manualFields : []),
-      'name',
-      'formerName',
-    ])
-  );
-
-  const updatedPlayer: Player = {
-    ...currentPlayer,
-    name: newTrim,
-    formerName: oldTrim,
-    manualFields,
-  };
-
-  await upsertPlayer(updatedPlayer);
   await client.batch(
     [
       {
