@@ -93,6 +93,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const isP2Winner = Boolean(match.winnerId && (winner?.id === player2.id || match.winnerId === player2.id));
   const hasDecidedWinner = isP1Winner || isP2Winner;
   const isFinished = match.status === 'finished';
+  const isFusen =
+    match.endCondition === '不戦' ||
+    (match as any).resultType === 'fusen' ||
+    Boolean(match.highlights?.includes('不戦') || match.highlights?.includes('□') || match.highlights?.includes('■'));
 
   // System time and status check (JST)
   const todayStr = getTodayDateString();
@@ -237,16 +241,16 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 <span className="text-xs font-black text-amber-400 tracking-wide">☗</span>
                 {hasDecidedWinner ? (
                   isP1Winner ? (
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 font-mono ${
                       (player1.type === 'women' || player1.affiliation === 'LPSA' || match.category?.includes('女流'))
                         ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
                         : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
                     }`}>
-                      <span>○ 勝者</span>
+                      <span>{isFusen ? '□ 勝者' : '○ 勝者'}</span>
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
-                      ● 敗退
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0 font-mono">
+                      {isFusen ? '■ 敗退' : '● 敗退'}
                     </span>
                   )
                 ) : null}
@@ -290,16 +294,16 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <div className="flex items-center justify-end gap-1.5 mb-2.5">
                 {hasDecidedWinner ? (
                   isP2Winner ? (
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 shadow-md whitespace-nowrap shrink-0 font-mono ${
                       (player2.type === 'women' || player2.affiliation === 'LPSA' || match.category?.includes('女流'))
                         ? 'bg-gradient-to-r from-pink-400 via-pink-300 to-rose-300 text-zinc-950 border border-pink-200 shadow-pink-500/20'
                         : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200 shadow-sky-500/20'
                     }`}>
-                      <span>○ 勝者</span>
+                      <span>{isFusen ? '□ 勝者' : '○ 勝者'}</span>
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0">
-                      ● 敗退
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 whitespace-nowrap shrink-0 font-mono">
+                      {isFusen ? '■ 敗退' : '● 敗退'}
                     </span>
                   )
                 ) : null}

@@ -257,6 +257,13 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       : undefined;
     const resolvedWinnerName = isSenteWin ? r.sente : isGoteWin ? r.gote : '';
 
+    const isFusen =
+      r.resultType === 'fusen' ||
+      r.senteMark.includes('□') ||
+      r.goteMark.includes('□') ||
+      r.senteMark.includes('■') ||
+      r.goteMark.includes('■');
+
     const m: Match = {
       id: r.id,
       tournament: r.tournament,
@@ -271,13 +278,14 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
       status: 'finished',
       venue: r.venue || '東京・将棋会館',
       timeControl: '公式持ち時間',
+      endCondition: isFusen ? '不戦' : undefined,
       broadcast: r.note?.includes('YouTube') ? ['将棋連盟YouTube'] : [],
       youtubeUrl: r.note?.includes('YouTube') ? 'https://www.youtube.com/@shogi_channel' : undefined,
       winnerId: resolvedWinnerId,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
       highlights: resolvedWinnerName
-        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}。`
+        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}${isFusen ? '（不戦）' : ''}。`
         : `${r.sente} 対 ${r.gote}（${r.tournament}）。結果未登録。`,
     };
     onSelectMatch(m);
@@ -1049,15 +1057,23 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                           {/* Win/Loss Badge */}
                           <div className="shrink-0">
                             {r.hasResult ? (
-                              r.isPlayerWinner ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
-                                  <span>{r.resultType === 'fusen' ? '□ 不戦勝' : '○ 勝利'}</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
-                                  <span>{r.resultType === 'fusen' ? '■ 不戦敗' : '● 敗戦'}</span>
-                                </span>
-                              )
+                              (() => {
+                                const isFusenItem =
+                                  r.resultType === 'fusen' ||
+                                  r.senteMark.includes('□') ||
+                                  r.goteMark.includes('□') ||
+                                  r.senteMark.includes('■') ||
+                                  r.goteMark.includes('■');
+                                return r.isPlayerWinner ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
+                                    <span>{isFusenItem ? '□ 不戦勝' : '○ 勝利'}</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                    <span>{isFusenItem ? '■ 不戦敗' : '● 敗戦'}</span>
+                                  </span>
+                                );
+                              })()
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800/80 text-zinc-300 border border-zinc-700">
                                 <span>結果未定</span>

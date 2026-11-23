@@ -535,6 +535,13 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     const resolvedWinnerId = isSenteWin ? p1.id : isGoteWin ? p2.id : undefined;
     const resolvedWinnerName = isSenteWin ? r.sente : isGoteWin ? r.gote : '';
 
+    const isFusen =
+      r.resultType === 'fusen' ||
+      r.senteMark.includes('□') ||
+      r.goteMark.includes('□') ||
+      r.senteMark.includes('■') ||
+      r.goteMark.includes('■');
+
     const m: Match = {
       id: r.id,
       tournament: r.tournament,
@@ -549,13 +556,14 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       status: 'finished',
       venue: r.venue || '東京・将棋会館',
       timeControl: '公式持ち時間',
+      endCondition: isFusen ? '不戦' : undefined,
       broadcast: r.note?.includes('YouTube') ? ['将棋連盟YouTube'] : [],
       youtubeUrl: r.note?.includes('YouTube') ? 'https://www.youtube.com/@shogi_channel' : undefined,
       winnerId: resolvedWinnerId,
       kifuUrl: `https://shogidb2.com/search?q=${encodeURIComponent(`${r.sente} ${r.gote}`)}`,
       kifuMoves: [],
       highlights: resolvedWinnerName
-        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}。`
+        ? `${r.sente} 対 ${r.gote}（${r.tournament}）。勝者: ${resolvedWinnerName}${isFusen ? '（不戦）' : ''}。`
         : `${r.sente} 対 ${r.gote}（${r.tournament}）。結果未登録。`,
     };
     onSelectMatch(m);
@@ -1128,6 +1136,12 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                     result.goteMark.includes('○') ||
                     result.goteMark.includes('□');
                   const hasResult = isSenteWinner || isGoteWinner;
+                  const isFusen =
+                    result.resultType === 'fusen' ||
+                    result.senteMark.includes('□') ||
+                    result.goteMark.includes('□') ||
+                    result.senteMark.includes('■') ||
+                    result.goteMark.includes('■');
 
                   // Category badge styling
                   const isLadyTitle =
@@ -1232,11 +1246,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                       : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
                                   }`}
                                 >
-                                  <span>○勝者</span>
+                                  <span>{isFusen ? '□勝者' : '○勝者'}</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
-                                  ●敗者
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap font-mono">
+                                  {isFusen ? '■敗者' : '●敗者'}
                                 </span>
                               )
                             )}
@@ -1271,6 +1285,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                           <span className="text-[11px] font-extrabold text-zinc-400 tracking-wider">
                             VS
                           </span>
+                          {isFusen && (
+                            <span className="text-[9px] text-amber-400 font-bold bg-amber-500/10 px-1 rounded">
+                              不戦
+                            </span>
+                          )}
                           {result.resultType === 'sennichite' && (
                             <span className="text-[9px] text-amber-400 font-bold bg-amber-500/10 px-1 rounded">
                               千日手
@@ -1310,11 +1329,11 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                                       : 'bg-gradient-to-r from-sky-400 via-sky-300 to-cyan-300 text-zinc-950 border border-sky-200'
                                   }`}
                                 >
-                                  <span>○勝者</span>
+                                  <span>{isFusen ? '□勝者' : '○勝者'}</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
-                                  ●敗者
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-zinc-400 bg-zinc-800/90 border border-zinc-700/80 px-1.5 py-0.2 rounded-full whitespace-nowrap font-mono">
+                                  {isFusen ? '■敗者' : '●敗者'}
                                 </span>
                               )
                             )}
