@@ -392,59 +392,120 @@ export function closeTurso(): void {
   initPromise = null;
 }
 
-const TABLE_STATEMENTS: string[] = [
-  `CREATE TABLE IF NOT EXISTS players (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    former_name TEXT,
-    type TEXT NOT NULL DEFAULT 'pro',
-    affiliation TEXT DEFAULT '日本将棋連盟',
-    rank TEXT DEFAULT '',
-    dan_rank TEXT,
-    player_number INTEGER,
-    photo_url TEXT,
-    data_json TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS matches (
-    id TEXT PRIMARY KEY,
-    date TEXT NOT NULL,
-    time TEXT DEFAULT '',
-    tournament TEXT NOT NULL DEFAULT '',
-    category TEXT NOT NULL DEFAULT '一般棋戦',
-    round TEXT DEFAULT '',
-    player1_id TEXT NOT NULL DEFAULT '',
-    player2_id TEXT NOT NULL DEFAULT '',
-    status TEXT NOT NULL DEFAULT 'upcoming',
-    venue TEXT DEFAULT '',
-    data_json TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS match_archives (
-    month TEXT PRIMARY KEY,
-    fiscal_year INTEGER NOT NULL,
-    count INTEGER NOT NULL DEFAULT 0,
-    results_json TEXT NOT NULL,
-    source TEXT DEFAULT 'turso-libsql',
-    updated_at TEXT NOT NULL
-  )`,
-  `CREATE TABLE IF NOT EXISTS player_name_history (
-    id TEXT PRIMARY KEY,
-    player_id TEXT NOT NULL,
-    old_name TEXT NOT NULL,
-    new_name TEXT NOT NULL,
-    changed_at TEXT NOT NULL,
-    note TEXT DEFAULT ''
-  )`,
-  `CREATE TABLE IF NOT EXISTS sync_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sync_type TEXT NOT NULL,
-    status TEXT NOT NULL,
-    message TEXT NOT NULL,
-    records_count INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL
-  )`,
+interface CanonicalTableSpec {
+  name: 'players' | 'matches' | 'match_archives' | 'player_name_history' | 'sync_logs';
+  pk: string;
+  columns: string[];
+  createBody: string;
+}
+
+const CANONICAL_TABLES: CanonicalTableSpec[] = [
+  {
+    name: 'players',
+    pk: 'id',
+    columns: [
+      'id',
+      'name',
+      'former_name',
+      'type',
+      'affiliation',
+      'rank',
+      'dan_rank',
+      'player_number',
+      'photo_url',
+      'data_json',
+      'updated_at',
+    ],
+    createBody: `(
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      former_name TEXT,
+      type TEXT NOT NULL DEFAULT 'pro',
+      affiliation TEXT DEFAULT '日本将棋連盟',
+      rank TEXT DEFAULT '',
+      dan_rank TEXT,
+      player_number INTEGER,
+      photo_url TEXT,
+      data_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`,
+  },
+  {
+    name: 'matches',
+    pk: 'id',
+    columns: [
+      'id',
+      'date',
+      'time',
+      'tournament',
+      'category',
+      'round',
+      'player1_id',
+      'player2_id',
+      'status',
+      'venue',
+      'data_json',
+      'updated_at',
+    ],
+    createBody: `(
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      time TEXT DEFAULT '',
+      tournament TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT '一般棋戦',
+      round TEXT DEFAULT '',
+      player1_id TEXT NOT NULL DEFAULT '',
+      player2_id TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'upcoming',
+      venue TEXT DEFAULT '',
+      data_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`,
+  },
+  {
+    name: 'match_archives',
+    pk: 'month',
+    columns: ['month', 'fiscal_year', 'count', 'results_json', 'source', 'updated_at'],
+    createBody: `(
+      month TEXT PRIMARY KEY,
+      fiscal_year INTEGER NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      results_json TEXT NOT NULL,
+      source TEXT DEFAULT 'turso-libsql',
+      updated_at TEXT NOT NULL
+    )`,
+  },
+  {
+    name: 'player_name_history',
+    pk: 'id',
+    columns: ['id', 'player_id', 'old_name', 'new_name', 'changed_at', 'note'],
+    createBody: `(
+      id TEXT PRIMARY KEY,
+      player_id TEXT NOT NULL,
+      old_name TEXT NOT NULL,
+      new_name TEXT NOT NULL,
+      changed_at TEXT NOT NULL,
+      note TEXT DEFAULT ''
+    )`,
+  },
+  {
+    name: 'sync_logs',
+    pk: 'id',
+    columns: ['id', 'sync_type', 'status', 'message', 'records_count', 'created_at'],
+    createBody: `(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sync_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      message TEXT NOT NULL,
+      records_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )`,
+  },
 ];
+
+const TABLE_STATEMENTS: string[] = CANONICAL_TABLES.map(
+  (t) => `CREATE TABLE IF NOT EXISTS ${t.name} ${t.createBody}`
+);
 
 const INDEX_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_players_name ON players(name)`,
@@ -455,108 +516,94 @@ const INDEX_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_name_history_player ON player_name_history(player_id)`,
 ];
 
-const TABLE_MIGRATION_COLUMNS: Record<string, Array<{ name: string; definition: string }>> = {
-  players: [
-    { name: 'name', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'former_name', definition: `TEXT` },
-    { name: 'type', definition: `TEXT NOT NULL DEFAULT 'pro'` },
-    { name: 'affiliation', definition: `TEXT DEFAULT '日本将棋連盟'` },
-    { name: 'rank', definition: `TEXT DEFAULT ''` },
-    { name: 'dan_rank', definition: `TEXT` },
-    { name: 'player_number', definition: `INTEGER` },
-    { name: 'photo_url', definition: `TEXT` },
-    { name: 'data_json', definition: `TEXT NOT NULL DEFAULT '{}'` },
-    { name: 'updated_at', definition: `TEXT NOT NULL DEFAULT ''` },
-  ],
-  matches: [
-    { name: 'date', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'time', definition: `TEXT DEFAULT ''` },
-    { name: 'tournament', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'category', definition: `TEXT NOT NULL DEFAULT '一般棋戦'` },
-    { name: 'round', definition: `TEXT DEFAULT ''` },
-    { name: 'player1_id', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'player2_id', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'status', definition: `TEXT NOT NULL DEFAULT 'upcoming'` },
-    { name: 'venue', definition: `TEXT DEFAULT ''` },
-    { name: 'data_json', definition: `TEXT NOT NULL DEFAULT '{}'` },
-    { name: 'updated_at', definition: `TEXT NOT NULL DEFAULT ''` },
-  ],
-  match_archives: [
-    { name: 'fiscal_year', definition: `INTEGER NOT NULL DEFAULT 2026` },
-    { name: 'count', definition: `INTEGER NOT NULL DEFAULT 0` },
-    { name: 'results_json', definition: `TEXT NOT NULL DEFAULT '[]'` },
-    { name: 'source', definition: `TEXT DEFAULT 'turso-libsql'` },
-    { name: 'updated_at', definition: `TEXT NOT NULL DEFAULT ''` },
-  ],
-  player_name_history: [
-    { name: 'player_id', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'old_name', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'new_name', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'changed_at', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'note', definition: `TEXT DEFAULT ''` },
-  ],
-  sync_logs: [
-    { name: 'sync_type', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'status', definition: `TEXT NOT NULL DEFAULT 'success'` },
-    { name: 'message', definition: `TEXT NOT NULL DEFAULT ''` },
-    { name: 'records_count', definition: `INTEGER NOT NULL DEFAULT 0` },
-    { name: 'created_at', definition: `TEXT NOT NULL DEFAULT ''` },
-  ],
-};
-
-async function ensureSchemaMigrations(client: Client): Promise<void> {
-  const addedColumnsByTable = new Map<string, Set<string>>();
-
-  for (const [tableName, requiredCols] of Object.entries(TABLE_MIGRATION_COLUMNS)) {
-    const infoRes = await client.execute(`PRAGMA table_info(${tableName})`);
-    const existingCols = new Set(
-      infoRes.rows.map((r) => String(r.name || '').toLowerCase()).filter(Boolean)
-    );
-    if (existingCols.size === 0) continue;
-
-    const added = new Set<string>();
-    for (const col of requiredCols) {
-      if (!existingCols.has(col.name.toLowerCase())) {
-        await client.execute(
-          `ALTER TABLE ${tableName} ADD COLUMN ${col.name} ${col.definition}`
-        );
-        added.add(col.name);
-        console.log(`[Turso Migration] Added missing column ${tableName}.${col.name}`);
-      }
-    }
-    if (added.size > 0) {
-      addedColumnsByTable.set(tableName, added);
+function extractNormalizedMonth(candidate: unknown): string {
+  if (candidate === null || candidate === undefined) return '';
+  const str = String(candidate).trim();
+  const sepMatch = str.match(/((?:19|20|21)\d{2})[-/年.](\d{1,2})(?:[-/月.\s]|$)/);
+  if (sepMatch) {
+    const y = Number(sepMatch[1]);
+    const m = Number(sepMatch[2]);
+    if (y >= 1900 && y <= 2200 && m >= 1 && m <= 12) {
+      return `${sepMatch[1]}${String(m).padStart(2, '0')}`;
     }
   }
+  const digits = str.replace(/[^0-9]/g, '');
+  if (digits.length >= 6) {
+    const ym = digits.slice(0, 6);
+    const y = Number(ym.slice(0, 4));
+    const m = Number(ym.slice(4, 6));
+    if (y >= 1900 && y <= 2200 && m >= 1 && m <= 12) {
+      return ym;
+    }
+  }
+  return '';
+}
 
-  // Backfill matches columns from data_json (or legacy match_date) if any column was newly added or date is empty
-  const matchesAdded = addedColumnsByTable.get('matches');
-  let hasEmptyMatchDate = false;
-  if (!matchesAdded || matchesAdded.size === 0) {
-    const emptyDateRes = await client.execute(
-      `SELECT COUNT(*) AS cnt FROM matches WHERE date = '' AND data_json != '{}'`
-    );
-    hasEmptyMatchDate = Number(emptyDateRes.rows[0]?.cnt ?? 0) > 0;
+async function migrateRowsToTable(
+  client: Client,
+  tableName: CanonicalTableSpec['name'],
+  targetTable: string,
+  rows: any[]
+): Promise<void> {
+  if (rows.length === 0) return;
+  const now = new Date().toISOString();
+
+  if (tableName === 'players') {
+    const stmts: Array<{ sql: string; args: InValue[] }> = [];
+    for (const rawRow of rows) {
+      const parsed = parseJsonSafe<Partial<Player>>(
+        rawRow.data_json ?? rawRow.dataJson ?? rawRow.json ?? rawRow.value,
+        {}
+      );
+      const p = normalizePlayerRecord({
+        ...parsed,
+        ...rawRow,
+        data_json: undefined,
+        id: rawRow.id ?? rawRow.player_id ?? rawRow.playerId ?? parsed.id,
+        name: rawRow.name ?? rawRow.player_name ?? rawRow.playerName ?? parsed.name,
+      });
+      if (!p) continue;
+      stmts.push({
+        sql: `INSERT OR REPLACE INTO ${targetTable}
+          (id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          p.id,
+          p.name,
+          p.formerName || null,
+          p.type || 'pro',
+          p.affiliation || '日本将棋連盟',
+          p.rank || '',
+          p.danRank || null,
+          p.playerNumber ?? null,
+          p.photoUrl || null,
+          JSON.stringify(p),
+          String(rawRow.updated_at || rawRow.updatedAt || now),
+        ],
+      });
+    }
+    await runBatchChunked(client, stmts, 40);
+    return;
   }
 
-  if ((matchesAdded && matchesAdded.size > 0) || hasEmptyMatchDate) {
-    const rowsRes = await client.execute(
-      matchesAdded && matchesAdded.size > 0
-        ? `SELECT * FROM matches`
-        : `SELECT * FROM matches WHERE date = ''`
-    );
-    const now = new Date().toISOString();
-    const updateStmts: Array<{ sql: string; args: InValue[] }> = [];
-
-    for (const rawRow of rowsRes.rows as any[]) {
-      const parsed = parseJsonSafe<Partial<Match>>(rawRow.data_json, {});
+  if (tableName === 'matches') {
+    const stmts: Array<{ sql: string; args: InValue[] }> = [];
+    for (const rawRow of rows) {
+      const parsed = parseJsonSafe<Partial<Match>>(
+        rawRow.data_json ?? rawRow.dataJson ?? rawRow.json ?? rawRow.value,
+        {}
+      );
+      const fallbackId = String(
+        rawRow.id ?? rawRow.match_id ?? rawRow.matchId ?? parsed.id ?? ''
+      ).trim();
       const fallbackDate = String(
-        rawRow.date || rawRow.match_date || rawRow.matchDate || parsed.date || ''
+        rawRow.date ?? rawRow.match_date ?? rawRow.matchDate ?? parsed.date ?? ''
       ).trim();
       const m = normalizeMatchRecord({
         ...rawRow,
         ...parsed,
-        id: rawRow.id || parsed.id,
+        data_json: undefined,
+        id: fallbackId,
         date: fallbackDate || '2026-01-01',
       });
       if (!m) continue;
@@ -564,12 +611,12 @@ async function ensureSchemaMigrations(client: Client): Promise<void> {
       if (!fallbackDate) {
         m.date = '';
       }
-      updateStmts.push({
-        sql: `UPDATE matches
-          SET date = ?, time = ?, tournament = ?, category = ?, round = ?,
-              player1_id = ?, player2_id = ?, status = ?, venue = ?, data_json = ?, updated_at = ?
-          WHERE id = ?`,
+      stmts.push({
+        sql: `INSERT OR REPLACE INTO ${targetTable}
+          (id, date, time, tournament, category, round, player1_id, player2_id, status, venue, data_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
+          m.id,
           persistedDate,
           m.time || '',
           m.tournament || '',
@@ -580,56 +627,226 @@ async function ensureSchemaMigrations(client: Client): Promise<void> {
           m.status || 'upcoming',
           m.venue || '',
           JSON.stringify(m),
-          now,
-          m.id,
+          String(rawRow.updated_at || rawRow.updatedAt || now),
         ],
       });
     }
-
-    if (updateStmts.length > 0) {
-      await runBatchChunked(client, updateStmts, 50);
-    }
+    await runBatchChunked(client, stmts, 50);
+    return;
   }
 
-  // Backfill players columns from data_json if any column was newly added
-  const playersAdded = addedColumnsByTable.get('players');
-  if (playersAdded && playersAdded.size > 0) {
-    const rowsRes = await client.execute(`SELECT * FROM players`);
-    const now = new Date().toISOString();
-    const updateStmts: Array<{ sql: string; args: InValue[] }> = [];
+  if (tableName === 'match_archives') {
+    let currentBatch: Array<{ sql: string; args: InValue[] }> = [];
+    let currentBytes = 0;
 
-    for (const rawRow of rowsRes.rows as any[]) {
-      const parsed = parseJsonSafe<Partial<Player>>(rawRow.data_json, {});
-      const p = normalizePlayerRecord({
-        ...parsed,
-        ...rawRow,
-        id: rawRow.id || parsed.id,
-        name: rawRow.name || parsed.name,
-      });
-      if (!p) continue;
-      updateStmts.push({
-        sql: `UPDATE players
-          SET name = ?, former_name = ?, type = ?, affiliation = ?, rank = ?,
-              dan_rank = ?, player_number = ?, photo_url = ?, data_json = ?, updated_at = ?
-          WHERE id = ?`,
+    for (const rawRow of rows) {
+      const rawJson =
+        rawRow.results_json ??
+        rawRow.resultsJson ??
+        rawRow.data_json ??
+        rawRow.dataJson ??
+        rawRow.results ??
+        rawRow.json ??
+        rawRow.value ??
+        '[]';
+      const parsedPayload = parseJsonSafe<unknown>(rawJson, []);
+      let results: ShogiMonthlyResult[] = [];
+      let objMonth = '';
+      if (Array.isArray(parsedPayload)) {
+        results = parsedPayload as ShogiMonthlyResult[];
+      } else if (parsedPayload && typeof parsedPayload === 'object') {
+        const obj = parsedPayload as Record<string, unknown>;
+        objMonth = extractNormalizedMonth(obj.month ?? obj.yearMonth ?? obj.year_month);
+        if (Array.isArray(obj.results)) {
+          results = obj.results as ShogiMonthlyResult[];
+        } else if (Array.isArray(obj.items)) {
+          results = obj.items as ShogiMonthlyResult[];
+        }
+      }
+
+      let month =
+        extractNormalizedMonth(rawRow.month) ||
+        extractNormalizedMonth(rawRow.year_month) ||
+        extractNormalizedMonth(rawRow.yearMonth) ||
+        extractNormalizedMonth(rawRow.ym) ||
+        extractNormalizedMonth(rawRow.archive_month) ||
+        extractNormalizedMonth(rawRow.archiveMonth) ||
+        extractNormalizedMonth(rawRow.month_key) ||
+        extractNormalizedMonth(rawRow.monthKey) ||
+        extractNormalizedMonth(rawRow.period) ||
+        extractNormalizedMonth(rawRow.yyyymm) ||
+        extractNormalizedMonth(rawRow.id) ||
+        extractNormalizedMonth(rawRow.key) ||
+        objMonth;
+
+      if (!month && rawRow.year && (rawRow.month_num ?? rawRow.monthNum ?? rawRow.m)) {
+        const y = String(rawRow.year).replace(/[^0-9]/g, '');
+        const mNum = String(rawRow.month_num ?? rawRow.monthNum ?? rawRow.m)
+          .replace(/[^0-9]/g, '')
+          .padStart(2, '0');
+        month = extractNormalizedMonth(`${y}${mNum}`);
+      }
+
+      if (!month && results.length > 0) {
+        for (const item of results) {
+          month = extractNormalizedMonth(item?.month ?? item?.date);
+          if (month) break;
+        }
+      }
+
+      if (!month) continue;
+
+      const jsonStr = JSON.stringify(results);
+      const fiscalYear = Number(
+        rawRow.fiscal_year ?? rawRow.fiscalYear ?? getFiscalYearFromMonth(month)
+      );
+      const count = Number(rawRow.count ?? results.length);
+      const source = String(rawRow.source || 'turso-migrated');
+      const updatedAt = String(rawRow.updated_at || rawRow.updatedAt || now);
+
+      const stmt = {
+        sql: `INSERT OR REPLACE INTO ${targetTable}
+          (month, fiscal_year, count, results_json, source, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)`,
         args: [
-          p.name,
-          p.formerName || null,
-          p.type || 'pro',
-          p.affiliation || '日本将棋連盟',
-          p.rank || '',
-          p.danRank || null,
-          p.playerNumber ?? null,
-          p.photoUrl || null,
-          JSON.stringify(p),
-          now,
-          p.id,
+          month,
+          Number.isFinite(fiscalYear) ? fiscalYear : getFiscalYearFromMonth(month),
+          Number.isFinite(count) ? count : results.length,
+          jsonStr,
+          source,
+          updatedAt,
+        ] as InValue[],
+      };
+
+      if (currentBatch.length > 0 && (currentBytes + jsonStr.length > 450_000 || currentBatch.length >= 4)) {
+        await client.batch(currentBatch, 'write');
+        currentBatch = [];
+        currentBytes = 0;
+      }
+      currentBatch.push(stmt);
+      currentBytes += jsonStr.length;
+    }
+
+    if (currentBatch.length > 0) {
+      await client.batch(currentBatch, 'write');
+    }
+    return;
+  }
+
+  if (tableName === 'player_name_history') {
+    const stmts: Array<{ sql: string; args: InValue[] }> = [];
+    for (const rawRow of rows) {
+      const parsed = parseJsonSafe<Record<string, unknown>>(
+        rawRow.data_json ?? rawRow.json ?? rawRow.value,
+        {}
+      );
+      const id = String(rawRow.id ?? parsed.id ?? '').trim();
+      const playerId = String(rawRow.player_id ?? rawRow.playerId ?? parsed.playerId ?? '').trim();
+      const oldName = String(rawRow.old_name ?? rawRow.oldName ?? parsed.oldName ?? '').trim();
+      const newName = String(rawRow.new_name ?? rawRow.newName ?? parsed.newName ?? '').trim();
+      const changedAt = String(rawRow.changed_at ?? rawRow.changedAt ?? parsed.changedAt ?? now);
+      const note = String(rawRow.note ?? parsed.note ?? '');
+      if (!id || !playerId) continue;
+      stmts.push({
+        sql: `INSERT OR REPLACE INTO ${targetTable}
+          (id, player_id, old_name, new_name, changed_at, note)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [id, playerId, oldName, newName, changedAt, note],
+      });
+    }
+    await runBatchChunked(client, stmts, 50);
+    return;
+  }
+
+  if (tableName === 'sync_logs') {
+    const stmts: Array<{ sql: string; args: InValue[] }> = [];
+    for (const rawRow of rows) {
+      stmts.push({
+        sql: `INSERT INTO ${targetTable}
+          (sync_type, status, message, records_count, created_at)
+          VALUES (?, ?, ?, ?, ?)`,
+        args: [
+          String(rawRow.sync_type ?? rawRow.syncType ?? 'legacy'),
+          String(rawRow.status ?? 'success'),
+          String(rawRow.message ?? ''),
+          Number(rawRow.records_count ?? rawRow.recordsCount ?? 0),
+          String(rawRow.created_at ?? rawRow.createdAt ?? now),
         ],
       });
     }
+    await runBatchChunked(client, stmts, 50);
+  }
+}
 
-    if (updateStmts.length > 0) {
-      await runBatchChunked(client, updateStmts, 40);
+async function ensureSchemaMigrations(client: Client): Promise<void> {
+  const rebuiltTables = new Set<string>();
+
+  for (const table of CANONICAL_TABLES) {
+    const infoRes = await client.execute(`PRAGMA table_info(${table.name})`);
+    if (infoRes.rows.length === 0) continue;
+
+    const existingMap = new Map<
+      string,
+      { name: string; notnull: number; dflt_value: unknown; pk: number }
+    >();
+    const pkCols: string[] = [];
+
+    for (const r of infoRes.rows) {
+      const colName = String(r.name || '').toLowerCase();
+      if (!colName) continue;
+      const pkVal = Number(r.pk ?? 0);
+      existingMap.set(colName, {
+        name: colName,
+        notnull: Number(r.notnull ?? 0),
+        dflt_value: r.dflt_value ?? null,
+        pk: pkVal,
+      });
+      if (pkVal > 0) {
+        pkCols.push(colName);
+      }
+    }
+
+    const canonicalSet = new Set(table.columns.map((c) => c.toLowerCase()));
+    const missingColumn = table.columns.some((c) => !existingMap.has(c.toLowerCase()));
+    const pkMismatch = pkCols.length !== 1 || pkCols[0] !== table.pk.toLowerCase();
+    const blockingLegacyNotNull = Array.from(existingMap.values()).some(
+      (col) => !canonicalSet.has(col.name) && col.notnull === 1 && col.dflt_value === null
+    );
+
+    if (!missingColumn && !pkMismatch && !blockingLegacyNotNull) {
+      continue;
+    }
+
+    const existingNames = Array.from(existingMap.keys()).join(', ');
+    console.log(
+      `[Turso Migration] Rebuilding table "${table.name}" (existing cols: [${existingNames}], missing=${missingColumn}, pkMismatch=${pkMismatch}, blockingLegacyNotNull=${blockingLegacyNotNull})`
+    );
+
+    const migratingName = `${table.name}__migrating`;
+    await client.execute(`DROP TABLE IF EXISTS ${migratingName}`);
+    await client.execute(`CREATE TABLE ${migratingName} ${table.createBody}`);
+
+    const existingRowsRes = await client.execute(`SELECT * FROM ${table.name}`);
+    await migrateRowsToTable(client, table.name, migratingName, existingRowsRes.rows as any[]);
+
+    await client.batch(
+      [`DROP TABLE ${table.name}`, `ALTER TABLE ${migratingName} RENAME TO ${table.name}`],
+      'write'
+    );
+    rebuiltTables.add(table.name);
+    console.log(
+      `[Turso Migration] Rebuilt table "${table.name}" successfully (${existingRowsRes.rows.length} rows checked)`
+    );
+  }
+
+  // Ensure any remaining matches rows with empty date get backfilled from data_json
+  if (!rebuiltTables.has('matches')) {
+    const emptyDateRes = await client.execute(
+      `SELECT COUNT(*) AS cnt FROM matches WHERE date = '' AND data_json != '{}'`
+    );
+    if (Number(emptyDateRes.rows[0]?.cnt ?? 0) > 0) {
+      const rowsRes = await client.execute(`SELECT * FROM matches WHERE date = ''`);
+      await migrateRowsToTable(client, 'matches', 'matches', rowsRes.rows as any[]);
     }
   }
 }
