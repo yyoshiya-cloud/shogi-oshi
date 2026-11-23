@@ -19,7 +19,7 @@ export function getGoogleCalendarUrl(match: Match, p1: Player, p2: Player): stri
   
   const details = [
     `【棋戦】${match.tournament}`,
-    `【対局】${p1.name} (${p1.rank}) vs ${p2.name} (${p2.rank})`,
+    `【対局】${p1.name}${p1.rank || p1.danRank ? ` (${p1.rank || p1.danRank})` : ''} vs ${p2.name}${p2.rank || p2.danRank ? ` (${p2.rank || p2.danRank})` : ''}`,
     `【対局場】${match.venue}`,
     `【持ち時間】${match.timeControl}`,
     match.youtubeUrl || match.broadcast?.some((b) => /youtube/i.test(b))
@@ -118,7 +118,7 @@ export function downloadMultipleICSFile(items: MatchExportItem[], filename: stri
 
     const desc = [
       `【棋戦】${match.tournament}${match.round ? ` (${match.round})` : ''}`,
-      `【対局】${p1.name} (${p1.rank}) vs ${p2.name} (${p2.rank})`,
+      `【対局】${p1.name}${p1.rank || p1.danRank ? ` (${p1.rank || p1.danRank})` : ''} vs ${p2.name}${p2.rank || p2.danRank ? ` (${p2.rank || p2.danRank})` : ''}`,
       match.venue ? `【会場】${match.venue}` : '',
       match.timeControl ? `【持ち時間】${match.timeControl}` : '',
       match.youtubeUrl || match.broadcast?.some((b) => /youtube/i.test(b))

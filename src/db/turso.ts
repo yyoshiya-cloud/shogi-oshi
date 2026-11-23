@@ -219,66 +219,206 @@ function getJstTimestampString(): string {
   return jstDate.toISOString().replace('T', ' ').slice(0, 19);
 }
 
-export function normalizePlayerRecord(raw: any): Player | null {
-  if (!raw || !raw.id || !raw.name) return null;
-  const parsed = parseJsonSafe<Partial<Player>>(raw.data_json, {});
-  const src = { ...raw, ...parsed };
+function extractRetirementDateFromTexts(texts: unknown[]): string | undefined {
+  for (const rawTxt of texts) {
+    if (!rawTxt) continue;
+    const cleanTxt = String(rawTxt).replace(/就位は原則引退後|引退後に就位|引退後/g, '');
+    const m = cleanTxt.match(
+      /((?:19|20)\d{2})\s*[年./-]\s*(\d{1,2})\s*[月./-]\s*(\d{1,2})\s*日?(?:付で)?\s*引退/
+    );
+    if (m) {
+      const yyyy = m[1];
+      const mm = m[2].padStart(2, '0');
+      const dd = m[3].padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+  return undefined;
+}
 
-  let rank = String(src.rank || '');
-  let danRank = src.danRank || src.dan_rank;
-  const isPro = src.type !== 'women';
-  const danRegex = isPro ? /([四五六七八九]段)/ : /(女流[1-2]級|女流[初一二三四五六七八]段)/;
-  if (!danRank && rank) {
-    const m = rank.match(danRegex);
-    if (m) danRank = m[1];
+const KNOWN_WOMEN_PLAYER_IDS = new Set([
+  'shimai-saori',
+  'watanabe-mana',
+  'nakakura-hiromi',
+  'uekawa-kaori',
+  'nakai-hiroe',
+]);
+
+function repairLegacyPlayerFields(src: any): Player {
+  const idStr = String(src.id || '');
+  const manualList = Array.isArray(src.manualFields) ? src.manualFields : undefined;
+  const manualSet = new Set<string>(manualList || []);
+
+  const legacyCategory = String(src.category || '').trim().toLowerCase();
+  const legacyTitle = String(src.title || '').trim();
+  const legacyBio = String(src.bio || '').trim();
+  const legacyTitleHighlight = String(src.title_highlight || src.titleHighlight || '').trim();
+  const legacyStatus = String(src.status || '').trim().toLowerCase();
+
+  let rawRank = String(src.rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+  let rawDan = String(src.danRank || src.dan_rank || '').trim().replace(/１/g, '1').replace(/２/g, '2');
+
+  const isFemaleHint =
+    src.type === 'women' ||
+    legacyCategory === 'female' ||
+    idStr.startsWith('lady-') ||
+    KNOWN_WOMEN_PLAYER_IDS.has(idStr) ||
+    /女流/.test(`${rawRank} ${rawDan} ${legacyTitle}`);
+
+  const resolvedType: 'pro' | 'women' = isFemaleHint ? 'women' : 'pro';
+  const isPro = resolvedType !== 'women';
+
+  const womenDanRegex = /(女流[1-2]級|女流[初一二三四五六七八]段)/;
+  const proDanRegex = /([四五六七八九]段)/;
+
+  if (!isPro) {
+    if (!rawDan || !rawDan.includes('女流')) {
+      const womenDanMatch = `${legacyTitle} ${rawRank} ${rawDan}`.match(womenDanRegex);
+      if (womenDanMatch) {
+        rawDan = womenDanMatch[1];
+      } else if (/^([初一二三四五六七八]段|[1-2]級)$/.test(rawDan)) {
+        rawDan = `女流${rawDan}`;
+      }
+    }
+    if (!rawDan && rawRank) {
+      const m = rawRank.match(womenDanRegex);
+      if (m) rawDan = m[1];
+    }
+  } else if (!rawDan) {
+    const m = `${rawRank} ${legacyTitle}`.match(proDanRegex);
+    if (m) rawDan = m[1];
   }
 
-  if (!rank && danRank) {
-    rank = danRank;
+  let rank = rawRank;
+  if (!rank && legacyTitle && !manualSet.has('rank')) {
+    rank = legacyTitle.split('（')[0].trim() || legacyTitle;
+  }
+  if (!rank && rawDan) {
+    rank = rawDan;
   }
 
-  return {
+  const photoUrl =
+    String(src.photoUrl || src.photo_url || src.avatar_url || src.avatarUrl || '').trim() ||
+    undefined;
+
+  let shortBio = String(src.shortBio || '').trim();
+  if (!shortBio && legacyBio && !manualSet.has('shortBio')) {
+    shortBio = legacyBio;
+  }
+
+  let highlights: string[] = Array.isArray(src.highlights) ? [...src.highlights] : [];
+  if (highlights.length === 0 && legacyTitleHighlight && !manualSet.has('highlights')) {
+    highlights = Array.from(
+      new Set(
+        legacyTitleHighlight
+          .split('・')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    );
+  }
+
+  let retirementDate = src.retirementDate ? String(src.retirementDate).trim() : undefined;
+  if (!retirementDate && !manualSet.has('retirementDate')) {
+    retirementDate = extractRetirementDateFromTexts([
+      shortBio,
+      legacyBio,
+      legacyTitleHighlight,
+      ...highlights,
+    ]);
+  }
+  if (
+    legacyStatus === 'retired' &&
+    !retirementDate &&
+    !shortBio.includes('引退') &&
+    !rank.includes('引退') &&
+    !highlights.some((h) => h.includes('引退'))
+  ) {
+    shortBio = shortBio ? `${shortBio}（現役引退）` : '現役引退';
+  }
+
+  let leaveInfo = src.leaveInfo as Player['leaveInfo'] | undefined;
+  if (legacyStatus === 'on_leave' && !manualSet.has('leaveInfo')) {
+    if (!leaveInfo) {
+      leaveInfo = { isOnLeave: true };
+    } else if (leaveInfo.isOnLeave === undefined) {
+      leaveInfo = { ...leaveInfo, isOnLeave: true };
+    }
+  }
+
+  const playerObj: Player = {
     ...src,
-    id: String(src.id),
+    id: idStr,
     name: String(src.name),
     formerName: src.formerName || src.former_name || undefined,
-    type: (src.type === 'women' ? 'women' : 'pro') as any,
+    type: resolvedType as any,
     affiliation: src.affiliation || '日本将棋連盟',
     rank,
-    danRank: danRank || undefined,
+    danRank: rawDan || undefined,
     playerNumber: src.playerNumber ?? src.player_number ?? undefined,
-    photoUrl: src.photoUrl || src.photo_url || undefined,
+    photoUrl,
     birthDate: String(src.birthDate || src.birth_date || '1970-01-01'),
-    birthPlace: String(src.birthPlace || src.birth_place || ''),
+    birthPlace: String(src.birthPlace || src.birth_place || src.hometown || ''),
     master: String(src.master || ''),
-    style: (src.style || '居飛車') as any,
+    style: (src.style || src.favorite_strategy || '居飛車') as any,
     ryuoClass: String(src.ryuoClass || src.ryuo_class || ''),
-    junisenClass: String(src.junisenClass || src.junisen_class || ''),
+    junisenClass: String(src.junisenClass || src.junisen_class || src.meijin_class || ''),
     heldTitles: Array.isArray(src.heldTitles) ? src.heldTitles : [],
     totalTitles: Number(src.totalTitles ?? 0),
     titleHistory: String(src.titleHistory || ''),
     eiseiTitles: Array.isArray(src.eiseiTitles) ? src.eiseiTitles : undefined,
-    careerWins: Number(src.careerWins ?? 0),
-    careerLosses: Number(src.careerLosses ?? 0),
+    careerWins: Number(src.careerWins ?? src.win_count ?? 0),
+    careerLosses: Number(src.careerLosses ?? src.loss_count ?? 0),
     careerWinRate: Number(src.careerWinRate ?? 0),
-    currentYearWins: Number(src.currentYearWins ?? 0),
-    currentYearLosses: Number(src.currentYearLosses ?? 0),
+    currentYearWins: Number(src.currentYearWins ?? src.fy2026_wins ?? 0),
+    currentYearLosses: Number(src.currentYearLosses ?? src.fy2026_losses ?? 0),
     currentYearWinRate: Number(src.currentYearWinRate ?? 0),
     currentYearStreak: Number(src.currentYearStreak ?? 0),
     rankingInFederation: src.rankingInFederation || {},
     colorAccent: String(src.colorAccent || '#f59e0b'),
     avatarBg: String(src.avatarBg || '#27272a'),
-    shortBio: String(src.shortBio || ''),
-    highlights: Array.isArray(src.highlights) ? src.highlights : [],
+    shortBio,
+    highlights,
     yearRecords: Array.isArray(src.yearRecords) ? src.yearRecords : [],
     senteWinRate: Number(src.senteWinRate || 0.5),
     goteWinRate: Number(src.goteWinRate || 0.5),
     openingStats: Array.isArray(src.openingStats) ? src.openingStats : [],
     headToHead: Array.isArray(src.headToHead) ? src.headToHead : [],
-    externalLinks: src.externalLinks || { officialProfile: '', kifuDatabase: '' },
-    manualFields: Array.isArray(src.manualFields) ? src.manualFields : undefined,
-    retirementDate: src.retirementDate ? String(src.retirementDate) : undefined,
+    externalLinks: src.externalLinks || { officialProfile: src.source_url || '', kifuDatabase: '' },
+    manualFields: manualList,
+    retirementDate,
+    ...(leaveInfo ? { leaveInfo } : {}),
   };
+
+  if (playerObj.type === 'women' || isPlayerRetired(playerObj)) {
+    playerObj.ryuoClass = '';
+  }
+  if (isPlayerRetired(playerObj)) {
+    playerObj.junisenClass = '';
+  }
+
+  return playerObj;
+}
+
+export function normalizePlayerRecord(raw: any): Player | null {
+  if (!raw) return null;
+  const parsed = parseJsonSafe<Partial<Player>>(raw.data_json, {});
+  const id = raw.id ?? raw.player_id ?? raw.playerId ?? parsed.id;
+  const name = raw.name ?? raw.player_name ?? raw.playerName ?? parsed.name;
+  if (!id || !name) return null;
+
+  // Prefer non-empty data_json fields over stale/default SQL columns
+  const merged: Record<string, any> = { ...raw };
+  for (const [k, v] of Object.entries(parsed || {})) {
+    if (v !== undefined) {
+      merged[k] = v;
+    }
+  }
+  merged.id = id;
+  merged.name = name;
+  delete merged.data_json;
+
+  return repairLegacyPlayerFields(merged);
 }
 
 export function normalizeMatchRecord(raw: any): Match | null {
@@ -556,11 +696,11 @@ async function migrateRowsToTable(
         {}
       );
       const p = normalizePlayerRecord({
-        ...parsed,
         ...rawRow,
+        ...parsed,
         data_json: undefined,
-        id: rawRow.id ?? rawRow.player_id ?? rawRow.playerId ?? parsed.id,
-        name: rawRow.name ?? rawRow.player_name ?? rawRow.playerName ?? parsed.name,
+        id: parsed.id ?? rawRow.id ?? rawRow.player_id ?? rawRow.playerId,
+        name: parsed.name ?? rawRow.name ?? rawRow.player_name ?? rawRow.playerName,
       });
       if (!p) continue;
       stmts.push({
@@ -847,6 +987,66 @@ async function ensureSchemaMigrations(client: Client): Promise<void> {
     if (Number(emptyDateRes.rows[0]?.cnt ?? 0) > 0) {
       const rowsRes = await client.execute(`SELECT * FROM matches WHERE date = ''`);
       await migrateRowsToTable(client, 'matches', 'matches', rowsRes.rows as any[]);
+    }
+  }
+
+  // Repair legacy player fields (avatar_url, category='female', title/danRank, status='retired'/'on_leave') in existing DB rows
+  if (!rebuiltTables.has('players')) {
+    const pRowsRes = await client.execute(
+      `SELECT id, name, former_name, type, affiliation, rank, dan_rank, player_number, photo_url, data_json FROM players`
+    );
+    const now = new Date().toISOString();
+    const repairStmts: Array<{ sql: string; args: InValue[] }> = [];
+
+    for (const rawRow of pRowsRes.rows as any[]) {
+      const parsed = parseJsonSafe<Record<string, any>>(rawRow.data_json, {});
+      const repaired = normalizePlayerRecord({
+        ...rawRow,
+        ...parsed,
+        data_json: undefined,
+        id: parsed.id || rawRow.id,
+        name: parsed.name || rawRow.name,
+      });
+      if (!repaired) continue;
+
+      const needsSqlOrJsonRepair =
+        String(rawRow.type || '') !== String(repaired.type || '') ||
+        String(rawRow.photo_url || '') !== String(repaired.photoUrl || '') ||
+        String(rawRow.rank || '') !== String(repaired.rank || '') ||
+        String(rawRow.dan_rank || '') !== String(repaired.danRank || '') ||
+        String(parsed.type || '') !== String(repaired.type || '') ||
+        String(parsed.photoUrl || '') !== String(repaired.photoUrl || '') ||
+        String(parsed.rank || '') !== String(repaired.rank || '') ||
+        String(parsed.danRank || '') !== String(repaired.danRank || '') ||
+        String(parsed.retirementDate || '') !== String(repaired.retirementDate || '') ||
+        String(parsed.shortBio || '') !== String(repaired.shortBio || '') ||
+        Boolean(parsed.leaveInfo?.isOnLeave) !== Boolean(repaired.leaveInfo?.isOnLeave);
+
+      if (needsSqlOrJsonRepair) {
+        repairStmts.push({
+          sql: `UPDATE players
+            SET former_name = ?, type = ?, affiliation = ?, rank = ?, dan_rank = ?,
+                player_number = ?, photo_url = ?, data_json = ?, updated_at = ?
+            WHERE id = ?`,
+          args: [
+            repaired.formerName || null,
+            repaired.type || 'pro',
+            repaired.affiliation || '日本将棋連盟',
+            repaired.rank || '',
+            repaired.danRank || null,
+            repaired.playerNumber ?? null,
+            repaired.photoUrl || null,
+            JSON.stringify(repaired),
+            now,
+            repaired.id,
+          ],
+        });
+      }
+    }
+
+    if (repairStmts.length > 0) {
+      console.log(`[Turso Migration] Repairing legacy fields on ${repairStmts.length} player rows`);
+      await runBatchChunked(client, repairStmts, 40);
     }
   }
 }
@@ -1182,19 +1382,12 @@ function hydratePlayersFromRows(
     const formerName =
       (row.former_name ? String(row.former_name) : '') || parsed.formerName || hist?.[0]?.oldName || undefined;
 
-    const playerObj: Player = {
+    return repairLegacyPlayerFields({
       ...parsed,
       id: parsed.id || id,
       name: parsed.name || name,
       ...(formerName ? { formerName } : {}),
-    };
-    if (playerObj.type === 'women' || isPlayerRetired(playerObj)) {
-      playerObj.ryuoClass = '';
-    }
-    if (isPlayerRetired(playerObj)) {
-      playerObj.junisenClass = '';
-    }
-    return playerObj;
+    });
   });
 }
 

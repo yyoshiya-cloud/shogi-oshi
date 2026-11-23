@@ -1,7 +1,7 @@
 import React from 'react';
 import { Player, FollowedPlayerConfig, Match } from '../types/shogi';
 import { getTodayDateString, getTodayInfo } from '../utils/dateUtils';
-import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, getPlayerNumberPrefix } from '../utils/playerUtils';
+import { formatPlayerName, formatPlayerRankAndDan, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetiredStatus, formatPlayerRetirementDate, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { OshiBadgeTag } from '../utils/badgeUtils';
 import { getPlayerTotalTitles, formatEiseiBadgeLabel } from '../utils/titleUtils';
 import {
@@ -100,7 +100,11 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-amber-300 font-semibold mt-1">
-                    ☗ {formatPlayerName(p1.name)} ({p1.rank}) vs ☖ {formatPlayerName(p2.name)} ({p2.rank})
+                    {(() => {
+                      const p1Label = (p1.rank || p1.danRank || '').trim();
+                      const p2Label = (p2.rank || p2.danRank || '').trim();
+                      return `☗ ${formatPlayerName(p1.name)}${p1Label ? ` (${p1Label})` : ''} vs ☖ ${formatPlayerName(p2.name)}${p2Label ? ` (${p2Label})` : ''}`;
+                    })()}
                   </p>
                   <p className="text-[11px] text-zinc-400 mt-0.5">
                     会場: {m.venue} / 持ち時間: {m.timeControl}
@@ -242,7 +246,7 @@ export const OshiDashboard: React.FC<OshiDashboardProps> = ({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <OshiBadgeTag badge={config.badge} size="xs" />
-                        {isPlayerRetired(player) && (
+                        {isPlayerRetiredStatus(player) && (
                           <span
                             className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80"
                             title={formatPlayerRetirementDate(player)}

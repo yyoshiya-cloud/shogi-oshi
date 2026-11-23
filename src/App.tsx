@@ -279,7 +279,7 @@ export default function App() {
       );
       if (todayMatch) {
         triggerPushNotification(
-          `【本日対局】${target.name} ${target.rank}の対局日です！`,
+          `【本日対局】${target.name}${target.rank || target.danRank ? ` ${target.rank || target.danRank}` : ''}の対局日です！`,
           `本日 ${todayMatch.time}〜 ${todayMatch.tournament}。${todayMatch.venue}にて対局中！`,
           'match_day',
           todayMatch.id,

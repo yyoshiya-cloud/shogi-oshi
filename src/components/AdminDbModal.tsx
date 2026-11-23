@@ -37,6 +37,7 @@ import {
   isPlayerOnLeave,
   formatPlayerLeavePeriod,
   isPlayerRetired,
+  isPlayerRetiredStatus,
   formatPlayerRetirementDate,
   formatPlayerName,
   formatPlayerRankAndDan,
@@ -1936,7 +1937,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                 >
                                   {getPlayerNumberPrefix(editingProfile)} No.{editingProfile.playerNumber ?? '-'}
                                 </span>
-                                {isPlayerRetired(editingProfile) && (
+                                {isPlayerRetiredStatus(editingProfile) && (
                                   <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 border border-zinc-500/80">
                                     引退
                                   </span>
@@ -2564,7 +2565,7 @@ export const AdminDbModal: React.FC<AdminDbModalProps> = ({
                                   ...editingProfile,
                                   retirementDate: profileRetirementDate.trim() || undefined,
                                 };
-                                const willShowRetired = isPlayerRetired(previewRetiredPlayer);
+                                const willShowRetired = isPlayerRetiredStatus(previewRetiredPlayer);
                                 if (willShowRetired) {
                                   return (
                                     <span className="inline-flex items-center gap-1.5 text-zinc-200 font-bold">

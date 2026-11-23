@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Player, FollowedPlayerConfig, Match, ShogiMonthlyResult } from '../types/shogi';
 import { PlayerStatsCharts, YearlyChartZoomModal } from './PlayerStatsCharts';
 import { getPlayerTotalTitles, getPlayerEiseiTitles, formatEiseiBadgeLabel, isEiseiPlayer } from '../utils/titleUtils';
-import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, formatPlayerRetirementDate, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer, getPlayerNumberPrefix } from '../utils/playerUtils';
+import { formatPlayerName, formatBirthDateWithAge, isPlayerOnLeave, formatPlayerLeavePeriod, isPlayerRetired, isPlayerRetiredStatus, formatPlayerRetirementDate, formatWinRate, isBoilerplateBio, formatPlayerRankAndDan, formatPlayerDanOnly, resolvePlayer, getPlayerNumberPrefix } from '../utils/playerUtils';
 import { getStoredFiscalResults } from '../utils/storage';
 import { getTodayDateString } from '../utils/dateUtils';
 import results2026Json from '../data/results2026.json';
@@ -350,7 +350,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
             >
               {activePlayer.affiliation || '日本将棋連盟'}
             </span>
-            {isPlayerRetired(activePlayer) && (
+            {isPlayerRetiredStatus(activePlayer) && (
               <span
                 className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-200 border border-zinc-500/80"
                 title={formatPlayerRetirementDate(activePlayer)}
@@ -693,7 +693,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                   )}
                 </div>
 
-                {isPlayerRetired(activePlayer) && (
+                {isPlayerRetiredStatus(activePlayer) && (
                   <div className="mt-3 px-3 py-2 rounded-xl bg-zinc-800/70 border border-zinc-600/60 flex items-center justify-between gap-2 flex-wrap text-xs">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-200 border border-zinc-500/80">
@@ -1191,9 +1191,15 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                       </div>
 
                       <div className="flex items-center justify-between text-xs text-zinc-300 py-1">
-                        <span>
-                          vs {opponent?.name || '相手棋士'} ({opponent?.rank})
-                        </span>
+                        {(() => {
+                          const opponentTitle = (opponent?.rank || opponent?.danRank || '').trim();
+                          return (
+                            <span>
+                              vs {opponent?.name || '相手棋士'}
+                              {opponentTitle ? ` (${opponentTitle})` : ''}
+                            </span>
+                          );
+                        })()}
                         <span className="text-zinc-500">{match.date}</span>
                       </div>
 
