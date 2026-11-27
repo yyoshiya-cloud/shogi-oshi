@@ -50,18 +50,20 @@ export function getDisplayLinks(result: ShogiMonthlyResult): { title: string; ur
 
   if (result.links && result.links.length > 0) {
     for (const link of result.links) {
+      if (!link) continue;
+      const linkTitle = link.title || '';
       if (
-        link.title === '携帯中継' ||
-        link.title === '中継' ||
-        link.title === '中継・携帯中継' ||
-        link.title.includes('携帯中継')
+        linkTitle === '携帯中継' ||
+        linkTitle === '中継' ||
+        linkTitle === '中継・携帯中継' ||
+        linkTitle.includes('携帯中継')
       ) {
         continue;
       }
-      let title = link.title;
+      let title = linkTitle;
       if (
-        /youtube/i.test(link.title) ||
-        link.title.includes('将棋連盟') ||
+        /youtube/i.test(linkTitle) ||
+        linkTitle.includes('将棋連盟') ||
         (link.url && /youtube\.com|youtu\.be/i.test(link.url))
       ) {
         title = '将棋連盟YouTube';
@@ -293,18 +295,18 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
       const dateStr = `${year}-${mStr}-${dStr}`;
       const dayMatches = dateMap.get(dateStr) || [];
       const hasOshiMatch = dayMatches.some((r) => {
-        const s = r.sente.replace(/\s+/g, '');
-        const g = r.gote.replace(/\s+/g, '');
+        const s = (r.sente || '').replace(/\s+/g, '');
+        const g = (r.gote || '').replace(/\s+/g, '');
         return followedPlayerNames.has(s) || followedPlayerNames.has(g);
       });
       const hasTitleMatch = dayMatches.some(
         (r) =>
           r.category === 'タイトル戦' ||
           r.category === '女流タイトル戦' ||
-          r.tournament.includes('竜王') ||
-          r.tournament.includes('名人') ||
-          r.tournament.includes('白玲') ||
-          r.tournament.includes('清麗')
+          Boolean(r.tournament?.includes('竜王')) ||
+          Boolean(r.tournament?.includes('名人')) ||
+          Boolean(r.tournament?.includes('白玲')) ||
+          Boolean(r.tournament?.includes('清麗'))
       );
 
       days.push({
@@ -414,10 +416,10 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
         (r) =>
           r.category === 'タイトル戦' ||
           r.category === '女流タイトル戦' ||
-          r.tournament.includes('竜王') ||
-          r.tournament.includes('名人') ||
-          r.tournament.includes('白玲') ||
-          r.tournament.includes('清麗')
+          Boolean(r.tournament?.includes('竜王')) ||
+          Boolean(r.tournament?.includes('名人')) ||
+          Boolean(r.tournament?.includes('白玲')) ||
+          Boolean(r.tournament?.includes('清麗'))
       );
     }
 
@@ -425,10 +427,10 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().replace(/\s+/g, '');
       list = list.filter((r) => {
-        const p1 = r.sente.toLowerCase().replace(/\s+/g, '');
-        const p2 = r.gote.toLowerCase().replace(/\s+/g, '');
-        const tourney = r.tournament.toLowerCase();
-        const note = r.note.toLowerCase();
+        const p1 = (r.sente || '').toLowerCase().replace(/\s+/g, '');
+        const p2 = (r.gote || '').toLowerCase().replace(/\s+/g, '');
+        const tourney = (r.tournament || '').toLowerCase();
+        const note = (r.note || '').toLowerCase();
         return p1.includes(q) || p2.includes(q) || tourney.includes(q) || note.includes(q);
       });
     }
@@ -521,26 +523,24 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
     const p1 = resolvePlayer(r.sente, players);
     const p2 = resolvePlayer(r.gote, players);
 
-    const sClean = r.sente.replace(/\s+/g, '');
-    const gClean = r.gote.replace(/\s+/g, '');
+    const sClean = (r.sente || '').replace(/\s+/g, '');
+    const gClean = (r.gote || '').replace(/\s+/g, '');
     const wClean = (r.winner || '').replace(/\s+/g, '');
     const isSenteWin =
       (Boolean(wClean) && wClean === sClean) ||
-      r.senteMark.includes('○') ||
-      r.senteMark.includes('□');
+      Boolean(r.senteMark && (r.senteMark.includes('○') || r.senteMark.includes('□')));
     const isGoteWin =
       (Boolean(wClean) && wClean === gClean) ||
-      r.goteMark.includes('○') ||
-      r.goteMark.includes('□');
+      Boolean(r.goteMark && (r.goteMark.includes('○') || r.goteMark.includes('□')));
     const resolvedWinnerId = isSenteWin ? p1.id : isGoteWin ? p2.id : undefined;
     const resolvedWinnerName = isSenteWin ? r.sente : isGoteWin ? r.gote : '';
 
     const isFusen =
       r.resultType === 'fusen' ||
-      r.senteMark.includes('□') ||
-      r.goteMark.includes('□') ||
-      r.senteMark.includes('■') ||
-      r.goteMark.includes('■');
+      Boolean(
+        (r.senteMark && (r.senteMark.includes('□') || r.senteMark.includes('■'))) ||
+        (r.goteMark && (r.goteMark.includes('□') || r.goteMark.includes('■')))
+      );
 
     const m: Match = {
       id: r.id,
@@ -1121,72 +1121,70 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
               {/* Cards for this Date */}
               <div className="grid grid-cols-1 gap-2.5">
                 {group.items.map((result) => {
-                  const senteClean = result.sente.replace(/\s+/g, '');
-                  const goteClean = result.gote.replace(/\s+/g, '');
+                  const senteClean = (result.sente || '').replace(/\s+/g, '');
+                  const goteClean = (result.gote || '').replace(/\s+/g, '');
                   const isSenteOshi = followedPlayerNames.has(senteClean);
                   const isGoteOshi = followedPlayerNames.has(goteClean);
 
                   const winnerClean = (result.winner || '').replace(/\s+/g, '');
                   const isSenteWinner =
                     (Boolean(winnerClean) && winnerClean === senteClean) ||
-                    result.senteMark.includes('○') ||
-                    result.senteMark.includes('□');
+                    Boolean(result.senteMark && (result.senteMark.includes('○') || result.senteMark.includes('□')));
                   const isGoteWinner =
                     (Boolean(winnerClean) && winnerClean === goteClean) ||
-                    result.goteMark.includes('○') ||
-                    result.goteMark.includes('□');
+                    Boolean(result.goteMark && (result.goteMark.includes('○') || result.goteMark.includes('□')));
                   const hasResult = isSenteWinner || isGoteWinner;
                   const isFusen =
                     result.resultType === 'fusen' ||
-                    result.senteMark.includes('□') ||
-                    result.goteMark.includes('□') ||
-                    result.senteMark.includes('■') ||
-                    result.goteMark.includes('■');
+                    Boolean(
+                      (result.senteMark && (result.senteMark.includes('□') || result.senteMark.includes('■'))) ||
+                      (result.goteMark && (result.goteMark.includes('□') || result.goteMark.includes('■')))
+                    );
 
                   // Category badge styling
                   const isLadyTitle =
                     result.category === '女流タイトル戦' ||
-                    result.tournament.includes('白玲') ||
-                    result.tournament.includes('清麗') ||
-                    result.tournament.includes('女王') ||
-                    result.tournament.includes('女流王座') ||
-                    result.tournament.includes('女流名人') ||
-                    result.tournament.includes('女流王位') ||
-                    result.tournament.includes('女流王将') ||
-                    result.tournament.includes('倉敷藤花');
+                    Boolean(result.tournament?.includes('白玲')) ||
+                    Boolean(result.tournament?.includes('清麗')) ||
+                    Boolean(result.tournament?.includes('女王')) ||
+                    Boolean(result.tournament?.includes('女流王座')) ||
+                    Boolean(result.tournament?.includes('女流名人')) ||
+                    Boolean(result.tournament?.includes('女流王位')) ||
+                    Boolean(result.tournament?.includes('女流王将')) ||
+                    Boolean(result.tournament?.includes('倉敷藤花'));
 
                   const isTitle =
                     !isLadyTitle &&
-                    !result.tournament.includes('女流') &&
+                    !result.tournament?.includes('女流') &&
                     !result.isWomen &&
                     result.category !== '女流棋戦' &&
                     (result.category === 'タイトル戦' ||
-                      result.tournament.includes('竜王') ||
-                      result.tournament.includes('名人') ||
-                      result.tournament.includes('王位') ||
-                      result.tournament.includes('王座') ||
-                      result.tournament.includes('棋王') ||
-                      result.tournament.includes('王将') ||
-                      result.tournament.includes('棋聖') ||
-                      result.tournament.includes('叡王'));
+                      Boolean(result.tournament?.includes('竜王')) ||
+                      Boolean(result.tournament?.includes('名人')) ||
+                      Boolean(result.tournament?.includes('王位')) ||
+                      Boolean(result.tournament?.includes('王座')) ||
+                      Boolean(result.tournament?.includes('棋王')) ||
+                      Boolean(result.tournament?.includes('王将')) ||
+                      Boolean(result.tournament?.includes('棋聖')) ||
+                      Boolean(result.tournament?.includes('叡王')));
 
-                  const isNhkCup = result.tournament.includes('NHK杯') || result.tournament.includes('ＮＨＫ杯');
+                  const isNhkCup = Boolean(result.tournament?.includes('NHK杯')) || Boolean(result.tournament?.includes('ＮＨＫ杯'));
                   const badgeClass = isNhkCup
                     ? 'bg-white text-zinc-950 border-white font-bold'
                     : isLadyTitle
                     ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
                     : isTitle
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : result.isWomen || result.category === '女流棋戦' || result.tournament.includes('女流')
+                    : result.isWomen || result.category === '女流棋戦' || Boolean(result.tournament?.includes('女流'))
                     ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
                     : result.category === '順位戦'
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
                     : 'bg-zinc-800 text-zinc-300 border-zinc-700';
 
-                  const sentePlayerObj = resolvePlayer(result.sente, players);
-                  const gotePlayerObj = resolvePlayer(result.gote, players);
-                  const isSenteWinnerWomen = sentePlayerObj.type === 'women' || sentePlayerObj.affiliation === 'LPSA' || result.sente.includes('女流');
-                  const isGoteWinnerWomen = gotePlayerObj.type === 'women' || gotePlayerObj.affiliation === 'LPSA' || result.gote.includes('女流');
+                  const sentePlayerObj = resolvePlayer(result.sente || '', players);
+                  const gotePlayerObj = resolvePlayer(result.gote || '', players);
+                  const isSenteWinnerWomen = sentePlayerObj.type === 'women' || sentePlayerObj.affiliation === 'LPSA' || Boolean(result.sente?.includes('女流'));
+                  const isGoteWinnerWomen = gotePlayerObj.type === 'women' || gotePlayerObj.affiliation === 'LPSA' || Boolean(result.gote?.includes('女流'));
 
                   return (
                     <div
@@ -1276,7 +1274,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             </span>
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
-                            {result.senteRaw.includes('※') ? 'LPSA' : '日本将棋連盟'}
+                            {(result.senteRaw || result.sente || '').includes('※') ? 'LPSA' : '日本将棋連盟'}
                           </span>
                         </div>
 
@@ -1357,7 +1355,7 @@ export const MonthlyResultsView: React.FC<MonthlyResultsViewProps> = ({
                             </span>
                           </div>
                           <span className="text-[10px] text-zinc-400 truncate mt-0.5">
-                            {result.goteRaw.includes('※') ? 'LPSA' : '日本将棋連盟'}
+                            {(result.goteRaw || result.gote || '').includes('※') ? 'LPSA' : '日本将棋連盟'}
                           </span>
                         </div>
                       </div>

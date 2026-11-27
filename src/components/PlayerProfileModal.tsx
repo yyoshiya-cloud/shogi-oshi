@@ -239,17 +239,15 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
     const p1 = allPlayers.find((p) => p.name.replace(/\s+/g, '') === r.sente.replace(/\s+/g, ''));
     const p2 = allPlayers.find((p) => p.name.replace(/\s+/g, '') === r.gote.replace(/\s+/g, ''));
 
-    const sClean = r.sente.replace(/\s+/g, '');
-    const gClean = r.gote.replace(/\s+/g, '');
+    const sClean = (r.sente || '').replace(/\s+/g, '');
+    const gClean = (r.gote || '').replace(/\s+/g, '');
     const wClean = (r.winner || '').replace(/\s+/g, '');
     const isSenteWin =
       (Boolean(wClean) && wClean === sClean) ||
-      r.senteMark.includes('○') ||
-      r.senteMark.includes('□');
+      Boolean(r.senteMark && (r.senteMark.includes('○') || r.senteMark.includes('□')));
     const isGoteWin =
       (Boolean(wClean) && wClean === gClean) ||
-      r.goteMark.includes('○') ||
-      r.goteMark.includes('□');
+      Boolean(r.goteMark && (r.goteMark.includes('○') || r.goteMark.includes('□')));
     const resolvedWinnerId = isSenteWin
       ? (p1?.id || r.sente)
       : isGoteWin
@@ -259,10 +257,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
 
     const isFusen =
       r.resultType === 'fusen' ||
-      r.senteMark.includes('□') ||
-      r.goteMark.includes('□') ||
-      r.senteMark.includes('■') ||
-      r.goteMark.includes('■');
+      Boolean(
+        (r.senteMark && (r.senteMark.includes('□') || r.senteMark.includes('■'))) ||
+        (r.goteMark && (r.goteMark.includes('□') || r.goteMark.includes('■')))
+      );
 
     const m: Match = {
       id: r.id,
@@ -1060,10 +1058,10 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({
                               (() => {
                                 const isFusenItem =
                                   r.resultType === 'fusen' ||
-                                  r.senteMark.includes('□') ||
-                                  r.goteMark.includes('□') ||
-                                  r.senteMark.includes('■') ||
-                                  r.goteMark.includes('■');
+                                  Boolean(
+                                    (r.senteMark && (r.senteMark.includes('□') || r.senteMark.includes('■'))) ||
+                                    (r.goteMark && (r.goteMark.includes('□') || r.goteMark.includes('■')))
+                                  );
                                 return r.isPlayerWinner ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-zinc-950 border border-amber-200 shadow-sm">
                                     <span>{isFusenItem ? '□ 不戦勝' : '○ 勝利'}</span>

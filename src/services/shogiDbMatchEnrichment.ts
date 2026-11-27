@@ -79,13 +79,13 @@ export function enrichPlayerMatches(
       const isPlayerWinner =
         (Boolean(winnerClean) && (targetNames.has(winnerClean) || targetNames.has(winnerNorm))) ||
         r.winnerId === player.id ||
-        (isSente && (r.senteMark.includes('○') || r.senteMark.includes('□'))) ||
-        (isGote && (r.goteMark.includes('○') || r.goteMark.includes('□')));
+        (isSente && Boolean(r.senteMark && (r.senteMark.includes('○') || r.senteMark.includes('□')))) ||
+        (isGote && Boolean(r.goteMark && (r.goteMark.includes('○') || r.goteMark.includes('□'))));
       const isPlayerLoser =
         (Boolean(winnerClean) && !targetNames.has(winnerClean) && !targetNames.has(winnerNorm) && r.winnerId !== player.id) ||
         r.loserId === player.id ||
-        (isSente && (r.senteMark.includes('●') || r.senteMark.includes('■'))) ||
-        (isGote && (r.goteMark.includes('●') || r.goteMark.includes('■')));
+        (isSente && Boolean(r.senteMark && (r.senteMark.includes('●') || r.senteMark.includes('■')))) ||
+        (isGote && Boolean(r.goteMark && (r.goteMark.includes('●') || r.goteMark.includes('■'))));
       const hasResult = isPlayerWinner || isPlayerLoser;
       const opponentName = isSente ? r.gote : r.sente;
 
